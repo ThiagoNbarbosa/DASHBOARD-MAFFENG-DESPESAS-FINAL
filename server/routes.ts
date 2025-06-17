@@ -111,8 +111,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         filters.userId = req.session.userId;
       }
       
-      if (month) filters.month = month as string;
-      if (category) filters.category = category as string;
+      if (month && month !== "all") filters.month = month as string;
+      if (category && category !== "all") filters.category = category as string;
       if (contractNumber) filters.contractNumber = contractNumber as string;
 
       const expenses = await storage.getExpenses(filters);
@@ -179,7 +179,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { month, contractNumber } = req.query;
       const filters: any = {};
       
-      if (month) filters.month = month as string;
+      if (month && month !== "all") filters.month = month as string;
       if (contractNumber) filters.contractNumber = contractNumber as string;
       
       const stats = await storage.getCategoryStats(filters);
@@ -194,7 +194,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { month, contractNumber } = req.query;
       const filters: any = {};
       
-      if (month) filters.month = month as string;
+      if (month && month !== "all") filters.month = month as string;
       if (contractNumber) filters.contractNumber = contractNumber as string;
       
       const stats = await storage.getPaymentMethodStats(filters);
