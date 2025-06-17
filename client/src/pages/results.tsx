@@ -40,8 +40,8 @@ interface Filters {
 
 export default function Results() {
   const [filters, setFilters] = useState<Filters>({
-    month: "",
-    category: "",
+    month: "all",
+    category: "all",
     contractNumber: "",
   });
 
