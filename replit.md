@@ -99,12 +99,17 @@ The database includes two main tables:
 
 ## Changelog
 - June 17, 2025: Initial setup - Created full-stack expense dashboard with React frontend and Express backend
-- June 17, 2025: Database connection issue identified - DATABASE_URL needs pooler connection string format
+- June 17, 2025: Database connection issue resolved - Updated to use Supabase pooler connection
+- June 17, 2025: Authentication system working - Admin and user login functioning correctly
 
 ## User Preferences
-Preferred communication style: Simple, everyday language.
+Preferred communication style: Portuguese (Brazil), simple everyday language.
 
-## Current Issues
-- Database connection failing due to incorrect connection string format
-- Need to use Supabase pooler connection (port 6543) instead of direct connection (port 5432)
-- User has already created tables and bucket in Supabase dashboard
+## Current Status
+- Application fully functional and running on port 5000
+- Database connected via Supabase pooler (PostgreSQL with node-postgres driver)
+- User authentication working with demo accounts:
+  - Admin: admin@empresa.com / senha123
+  - User: user@empresa.com / senha123
+- Supabase Storage configured for receipt image uploads
+- All core features implemented: expense management, filtering, analytics charts

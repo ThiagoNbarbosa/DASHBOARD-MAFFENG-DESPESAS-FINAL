@@ -3,8 +3,8 @@ import { eq, and, like, gte, lte, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 
-// Parse DATABASE_URL for pg Pool
-const connectionString = process.env.DATABASE_URL!;
+// Use the pooler connection string directly
+const connectionString = "postgresql://postgres.inukzizxxsvnlydkitle:TMS123456@aws-0-sa-east-1.pooler.supabase.com:6543/postgres";
 const pool = new Pool({
   connectionString,
   ssl: { rejectUnauthorized: false }
