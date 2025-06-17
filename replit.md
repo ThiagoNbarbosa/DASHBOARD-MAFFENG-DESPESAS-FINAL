@@ -98,7 +98,13 @@ The database includes two main tables:
 - Supabase credentials for file storage integration
 
 ## Changelog
-- June 17, 2025. Initial setup
+- June 17, 2025: Initial setup - Created full-stack expense dashboard with React frontend and Express backend
+- June 17, 2025: Database connection issue identified - DATABASE_URL needs pooler connection string format
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
+
+## Current Issues
+- Database connection failing due to incorrect connection string format
+- Need to use Supabase pooler connection (port 6543) instead of direct connection (port 5432)
+- User has already created tables and bucket in Supabase dashboard
