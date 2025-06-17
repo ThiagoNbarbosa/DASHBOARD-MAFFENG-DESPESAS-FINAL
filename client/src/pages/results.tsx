@@ -166,7 +166,7 @@ export default function Results() {
                       <SelectValue placeholder="Todos os meses" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todos os meses</SelectItem>
+                      <SelectItem value="all">Todos os meses</SelectItem>
                       {Array.from({ length: 12 }, (_, i) => {
                         const date = new Date(2024, i, 1);
                         const monthYear = date.toISOString().slice(0, 7);
@@ -187,7 +187,7 @@ export default function Results() {
                       <SelectValue placeholder="Todas as categorias" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todas as categorias</SelectItem>
+                      <SelectItem value="all">Todas as categorias</SelectItem>
                       {categories.map((category) => (
                         <SelectItem key={category} value={category}>
                           {category}
