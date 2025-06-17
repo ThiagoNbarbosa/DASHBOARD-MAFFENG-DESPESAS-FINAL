@@ -45,20 +45,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.post("/api/auth/login", async (req, res) => {
     try {
-      console.log("Login request body:", req.body);
       const { email, password } = loginSchema.parse(req.body);
-      console.log("Parsed email:", email);
       
       const user = await storage.getUserByEmail(email);
-      console.log("User found:", user ? "yes" : "no");
       if (!user) {
-        return res.status(401).json({ message: "Invalid credentials" });
+        return res.status(401).json({ message: "Credenciais inválidas" });
       }
 
       const isValidPassword = await bcrypt.compare(password, user.password);
-      console.log("Password valid:", isValidPassword);
       if (!isValidPassword) {
-        return res.status(401).json({ message: "Invalid credentials" });
+        return res.status(401).json({ message: "Credenciais inválidas" });
       }
 
       req.session.userId = user.id;
@@ -72,10 +68,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       console.error("Login error:", error);
-      if (error.errors) {
-        console.error("Validation errors:", error.errors);
-      }
-      res.status(400).json({ message: "Invalid request data", error: error.message });
+      res.status(400).json({ message: "Dados de requisição inválidos" });
     }
   });
 
