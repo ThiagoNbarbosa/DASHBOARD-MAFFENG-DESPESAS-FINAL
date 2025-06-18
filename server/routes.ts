@@ -224,29 +224,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const fileName = `${Date.now()}_${filename}`;
       const filePath = `${user.authUid}/${fileName}`;
 
-      // Criar cliente Supabase com o authUid do usuário para RLS
-      const { createClient } = require('@supabase/supabase-js');
-      const userSupabase = createClient(
-        process.env.VITE_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!,
-        {
-          auth: {
-            persistSession: false,
-            autoRefreshToken: false,
-          },
-          global: {
-            headers: {
-              Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`
-            }
-          }
-        }
-      );
-
-      // Simular o contexto do usuário para RLS
-      await userSupabase.auth.admin.getUserById(user.authUid);
-
-      // Upload para o Supabase Storage
-      const { data, error: uploadError } = await userSupabase.storage
+      // Upload para o Supabase Storage usando service role (políticas RLS aplicadas)
+      const { data, error: uploadError } = await supabase.storage
         .from('receipts')
         .upload(filePath, buffer, {
           contentType: `image/${fileExt}`,
@@ -260,7 +239,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Obter URL pública
-      const { data: { publicUrl } } = userSupabase.storage
+      const { data: { publicUrl } } = supabase.storage
         .from('receipts')
         .getPublicUrl(filePath);
 
