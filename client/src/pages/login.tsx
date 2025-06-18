@@ -51,13 +51,13 @@ export default function Login() {
             MAFFENG - Dashboard de Despesas
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Faça login para acessar o sistema
+            
           </p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-center">Entrar</CardTitle>
+            <CardTitle className="text-center text-3xl">Entrar</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
