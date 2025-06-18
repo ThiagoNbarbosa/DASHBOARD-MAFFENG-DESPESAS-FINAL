@@ -41,36 +41,50 @@ export default function ExpenseModal() {
         try {
           imageUrl = await uploadImage(imageFile);
         } catch (error) {
+          console.error("Erro no upload da imagem:", error);
           throw new Error("Falha no upload da imagem");
         }
       }
 
       const expenseData = {
         ...data,
-        value: data.totalValue, // Usar totalValue como value também
+        value: data.totalValue,
         imageUrl,
         paymentDate: new Date(data.paymentDate).toISOString(),
       };
 
       const response = await apiRequest('POST', '/api/expenses', expenseData);
+      if (!response.ok) {
+        throw new Error("Erro ao salvar despesa");
+      }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/expenses'] });
       queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
-      toast({
-        title: "Despesa criada",
-        description: "A despesa foi criada com sucesso.",
-      });
+      
+      // Use setTimeout to ensure DOM is stable before showing toast
+      setTimeout(() => {
+        toast({
+          title: "Despesa criada",
+          description: "A despesa foi criada com sucesso.",
+        });
+      }, 100);
+      
       setOpen(false);
       resetForm();
     },
     onError: (error: any) => {
-      toast({
-        title: "Erro ao criar despesa",
-        description: error.message || "Não foi possível criar a despesa.",
-        variant: "destructive",
-      });
+      console.error("Erro ao criar despesa:", error);
+      
+      // Use setTimeout to ensure DOM is stable before showing toast
+      setTimeout(() => {
+        toast({
+          title: "Erro ao criar despesa",
+          description: error.message || "Não foi possível criar a despesa.",
+          variant: "destructive",
+        });
+      }, 100);
     },
   });
 
@@ -92,11 +106,13 @@ export default function ExpenseModal() {
     e.preventDefault();
     
     if (!imageFile) {
-      toast({
-        title: "Imagem obrigatória",
-        description: "Por favor, selecione uma imagem do comprovante.",
-        variant: "destructive",
-      });
+      setTimeout(() => {
+        toast({
+          title: "Imagem obrigatória",
+          description: "Por favor, selecione uma imagem do comprovante.",
+          variant: "destructive",
+        });
+      }, 100);
       return;
     }
 
