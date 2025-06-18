@@ -11,6 +11,7 @@ import { Trash2, Edit, Filter, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { authApi } from "@/lib/auth";
+import EditExpenseModal from "@/components/edit-expense-modal";
 import type { Expense } from "@shared/schema";
 
 interface ExpenseFilters {
@@ -27,6 +28,8 @@ export default function ExpenseTable() {
     category: "all",
     contractNumber: "",
   });
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -74,6 +77,11 @@ export default function ExpenseTable() {
     if (confirm("Tem certeza que deseja excluir esta despesa?")) {
       deleteMutation.mutate(id);
     }
+  };
+
+  const handleEdit = (expense: Expense) => {
+    setEditingExpense(expense);
+    setEditModalOpen(true);
   };
 
   const clearFilters = () => {
@@ -263,7 +271,12 @@ export default function ExpenseTable() {
                       {user?.role === "admin" && (
                         <TableCell>
                           <div className="flex gap-2">
-                            <Button variant="outline" size="sm">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleEdit(expense)}
+                              title="Editar despesa"
+                            >
                               <Edit className="h-4 w-4" />
                             </Button>
                             <Button 
@@ -271,6 +284,7 @@ export default function ExpenseTable() {
                               size="sm"
                               onClick={() => handleDelete(expense.id)}
                               disabled={deleteMutation.isPending}
+                              title="Excluir despesa"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -285,6 +299,13 @@ export default function ExpenseTable() {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Modal */}
+      <EditExpenseModal
+        expense={editingExpense}
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+      />
     </div>
   );
 }
