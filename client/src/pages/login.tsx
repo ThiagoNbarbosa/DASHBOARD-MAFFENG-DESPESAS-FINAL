@@ -47,7 +47,11 @@ export default function Login() {
             <img 
               src="/maffeng-logo.png" 
               alt="MAFFENG - Engenharia e Manutenção" 
-              className="h-24 w-auto mx-auto"
+              className="h-24 w-auto mx-auto object-contain"
+              onError={(e) => {
+                console.error('Erro ao carregar imagem:', e);
+                e.currentTarget.style.display = 'none';
+              }}
             />
           </div>
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
