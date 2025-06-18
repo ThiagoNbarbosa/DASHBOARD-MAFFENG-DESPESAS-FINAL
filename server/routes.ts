@@ -142,6 +142,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Image upload route (simplified - stores locally for now)
+  app.post("/api/upload", requireAuth, async (req, res) => {
+    try {
+      if (!req.body || !req.body.file || !req.body.filename) {
+        return res.status(400).json({ message: "Arquivo e nome do arquivo são obrigatórios" });
+      }
+
+      const { file: fileData, filename } = req.body;
+      const fs = await import('fs');
+      const path = await import('path');
+      
+      // Criar diretório uploads se não existir
+      const uploadsDir = path.join(process.cwd(), 'uploads');
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+      
+      // Converter base64 para buffer
+      const base64Data = fileData.replace(/^data:image\/\w+;base64,/, '');
+      const buffer = Buffer.from(base64Data, 'base64');
+
+      const fileExt = filename.split('.').pop();
+      const fileName = `${Date.now()}.${fileExt}`;
+      const filePath = path.join(uploadsDir, fileName);
+
+      // Salvar arquivo localmente
+      fs.writeFileSync(filePath, buffer);
+
+      // Retornar URL local
+      const publicUrl = `/uploads/${fileName}`;
+      res.json({ url: publicUrl });
+    } catch (error: any) {
+      console.error("Erro no upload:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   // Expense routes
   app.get("/api/expenses", requireAuth, async (req, res) => {
     try {
