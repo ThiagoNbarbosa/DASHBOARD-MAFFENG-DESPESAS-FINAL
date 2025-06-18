@@ -33,6 +33,7 @@ ChartJS.register(
 );
 
 interface Filters {
+  year: string;
   month: string;
   category: string;
   contractNumber: string;
@@ -40,6 +41,7 @@ interface Filters {
 
 export default function Results() {
   const [filters, setFilters] = useState<Filters>({
+    year: "2025",
     month: "all",
     category: "all",
     contractNumber: "",
@@ -49,7 +51,10 @@ export default function Results() {
     queryKey: ['/api/stats/categories', filters],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (filters.month) params.set('month', filters.month);
+      if (filters.month && filters.month !== "all") {
+        const monthFilter = filters.year + "-" + filters.month;
+        params.set('month', monthFilter);
+      }
       if (filters.contractNumber) params.set('contractNumber', filters.contractNumber);
       
       const response = await apiRequest('GET', `/api/stats/categories?${params}`);
@@ -61,7 +66,10 @@ export default function Results() {
     queryKey: ['/api/stats/payment-methods', filters],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (filters.month) params.set('month', filters.month);
+      if (filters.month && filters.month !== "all") {
+        const monthFilter = filters.year + "-" + filters.month;
+        params.set('month', monthFilter);
+      }
       if (filters.contractNumber) params.set('contractNumber', filters.contractNumber);
       
       const response = await apiRequest('GET', `/api/stats/payment-methods?${params}`);
