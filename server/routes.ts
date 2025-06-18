@@ -215,7 +215,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/expenses", requireAuth, async (req, res) => {
     try {
+      console.log('Dados recebidos para criação de despesa:', req.body);
       const expenseData = insertExpenseSchema.parse(req.body);
+      console.log('Dados validados:', expenseData);
       const expense = await storage.createExpense({
         ...expenseData,
         userId: req.session.userId!,
@@ -223,8 +225,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(expense);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error('Erro de validação Zod:', error.errors);
         return res.status(400).json({ message: "Invalid expense data", errors: error.errors });
       }
+      console.error('Erro no servidor:', error);
       res.status(500).json({ message: "Server error" });
     }
   });
