@@ -81,6 +81,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { email, password, name, role } = signUpSchema.parse(req.body);
       
+      // Verificar se já existe usuário na nossa tabela
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ message: "Email já está em uso" });
+      }
+
       // 1. Criar usuário no Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email,
@@ -90,6 +96,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (authError) {
         console.error("Erro detalhado do Supabase Auth:", authError);
+        
+        // Se o erro for de email já existente, vamos buscar o usuário existente
+        if (authError.message.includes("already been registered")) {
+          // Obter lista de usuários para encontrar o authUid
+          const { data: listData, error: listError } = await supabase.auth.admin.listUsers();
+          if (listError) {
+            return res.status(400).json({ message: "Erro ao verificar usuários existentes" });
+          }
+          
+          const existingAuthUser = listData.users.find(u => u.email === email);
+          if (!existingAuthUser) {
+            return res.status(400).json({ message: "Erro de consistência: usuário existe no auth mas não foi encontrado" });
+          }
+
+          // Criar apenas o registro na nossa tabela usando o authUid existente
+          const user = await storage.createUserWithAuth({
+            authUid: existingAuthUser.id,
+            email,
+            name,
+            role,
+          });
+
+          return res.json({
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            authUid: user.authUid,
+          });
+        }
+        
         return res.status(400).json({ message: `Erro no Supabase Auth: ${authError.message}` });
       }
 
@@ -116,6 +153,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Signup error:", error);
       if (error.code === "23505") { // Unique constraint violation
         return res.status(400).json({ message: "Email já está em uso" });
+      }
+      if (error.code === "23502") { // Not null constraint violation
+        return res.status(400).json({ message: "Erro de configuração do banco de dados" });
       }
       res.status(400).json({ message: "Dados de requisição inválidos" });
     }
