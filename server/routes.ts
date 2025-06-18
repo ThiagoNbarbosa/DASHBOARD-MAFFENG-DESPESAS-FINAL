@@ -207,22 +207,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { file: fileData, filename } = req.body;
+      const userId = req.session.userId;
+      const userRole = req.session.userRole;
       
       // Converter base64 para buffer
       const base64Data = fileData.replace(/^data:image\/\w+;base64,/, '');
       const buffer = Buffer.from(base64Data, 'base64');
 
       const fileExt = filename.split('.').pop();
-      const fileName = `${Date.now()}.${fileExt}`;
+      const fileName = `${userId}_${Date.now()}.${fileExt}`;
       const filePath = `receipts/${fileName}`;
 
-      // Upload para o Supabase Storage
+      // Upload para o Supabase Storage usando service role
+      // Incluir metadados do usuário para políticas RLS
       const { data, error: uploadError } = await supabase.storage
         .from('receipts')
         .upload(filePath, buffer, {
           contentType: `image/${fileExt}`,
           cacheControl: '3600',
-          upsert: false
+          upsert: false,
+          metadata: {
+            userId: userId.toString(),
+            userRole: userRole,
+            uploadedBy: userId.toString()
+          }
         });
 
       if (uploadError) {
