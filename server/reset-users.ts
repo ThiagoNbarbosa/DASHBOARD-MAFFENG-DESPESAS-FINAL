@@ -23,11 +23,15 @@ async function resetAndCreateUsers() {
       }
     }
 
-    // 2. Limpar usuários da nossa tabela
+    // 2. Limpar despesas primeiro (devido à restrição de chave estrangeira)
+    console.log("Removendo despesas da tabela local...");
+    await storage.clearAllExpenses();
+    
+    // 3. Limpar usuários da nossa tabela
     console.log("Removendo usuários da tabela local...");
     await storage.clearAllUsers();
 
-    // 3. Criar novos usuários no Supabase Auth
+    // 4. Criar novos usuários no Supabase Auth
     console.log("Criando novos usuários...");
 
     // Criar thiago@maffeng.com (ADMIN)

@@ -290,6 +290,10 @@ export class DatabaseStorage implements IStorage {
     await db.update(users).set({ authUid }).where(eq(users.id, userId));
   }
 
+  async clearAllExpenses() {
+    await db.delete(expenses);
+  }
+
   async clearAllUsers() {
     await db.delete(users);
   }
