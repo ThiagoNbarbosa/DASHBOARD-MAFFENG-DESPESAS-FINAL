@@ -4,7 +4,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage-pg";
 import { insertExpenseSchema, loginSchema, signUpSchema } from "@shared/schema";
 import bcrypt from "bcrypt";
-import { supabase } from "../client/src/lib/supabase";
+import { supabase } from "./supabase";
 import session from "express-session";
 import { z } from "zod";
 
