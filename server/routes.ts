@@ -146,7 +146,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Image upload route (simplified - stores locally for now)
+  // Image upload route - Supabase Storage
   app.post("/api/upload", requireAuth, async (req, res) => {
     try {
       if (!req.body || !req.body.file || !req.body.filename) {
@@ -154,14 +154,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { file: fileData, filename } = req.body;
-      const fs = await import('fs');
-      const path = await import('path');
-      
-      // Criar diretório uploads se não existir
-      const uploadsDir = path.join(process.cwd(), 'uploads');
-      if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir, { recursive: true });
-      }
       
       // Converter base64 para buffer
       const base64Data = fileData.replace(/^data:image\/\w+;base64,/, '');
@@ -169,13 +161,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const fileExt = filename.split('.').pop();
       const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = path.join(uploadsDir, fileName);
+      const filePath = `receipts/${fileName}`;
 
-      // Salvar arquivo localmente
-      fs.writeFileSync(filePath, buffer);
+      // Upload para o Supabase Storage
+      const { data, error: uploadError } = await supabase.storage
+        .from('receipts')
+        .upload(filePath, buffer, {
+          contentType: `image/${fileExt}`,
+          cacheControl: '3600',
+          upsert: false
+        });
 
-      // Retornar URL local
-      const publicUrl = `/uploads/${fileName}`;
+      if (uploadError) {
+        console.error('Erro no upload para Supabase:', uploadError);
+        return res.status(500).json({ message: `Erro no upload: ${uploadError.message}` });
+      }
+
+      // Obter URL pública
+      const { data: { publicUrl } } = supabase.storage
+        .from('receipts')
+        .getPublicUrl(filePath);
+
+      console.log('Upload realizado com sucesso no Supabase:', publicUrl);
       res.json({ url: publicUrl });
     } catch (error: any) {
       console.error("Erro no upload:", error);
