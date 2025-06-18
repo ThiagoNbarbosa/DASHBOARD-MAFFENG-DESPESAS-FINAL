@@ -4,8 +4,9 @@ import { z } from "zod";
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
+  authUid: text("auth_uid").unique(), // Supabase Auth UUID
   email: text("email").notNull().unique(),
-  password: text("password").notNull(),
+  password: text("password"), // Opcional para usuários do Supabase Auth
   name: text("name").notNull(),
   role: text("role").notNull().default("user"), // "user" or "admin"
   createdAt: timestamp("created_at").defaultNow(),
@@ -30,6 +31,13 @@ export const insertUserSchema = createInsertSchema(users).omit({
   createdAt: true,
 });
 
+export const signUpSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+  name: z.string().min(1),
+  role: z.string().default("user"),
+});
+
 export const insertExpenseSchema = createInsertSchema(expenses).omit({
   id: true,
   userId: true,
@@ -46,3 +54,4 @@ export type User = typeof users.$inferSelect;
 export type InsertExpense = z.infer<typeof insertExpenseSchema>;
 export type Expense = typeof expenses.$inferSelect;
 export type LoginData = z.infer<typeof loginSchema>;
+export type SignUpData = z.infer<typeof signUpSchema>;

@@ -2,8 +2,9 @@ import type { Express } from "express";
 import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage-pg";
-import { insertExpenseSchema, loginSchema } from "@shared/schema";
+import { insertExpenseSchema, loginSchema, signUpSchema } from "@shared/schema";
 import bcrypt from "bcrypt";
+import { supabase } from "../client/src/lib/supabase";
 import session from "express-session";
 import { z } from "zod";
 
@@ -68,6 +69,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       console.error("Login error:", error);
+      res.status(400).json({ message: "Dados de requisição inválidos" });
+    }
+  });
+
+  app.post("/api/auth/signup", async (req, res) => {
+    try {
+      const { email, password, name, role } = signUpSchema.parse(req.body);
+      
+      // 1. Criar usuário no Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (authError) {
+        return res.status(400).json({ message: `Erro no Supabase Auth: ${authError.message}` });
+      }
+
+      if (!authData.user) {
+        return res.status(400).json({ message: "Falha ao criar usuário no Supabase Auth" });
+      }
+
+      // 2. Criar registro na tabela users com o auth_uid
+      const user = await storage.createUserWithAuth({
+        authUid: authData.user.id,
+        email,
+        name,
+        role,
+      });
+
+      res.json({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        authUid: user.authUid,
+      });
+    } catch (error: any) {
+      console.error("Signup error:", error);
+      if (error.code === "23505") { // Unique constraint violation
+        return res.status(400).json({ message: "Email já está em uso" });
+      }
       res.status(400).json({ message: "Dados de requisição inválidos" });
     }
   });
