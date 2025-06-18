@@ -34,5 +34,4 @@ export default defineConfig({
       deny: ["**/.*"],
     },
   },
-  publicDir: 'client/public',
 });
