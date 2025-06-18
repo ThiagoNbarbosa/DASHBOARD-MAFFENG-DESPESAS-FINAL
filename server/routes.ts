@@ -208,7 +208,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { file: fileData, filename } = req.body;
       const userId = req.session.userId;
-      const userRole = req.session.userRole;
       
       if (!userId) {
         return res.status(401).json({ message: "Usuário não autenticado" });
@@ -220,15 +219,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const fileExt = filename.split('.').pop();
       const fileName = `${userId}_${Date.now()}.${fileExt}`;
-      const filePath = `receipts/${fileName}`;
+      const filePath = `${fileName}`;
 
-      // Upload para o Supabase Storage usando service role (políticas RLS aplicadas)
+      // Primeiro, verificar se o bucket existe
+      const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+      
+      if (listError) {
+        console.error('Erro ao listar buckets:', listError);
+      } else {
+        const receiptsBucket = buckets.find(bucket => bucket.name === 'receipts');
+        if (!receiptsBucket) {
+          console.log('Criando bucket receipts...');
+          const { error: createError } = await supabase.storage.createBucket('receipts', {
+            public: true,
+            allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'],
+            fileSizeLimit: 10485760 // 10MB
+          });
+          
+          if (createError) {
+            console.error('Erro ao criar bucket:', createError);
+          } else {
+            console.log('Bucket receipts criado com sucesso');
+          }
+        }
+      }
+
+      // Upload com service role (deve bypassar RLS)
       const { data, error: uploadError } = await supabase.storage
         .from('receipts')
         .upload(filePath, buffer, {
           contentType: `image/${fileExt}`,
           cacheControl: '3600',
-          upsert: false
+          upsert: true
         });
 
       if (uploadError) {
