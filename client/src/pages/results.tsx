@@ -166,7 +166,21 @@ export default function Results() {
               <CardTitle>Filtros do Gráfico</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <Label htmlFor="chartYearFilter">Ano</Label>
+                  <Select value={filters.year} onValueChange={(value) => setFilters({ ...filters, year: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o ano" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="2024">2024</SelectItem>
+                      <SelectItem value="2025">2025</SelectItem>
+                      <SelectItem value="2026">2026</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div>
                   <Label htmlFor="chartMonthFilter">Mês</Label>
                   <Select value={filters.month} onValueChange={(value) => setFilters({ ...filters, month: value })}>
@@ -176,11 +190,10 @@ export default function Results() {
                     <SelectContent>
                       <SelectItem value="all">Todos os meses</SelectItem>
                       {Array.from({ length: 12 }, (_, i) => {
-                        const date = new Date(2024, i, 1);
-                        const monthYear = date.toISOString().slice(0, 7);
-                        const monthName = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+                        const monthNumber = String(i + 1).padStart(2, '0');
+                        const monthName = new Date(2024, i, 1).toLocaleDateString('pt-BR', { month: 'long' });
                         return (
-                          <SelectItem key={monthYear} value={monthYear}>
+                          <SelectItem key={monthNumber} value={monthNumber}>
                             {monthName}
                           </SelectItem>
                         );
