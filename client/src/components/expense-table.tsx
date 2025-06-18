@@ -14,6 +14,7 @@ import { authApi } from "@/lib/auth";
 import type { Expense } from "@shared/schema";
 
 interface ExpenseFilters {
+  year: string;
   month: string;
   category: string;
   contractNumber: string;
@@ -21,6 +22,7 @@ interface ExpenseFilters {
 
 export default function ExpenseTable() {
   const [filters, setFilters] = useState<ExpenseFilters>({
+    year: "2025",
     month: "all",
     category: "all",
     contractNumber: "",
@@ -37,8 +39,11 @@ export default function ExpenseTable() {
     queryKey: ['/api/expenses', filters],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (filters.month) params.set('month', filters.month);
-      if (filters.category) params.set('category', filters.category);
+      if (filters.month && filters.month !== "all") {
+        const monthFilter = filters.year + "-" + filters.month;
+        params.set('month', monthFilter);
+      }
+      if (filters.category && filters.category !== "all") params.set('category', filters.category);
       if (filters.contractNumber) params.set('contractNumber', filters.contractNumber);
       
       const response = await apiRequest('GET', `/api/expenses?${params}`);
@@ -72,7 +77,7 @@ export default function ExpenseTable() {
   };
 
   const clearFilters = () => {
-    setFilters({ month: "all", category: "all", contractNumber: "" });
+    setFilters({ year: "2025", month: "all", category: "all", contractNumber: "" });
   };
 
   const categories = [
@@ -122,7 +127,21 @@ export default function ExpenseTable() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div>
+              <Label htmlFor="yearFilter">Ano</Label>
+              <Select value={filters.year} onValueChange={(value) => setFilters({ ...filters, year: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o ano" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="2024">2024</SelectItem>
+                  <SelectItem value="2025">2025</SelectItem>
+                  <SelectItem value="2026">2026</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <div>
               <Label htmlFor="monthFilter">Mês</Label>
               <Select value={filters.month} onValueChange={(value) => setFilters({ ...filters, month: value })}>
@@ -132,11 +151,10 @@ export default function ExpenseTable() {
                 <SelectContent>
                   <SelectItem value="all">Todos os meses</SelectItem>
                   {Array.from({ length: 12 }, (_, i) => {
-                    const date = new Date(2024, i, 1);
-                    const monthYear = date.toISOString().slice(0, 7);
-                    const monthName = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+                    const monthNumber = String(i + 1).padStart(2, '0');
+                    const monthName = new Date(2024, i, 1).toLocaleDateString('pt-BR', { month: 'long' });
                     return (
-                      <SelectItem key={monthYear} value={monthYear}>
+                      <SelectItem key={monthNumber} value={monthNumber}>
                         {monthName}
                       </SelectItem>
                     );
