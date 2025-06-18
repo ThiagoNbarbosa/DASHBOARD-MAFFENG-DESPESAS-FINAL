@@ -280,12 +280,28 @@ export default function ExpenseModal() {
               <div className="flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-gray-400 transition-colors">
                 <div className="space-y-1 text-center">
                   {imagePreview ? (
-                    <div className="space-y-2">
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="mx-auto h-32 w-32 object-cover rounded-lg"
-                      />
+                    <div className="space-y-2 relative">
+                      <div className="relative inline-block">
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          className="mx-auto h-32 w-32 object-cover rounded-lg"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setImageFile(null);
+                            setImagePreview("");
+                            // Reset the file input
+                            const fileInput = document.getElementById('image') as HTMLInputElement;
+                            if (fileInput) fileInput.value = '';
+                          }}
+                          className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm transition-colors"
+                          title="Remover imagem"
+                        >
+                          ×
+                        </button>
+                      </div>
                       <p className="text-sm text-gray-600">{imageFile?.name}</p>
                     </div>
                   ) : (
