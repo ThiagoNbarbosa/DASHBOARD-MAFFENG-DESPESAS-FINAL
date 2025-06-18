@@ -12,7 +12,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { uploadImage } from "@/lib/supabase";
 import type { InsertExpense } from "@shared/schema";
 
-interface ExpenseFormData extends Omit<InsertExpense, 'paymentDate'> {
+interface ExpenseFormData extends Omit<InsertExpense, 'paymentDate' | 'value'> {
   paymentDate: string;
 }
 
@@ -20,7 +20,6 @@ export default function ExpenseModal() {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<ExpenseFormData>({
     item: "",
-    value: "",
     paymentMethod: "",
     category: "",
     contractNumber: "",
@@ -48,6 +47,7 @@ export default function ExpenseModal() {
 
       const expenseData = {
         ...data,
+        value: data.totalValue, // Usar totalValue como value também
         imageUrl,
         paymentDate: new Date(data.paymentDate).toISOString(),
       };
@@ -77,7 +77,6 @@ export default function ExpenseModal() {
   const resetForm = () => {
     setFormData({
       item: "",
-      value: "",
       paymentMethod: "",
       category: "",
       contractNumber: "",
@@ -114,6 +113,30 @@ export default function ExpenseModal() {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const formatCurrency = (value: string) => {
+    // Remove tudo que não é número
+    const numbers = value.replace(/\D/g, '');
+    
+    // Converte para centavos
+    const cents = parseFloat(numbers) / 100;
+    
+    // Formata como moeda brasileira
+    return cents.toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    });
+  };
+
+  const handleTotalValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value.replace(/\D/g, '');
+    const numericValue = (parseFloat(rawValue) / 100).toFixed(2);
+    
+    setFormData({ 
+      ...formData, 
+      totalValue: rawValue ? numericValue : ""
+    });
   };
 
   const categories = [
@@ -159,14 +182,13 @@ export default function ExpenseModal() {
             </div>
 
             <div>
-              <Label htmlFor="value">Valor *</Label>
+              <Label htmlFor="totalValue">Valor Total *</Label>
               <Input
-                id="value"
-                type="number"
-                step="0.01"
-                value={formData.value}
-                onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                placeholder="0,00"
+                id="totalValue"
+                type="text"
+                value={formData.totalValue ? formatCurrency((parseFloat(formData.totalValue) * 100).toString()) : ""}
+                onChange={handleTotalValueChange}
+                placeholder="R$ 0,00"
                 required
               />
             </div>
@@ -214,18 +236,7 @@ export default function ExpenseModal() {
               />
             </div>
 
-            <div>
-              <Label htmlFor="totalValue">Valor Total *</Label>
-              <Input
-                id="totalValue"
-                type="number"
-                step="0.01"
-                value={formData.totalValue}
-                onChange={(e) => setFormData({ ...formData, totalValue: e.target.value })}
-                placeholder="0,00"
-                required
-              />
-            </div>
+            
 
             <div>
               <Label htmlFor="paymentDate">Data de Pagamento *</Label>
