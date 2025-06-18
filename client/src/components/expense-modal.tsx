@@ -43,7 +43,33 @@ export default function ExpenseModal() {
       if (imageFile) {
         try {
           console.log('Iniciando processo de upload...');
-          imageUrl = await uploadImage(imageFile);
+          
+          // Converter arquivo para base64
+          const reader = new FileReader();
+          const fileDataPromise = new Promise<string>((resolve, reject) => {
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(imageFile);
+          });
+
+          const fileData = await fileDataPromise;
+          
+          console.log('Enviando arquivo para o servidor...');
+
+          // Enviar para o servidor backend que tem service role key
+          const uploadResponse = await apiRequest('POST', '/api/upload', {
+            file: fileData,
+            filename: imageFile.name
+          });
+
+          if (!uploadResponse.ok) {
+            const error = await uploadResponse.json();
+            throw new Error(error.message || 'Erro no upload');
+          }
+
+          const result = await uploadResponse.json();
+          imageUrl = result.url;
+          
           console.log('Upload concluído, URL:', imageUrl);
         } catch (error) {
           console.error("Erro no upload da imagem:", error);

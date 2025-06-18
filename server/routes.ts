@@ -210,10 +210,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.session.userId;
       const userRole = req.session.userRole;
       
-      // Buscar o usuário para obter o authUid
-      const user = await storage.getUser(userId);
-      if (!user || !user.authUid) {
-        return res.status(400).json({ message: "Usuário não encontrado ou não tem authUid" });
+      if (!userId) {
+        return res.status(401).json({ message: "Usuário não autenticado" });
       }
       
       // Converter base64 para buffer
@@ -221,8 +219,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const buffer = Buffer.from(base64Data, 'base64');
 
       const fileExt = filename.split('.').pop();
-      const fileName = `${Date.now()}_${filename}`;
-      const filePath = `${user.authUid}/${fileName}`;
+      const fileName = `${userId}_${Date.now()}.${fileExt}`;
+      const filePath = `receipts/${fileName}`;
 
       // Upload para o Supabase Storage usando service role (políticas RLS aplicadas)
       const { data, error: uploadError } = await supabase.storage
