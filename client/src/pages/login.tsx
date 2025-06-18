@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { authApi } from "@/lib/auth";
 import type { LoginData } from "@shared/schema";
-import { BarChart3 } from "lucide-react";
+import logoPath from "@assets/63f5d089-94db-4968-a76f-00d77b188818 (1)_1750213898122.png";
 
 export default function Login() {
   const [credentials, setCredentials] = useState<LoginData>({
@@ -44,8 +44,8 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="max-w-md w-full space-y-8 p-8">
         <div className="text-center">
-          <div className="mx-auto h-12 w-12 bg-primary rounded-lg flex items-center justify-center">
-            <BarChart3 className="h-6 w-6 text-primary-foreground" />
+          <div className="mx-auto h-20 w-20 flex items-center justify-center">
+            <img src={logoPath} alt="MAFFENG Logo" className="h-full w-full object-contain" />
           </div>
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
             MAFFENG - Dashboard de Despesas
