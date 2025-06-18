@@ -1,11 +1,17 @@
+import { useQuery } from "@tanstack/react-query";
 import Sidebar from "@/components/sidebar";
 import DashboardStats from "@/components/dashboard-stats";
 import ExpenseTable from "@/components/expense-table";
 import ExpenseModal from "@/components/expense-modal";
 import SignupModal from "@/components/signup-modal";
+import { authApi } from "@/lib/auth";
 
 export default function Dashboard() {
-  const user = { role: "admin" }; // Mock user object for demonstration
+  const { data: user } = useQuery({
+    queryKey: ['/api/auth/me'],
+    queryFn: authApi.getCurrentUser,
+  });
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Sidebar />
