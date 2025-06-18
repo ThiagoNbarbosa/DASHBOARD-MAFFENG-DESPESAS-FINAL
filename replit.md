@@ -101,6 +101,9 @@ The database includes two main tables:
 - June 17, 2025: Initial setup - Created full-stack expense dashboard with React frontend and Express backend
 - June 17, 2025: Database connection issue resolved - Updated to use Supabase pooler connection
 - June 17, 2025: Authentication system working - Admin and user login functioning correctly
+- June 18, 2025: Image upload issue identified and corrected - Frontend was using anonymous key instead of backend service role
+- June 18, 2025: Logo MAFFENG added to sidebar replacing generic icon
+- June 18, 2025: RLS policies documented for Supabase Storage bucket "receipts"
 
 ## User Preferences
 Preferred communication style: Portuguese (Brazil), simple everyday language.
