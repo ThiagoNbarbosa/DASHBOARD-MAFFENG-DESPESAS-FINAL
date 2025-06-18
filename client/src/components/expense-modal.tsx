@@ -37,13 +37,21 @@ export default function ExpenseModal() {
     mutationFn: async (data: ExpenseFormData) => {
       let imageUrl = "";
       
+      console.log('Estado do imageFile antes do upload:', imageFile);
+      console.log('Dados do formulário:', data);
+      
       if (imageFile) {
         try {
+          console.log('Iniciando processo de upload...');
           imageUrl = await uploadImage(imageFile);
+          console.log('Upload concluído, URL:', imageUrl);
         } catch (error) {
           console.error("Erro no upload da imagem:", error);
           throw new Error("Falha no upload da imagem");
         }
+      } else {
+        console.error('Nenhum arquivo de imagem selecionado');
+        throw new Error("Nenhum arquivo selecionado");
       }
 
       const expenseData = {
