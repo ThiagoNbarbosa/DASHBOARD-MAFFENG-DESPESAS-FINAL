@@ -81,19 +81,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { email, password, name, role } = signUpSchema.parse(req.body);
       
-      // Verificar se o email já existe
-      const existingUser = await storage.getUserByEmail(email);
-      if (existingUser) {
-        return res.status(400).json({ message: "Email já está em uso" });
+      // 1. Criar usuário no Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true
+      });
+
+      if (authError) {
+        console.error("Erro detalhado do Supabase Auth:", authError);
+        return res.status(400).json({ message: `Erro no Supabase Auth: ${authError.message}` });
       }
 
-      // Hash da senha
-      const hashedPassword = await bcrypt.hash(password, 10);
+      if (!authData.user) {
+        return res.status(400).json({ message: "Falha ao criar usuário no Supabase Auth" });
+      }
 
-      // Criar usuário diretamente na nossa tabela
-      const user = await storage.createUser({
+      // 2. Criar registro na tabela users com o auth_uid
+      const user = await storage.createUserWithAuth({
+        authUid: authData.user.id,
         email,
-        password: hashedPassword,
         name,
         role,
       });
@@ -103,6 +110,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: user.email,
         name: user.name,
         role: user.role,
+        authUid: user.authUid,
       });
     } catch (error: any) {
       console.error("Signup error:", error);
