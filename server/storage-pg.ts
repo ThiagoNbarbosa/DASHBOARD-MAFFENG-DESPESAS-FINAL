@@ -281,6 +281,18 @@ export class DatabaseStorage implements IStorage {
       total,
     }));
   }
+
+  async getTraditionalUsers() {
+    return await db.select().from(users).where(isNull(users.authUid));
+  }
+
+  async updateUserAuthUid(userId: number, authUid: string) {
+    await db.update(users).set({ authUid }).where(eq(users.id, userId));
+  }
+
+  async clearAllUsers() {
+    await db.delete(users);
+  }
 }
 
 export const storage = new DatabaseStorage();
