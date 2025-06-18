@@ -1,5 +1,5 @@
 import { users, expenses, type User, type InsertUser, type Expense, type InsertExpense } from "@shared/schema";
-import { eq, and, like, gte, lte, desc } from "drizzle-orm";
+import { eq, and, like, gte, lte, desc, isNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 

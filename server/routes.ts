@@ -53,33 +53,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Credenciais inválidas" });
       }
 
-      // Para usuários tradicionais (com senha no banco)
-      if (user.password) {
-        const isValidPassword = await bcrypt.compare(password, user.password);
-        if (!isValidPassword) {
-          return res.status(401).json({ message: "Credenciais inválidas" });
-        }
-      } 
-      // Para usuários do Supabase Auth (sem senha no banco)
-      else if (user.authUid) {
-        // Verificar credenciais via Supabase Auth
-        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+      // Todos os usuários agora usam Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-        if (authError || !authData.user) {
-          return res.status(401).json({ message: "Credenciais inválidas" });
-        }
-
-        // Verificar se o authUid corresponde
-        if (authData.user.id !== user.authUid) {
-          return res.status(401).json({ message: "Credenciais inválidas" });
-        }
-      } 
-      // Usuário sem senha e sem authUid (situação inválida)
-      else {
+      if (authError || !authData.user) {
         return res.status(401).json({ message: "Credenciais inválidas" });
+      }
+
+      // Se o usuário tem authUid, verificar correspondência
+      if (user.authUid && authData.user.id !== user.authUid) {
+        return res.status(401).json({ message: "Credenciais inválidas" });
+      }
+
+      // Se o usuário não tem authUid (usuários tradicionais migrados), atualizar com o authUid do Supabase
+      if (!user.authUid) {
+        await storage.updateUserAuthUid(user.id, authData.user.id);
       }
 
       req.session.userId = user.id;
