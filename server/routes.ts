@@ -210,27 +210,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.session.userId;
       const userRole = req.session.userRole;
       
+      // Buscar o usuário para obter o authUid
+      const user = await storage.getUser(userId);
+      if (!user || !user.authUid) {
+        return res.status(400).json({ message: "Usuário não encontrado ou não tem authUid" });
+      }
+      
       // Converter base64 para buffer
       const base64Data = fileData.replace(/^data:image\/\w+;base64,/, '');
       const buffer = Buffer.from(base64Data, 'base64');
 
       const fileExt = filename.split('.').pop();
-      const fileName = `${userId}_${Date.now()}.${fileExt}`;
-      const filePath = `receipts/${fileName}`;
+      const fileName = `${Date.now()}_${filename}`;
+      const filePath = `${user.authUid}/${fileName}`;
 
-      // Upload para o Supabase Storage usando service role
-      // Incluir metadados do usuário para políticas RLS
+      // Upload para o Supabase Storage usando service role (políticas RLS aplicadas)
       const { data, error: uploadError } = await supabase.storage
         .from('receipts')
         .upload(filePath, buffer, {
           contentType: `image/${fileExt}`,
           cacheControl: '3600',
-          upsert: false,
-          metadata: {
-            userId: userId.toString(),
-            userRole: userRole,
-            uploadedBy: userId.toString()
-          }
+          upsert: false
         });
 
       if (uploadError) {

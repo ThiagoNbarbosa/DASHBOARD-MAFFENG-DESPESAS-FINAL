@@ -90,6 +90,27 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
+  async createUserWithAuth(user: InsertUser & { authUid: string }): Promise<User> {
+    const result = await db.insert(users).values(user).returning();
+    return result[0];
+  }
+
+  async updateUserAuthUid(userId: number, authUid: string): Promise<void> {
+    await db.update(users).set({ authUid }).where(eq(users.id, userId));
+  }
+
+  async getTraditionalUsers(): Promise<User[]> {
+    return await db.select().from(users).where(eq(users.authUid, null));
+  }
+
+  async clearAllUsers(): Promise<void> {
+    await db.delete(users);
+  }
+
+  async clearAllExpenses(): Promise<void> {
+    await db.delete(expenses);
+  }
+
   async getExpenses(filters?: {
     userId?: number;
     month?: string;
