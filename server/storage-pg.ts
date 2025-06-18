@@ -1,5 +1,5 @@
 import { users, expenses, type User, type InsertUser, type Expense, type InsertExpense } from "@shared/schema";
-import { eq, and, like, gte, lte, desc } from "drizzle-orm";
+import { eq, and, like, gte, lte, desc, isNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 
@@ -280,6 +280,22 @@ export class DatabaseStorage implements IStorage {
       month,
       total,
     }));
+  }
+
+  async getTraditionalUsers() {
+    return await db.select().from(users).where(isNull(users.authUid));
+  }
+
+  async updateUserAuthUid(userId: number, authUid: string) {
+    await db.update(users).set({ authUid }).where(eq(users.id, userId));
+  }
+
+  async clearAllExpenses() {
+    await db.delete(expenses);
+  }
+
+  async clearAllUsers() {
+    await db.delete(users);
   }
 }
 

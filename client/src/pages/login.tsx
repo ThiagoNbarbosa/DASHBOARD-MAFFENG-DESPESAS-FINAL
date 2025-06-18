@@ -96,17 +96,12 @@ export default function Login() {
               </Button>
             </form>
 
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-              <h3 className="text-sm font-medium text-blue-800 mb-2">
-                Usuários de Demonstração:
+            <div className="mt-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
+              <h3 className="text-sm font-medium text-amber-800 mb-2">
+                ⚠️ Aplicativo Restrito
               </h3>
-              <div className="text-xs text-blue-700 space-y-1">
-                <div>
-                  <strong>Admin:</strong> admin@empresa.com / senha123
-                </div>
-                <div>
-                  <strong>Usuário:</strong> user@empresa.com / senha123
-                </div>
+              <div className="text-xs text-amber-700">
+                Para acessar este sistema, entre em contato com o desenvolvedor.
               </div>
             </div>
           </CardContent>

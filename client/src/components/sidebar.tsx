@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { BarChart3, FileText, TrendingUp, LogOut, Menu, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import logoPath from "@assets/63f5d089-94db-4968-a76f-00d77b188818 (1)_1750213898122.png";
 
 export default function Sidebar() {
   const [location, setLocation] = useLocation();
@@ -76,8 +77,8 @@ export default function Sidebar() {
           {/* Logo/Header */}
           <div className="flex h-16 items-center justify-between px-6 border-b border-gray-200">
             <div className="flex items-center">
-              <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center mr-3">
-                <BarChart3 className="h-4 w-4 text-primary-foreground" />
+              <div className="h-10 w-14 flex items-center justify-center mr-3">
+                <img src={logoPath} alt="MAFFENG Logo" className="h-full w-full object-contain" />
               </div>
               <span className="text-lg font-semibold text-gray-900">Despesas</span>
             </div>

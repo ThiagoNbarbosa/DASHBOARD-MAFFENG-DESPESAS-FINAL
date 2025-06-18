@@ -53,13 +53,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Credenciais inválidas" });
       }
 
-      if (!user.password) {
+      // Todos os usuários agora usam Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (authError || !authData.user) {
         return res.status(401).json({ message: "Credenciais inválidas" });
       }
-      
-      const isValidPassword = await bcrypt.compare(password, user.password);
-      if (!isValidPassword) {
+
+      // Se o usuário tem authUid, verificar correspondência
+      if (user.authUid && authData.user.id !== user.authUid) {
         return res.status(401).json({ message: "Credenciais inválidas" });
+      }
+
+      // Se o usuário não tem authUid (usuários tradicionais migrados), atualizar com o authUid do Supabase
+      if (!user.authUid) {
+        await storage.updateUserAuthUid(user.id, authData.user.id);
       }
 
       req.session.userId = user.id;
