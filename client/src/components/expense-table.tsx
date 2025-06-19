@@ -7,11 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Edit, Filter, X } from "lucide-react";
+import { Trash2, Filter, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { authApi } from "@/lib/auth";
-import EditExpenseModal from "@/components/edit-expense-modal";
+
 import type { Expense } from "@shared/schema";
 
 interface ExpenseFilters {
@@ -28,8 +28,7 @@ export default function ExpenseTable() {
     category: "all",
     contractNumber: "",
   });
-  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
-  const [editModalOpen, setEditModalOpen] = useState(false);
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -45,6 +44,8 @@ export default function ExpenseTable() {
       if (filters.month && filters.month !== "all") {
         const monthFilter = filters.year + "-" + filters.month;
         params.set('month', monthFilter);
+      } else if (filters.year && filters.year !== "all") {
+        params.set('year', filters.year);
       }
       if (filters.category && filters.category !== "all") params.set('category', filters.category);
       if (filters.contractNumber) params.set('contractNumber', filters.contractNumber);
@@ -79,10 +80,7 @@ export default function ExpenseTable() {
     }
   };
 
-  const handleEdit = (expense: Expense) => {
-    setEditingExpense(expense);
-    setEditModalOpen(true);
-  };
+  
 
   const clearFilters = () => {
     setFilters({ year: "2025", month: "all", category: "all", contractNumber: "" });
@@ -127,15 +125,15 @@ export default function ExpenseTable() {
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <Card>
+      <Card className="shadow-sm">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-base font-semibold">
             <Filter className="h-5 w-5" />
             Filtros
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 space-y-2 md:space-y-0">
             <div>
               <Label htmlFor="yearFilter">Ano</Label>
               <Select value={filters.year} onValueChange={(value) => setFilters({ ...filters, year: value })}>
@@ -213,9 +211,9 @@ export default function ExpenseTable() {
       </Card>
 
       {/* Expenses Table */}
-      <Card>
+      <Card className="shadow-sm">
         <CardHeader>
-          <CardTitle>Despesas Recentes</CardTitle>
+          <CardTitle className="text-base font-semibold">Despesas Recentes</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -226,7 +224,7 @@ export default function ExpenseTable() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <Table>
+              <Table className="min-w-full">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Item</TableHead>
@@ -274,14 +272,6 @@ export default function ExpenseTable() {
                             <Button 
                               variant="outline" 
                               size="sm"
-                              onClick={() => handleEdit(expense)}
-                              title="Editar despesa"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
                               onClick={() => handleDelete(expense.id)}
                               disabled={deleteMutation.isPending}
                               title="Excluir despesa"
@@ -300,12 +290,7 @@ export default function ExpenseTable() {
         </CardContent>
       </Card>
 
-      {/* Edit Modal */}
-      <EditExpenseModal
-        expense={editingExpense}
-        open={editModalOpen}
-        onOpenChange={setEditModalOpen}
-      />
+      
     </div>
   );
 }

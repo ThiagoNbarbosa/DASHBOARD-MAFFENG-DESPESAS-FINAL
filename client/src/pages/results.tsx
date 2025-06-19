@@ -56,7 +56,7 @@ export default function Results() {
         params.set('month', monthFilter);
       }
       if (filters.contractNumber) params.set('contractNumber', filters.contractNumber);
-      
+
       const response = await apiRequest('GET', `/api/stats/categories?${params}`);
       return response.json();
     },
@@ -71,7 +71,7 @@ export default function Results() {
         params.set('month', monthFilter);
       }
       if (filters.contractNumber) params.set('contractNumber', filters.contractNumber);
-      
+
       const response = await apiRequest('GET', `/api/stats/payment-methods?${params}`);
       return response.json();
     },
@@ -146,173 +146,50 @@ export default function Results() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Sidebar />
-      
+
       <div className="lg:pl-64">
         <header className="bg-white shadow-sm border-b border-gray-200">
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Resultados</h1>
-                <p className="text-sm text-gray-600 mt-1">Análise detalhada das despesas</p>
-              </div>
+          <div className="px-4 sm:px-6 py-4 sm:py-6">
+            <div className="space-y-1">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Resultados</h1>
+              <p className="text-xs sm:text-sm text-gray-600">Análise detalhada das despesas</p>
             </div>
           </div>
         </header>
 
-        <main className="p-6">
-          {/* Chart Filters */}
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Filtros do Gráfico</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                  <Label htmlFor="chartYearFilter">Ano</Label>
-                  <Select value={filters.year} onValueChange={(value) => setFilters({ ...filters, year: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o ano" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="2024">2024</SelectItem>
-                      <SelectItem value="2025">2025</SelectItem>
-                      <SelectItem value="2026">2026</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+        <main className="p-4 sm:p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
 
-                <div>
-                  <Label htmlFor="chartMonthFilter">Mês</Label>
-                  <Select value={filters.month} onValueChange={(value) => setFilters({ ...filters, month: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Todos os meses" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos os meses</SelectItem>
-                      {Array.from({ length: 12 }, (_, i) => {
-                        const monthNumber = String(i + 1).padStart(2, '0');
-                        const monthName = new Date(2024, i, 1).toLocaleDateString('pt-BR', { month: 'long' });
-                        return (
-                          <SelectItem key={monthNumber} value={monthNumber}>
-                            {monthName}
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="chartCategoryFilter">Categoria</Label>
-                  <Select value={filters.category} onValueChange={(value) => setFilters({ ...filters, category: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Todas as categorias" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas as categorias</SelectItem>
-                      {categories.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="chartContractFilter">Contrato</Label>
-                  <Input
-                    id="chartContractFilter"
-                    placeholder="Número do contrato"
-                    value={filters.contractNumber}
-                    onChange={(e) => setFilters({ ...filters, contractNumber: e.target.value })}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Category Chart */}
-            <Card>
+            <Card className="shadow-sm">
               <CardHeader>
-                <CardTitle>Despesas por Categoria</CardTitle>
+                <CardTitle className="text-base font-semibold">Despesas por Categoria</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="h-80 flex items-center justify-center">
-                  {categoryStats.length > 0 ? (
-                    <Doughnut 
-                      data={categoryChartData}
-                      options={{
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                          legend: {
-                            position: 'bottom' as const,
-                            labels: {
-                              padding: 20,
-                              usePointStyle: true
-                            }
-                          }
+              <CardContent className="p-4">
+                <div style={{ height: '300px' }}>
+                  <Doughnut data={categoryChartData} options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        position: 'bottom' as const,
+                        labels: {
+                          padding: 20,
+                          usePointStyle: true
                         }
-                      }}
-                    />
-                  ) : (
-                    <div className="text-gray-500">Nenhum dado disponível</div>
-                  )}
+                      }
+                    }
+                  }} />
                 </div>
               </CardContent>
             </Card>
 
-            {/* Monthly Trend Chart */}
-            <Card>
+            <Card className="shadow-sm">
               <CardHeader>
-                <CardTitle>Tendência Mensal</CardTitle>
+                <CardTitle className="text-base font-semibold">Distribuição por Forma de Pagamento</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="h-80">
-                  {monthlyStats.length > 0 ? (
-                    <Line
-                      data={monthlyChartData}
-                      options={{
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                          legend: {
-                            display: false
-                          }
-                        },
-                        scales: {
-                          y: {
-                            beginAtZero: true,
-                            ticks: {
-                              callback: function(value) {
-                                return new Intl.NumberFormat('pt-BR', {
-                                  style: 'currency',
-                                  currency: 'BRL'
-                                }).format(value as number);
-                              }
-                            }
-                          }
-                        }
-                      }}
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-gray-500">
-                      Nenhum dado disponível
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Payment Method Distribution */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Distribuição por Forma de Pagamento</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-80">
-                  {paymentStats.length > 0 ? (
+              <CardContent className="p-4">
+                <div className="overflow-x-auto">
+                  <div style={{ height: '300px', minWidth: '300px' }}>
                     <Bar
                       data={paymentChartData}
                       options={{
@@ -330,45 +207,44 @@ export default function Results() {
                         }
                       }}
                     />
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-gray-500">
-                      Nenhum dado disponível
-                    </div>
-                  )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Contract Summary */}
-            <Card>
+            <Card className="shadow-sm">
               <CardHeader>
-                <CardTitle>Resumo por Contrato</CardTitle>
+                <CardTitle className="text-base font-semibold">Evolução Mensal</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {categoryStats.length > 0 ? (
-                    categoryStats.map((stat: any, index: number) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div>
-                          <div className="font-medium text-gray-900">{stat.category}</div>
-                          <div className="text-sm text-gray-500">{stat.count} despesas</div>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-semibold text-gray-900">
-                            {new Intl.NumberFormat('pt-BR', {
-                              style: 'currency',
-                              currency: 'BRL'
-                            }).format(stat.total)}
-                          </div>
-                          <div className="text-sm text-gray-500">Total gasto</div>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-8 text-gray-500">
-                      Nenhum dado disponível
-                    </div>
-                  )}
+              <CardContent className="p-4">
+                <div className="overflow-x-auto">
+                  <div style={{ height: '400px', minWidth: '600px' }}>
+                    <Line
+                      data={monthlyChartData}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                          legend: {
+                            display: false
+                          }
+                        },
+                        scales: {
+                          y: {
+                            beginAtZero: true,
+                            ticks: {
+                              callback: function (value) {
+                                return new Intl.NumberFormat('pt-BR', {
+                                  style: 'currency',
+                                  currency: 'BRL'
+                                }).format(value as number);
+                              }
+                            }
+                          }
+                        }
+                      }}
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>

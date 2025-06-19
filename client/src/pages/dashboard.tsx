@@ -18,15 +18,14 @@ export default function Dashboard() {
 
       <div className="lg:pl-64">
         <header className="bg-white shadow-sm border-b border-gray-200">
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-                <p className="text-sm text-gray-600 mt-1">Gerencie suas despesas de forma eficiente</p>
+          <div className="px-4 sm:px-6 py-4 sm:py-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Dashboard</h1>
+                <p className="text-xs sm:text-sm text-gray-600">Gerencie suas despesas de forma eficiente</p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex justify-end">
                 <ExpenseModal />
-                {user?.role === "admin" && <SignupModal />}
               </div>
             </div>
           </div>

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -19,7 +18,7 @@ export default function SignupModal() {
     name: "",
     role: "user",
   });
-  
+
   const { toast } = useToast();
 
   const signupMutation = useMutation({
@@ -59,10 +58,10 @@ export default function SignupModal() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">
-          <UserPlus className="h-4 w-4 mr-2" />
+        <button className="w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors text-gray-700 hover:bg-gray-100">
+          <UserPlus className="mr-3 h-5 w-5" />
           Novo Usuário
-        </Button>
+        </button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
