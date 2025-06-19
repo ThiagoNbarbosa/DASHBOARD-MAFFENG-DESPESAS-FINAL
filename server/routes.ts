@@ -339,6 +339,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/expenses/:id/cancel", requireAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Check if user has permission to cancel this expense
+      const expense = await storage.getExpense(id);
+      if (!expense) {
+        return res.status(404).json({ message: "Expense not found" });
+      }
+
+      // Regular users can only cancel their own expenses
+      if (req.session.userRole !== "admin" && expense.userId !== req.session.userId) {
+        return res.status(403).json({ message: "Not authorized to cancel this expense" });
+      }
+
+      const updatedExpense = await storage.cancelExpense(id);
+      res.json(updatedExpense);
+    } catch (error) {
+      console.error("Error cancelling expense:", error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
   // Stats routes
   app.get("/api/stats", requireAuth, async (req, res) => {
     try {
