@@ -23,7 +23,6 @@ export const expenses = pgTable("expenses", {
   totalValue: numeric("total_value").notNull(),
   imageUrl: text("image_url").notNull(),
   paymentDate: timestamp("payment_date").notNull(),
-  status: text("status").notNull().default("active"), // "active" or "cancelled"
   createdAt: timestamp("created_at").defaultNow(),
 });
 
