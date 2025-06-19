@@ -39,7 +39,7 @@ export default function Sidebar() {
       current: location === "/",
     },
     {
-      name: "Despesas",
+      name: "Despesas Recentes",
       href: "/",
       icon: FileText,
       current: location === "/",

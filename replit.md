@@ -104,6 +104,7 @@ The database includes two main tables:
 - June 18, 2025: Image upload issue identified and corrected - Frontend was using anonymous key instead of backend service role
 - June 18, 2025: Logo MAFFENG added to sidebar replacing generic icon
 - June 18, 2025: RLS policies documented for Supabase Storage bucket "receipts"
+- June 19, 2025: Major filter improvements implemented - Added comprehensive filtering system with year, category, payment method filters for all users; Implemented separate "Filtered Expenses" section above recent expenses; Fixed filter logic to properly respect year selection; Updated sidebar menu item to "Despesas Recentes"
 
 ## User Preferences
 Preferred communication style: Portuguese (Brazil), simple everyday language.
