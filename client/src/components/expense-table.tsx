@@ -305,10 +305,15 @@ export default function ExpenseTable() {
                   </TableHeader>
                   <TableBody>
                     {filteredExpenses.map((expense: Expense) => (
-                      <TableRow key={expense.id}>
+                      <TableRow 
+                        key={expense.id}
+                        className={isCancelled(expense.category) ? "bg-red-50" : ""}
+                      >
                         <TableCell>
                           <div>
-                            <div className="font-medium">{expense.item}</div>
+                            <div className={`font-medium ${isCancelled(expense.category) ? "text-red-600" : ""}`}>
+                              {expense.item}
+                            </div>
                             <div className="text-sm text-gray-500">ID: #{expense.id.slice(0, 8)}</div>
                           </div>
                         </TableCell>
@@ -317,31 +322,46 @@ export default function ExpenseTable() {
                             {expense.category}
                           </Badge>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className={isCancelled(expense.category) ? "text-red-600" : ""}>
                           {new Intl.NumberFormat('pt-BR', {
                             style: 'currency',
                             currency: 'BRL'
                           }).format(parseFloat(expense.value))}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className={isCancelled(expense.category) ? "text-red-600" : ""}>
                           <div className="flex items-center gap-2">
                             <span>{getPaymentMethodIcon(expense.paymentMethod)}</span>
                             <span>{expense.paymentMethod}</span>
                           </div>
                         </TableCell>
-                        <TableCell>{expense.contractNumber}</TableCell>
-                        <TableCell>
+                        <TableCell className={isCancelled(expense.category) ? "text-red-600" : ""}>
+                          {expense.contractNumber}
+                        </TableCell>
+                        <TableCell className={isCancelled(expense.category) ? "text-red-600" : ""}>
                           {new Date(expense.paymentDate).toLocaleDateString('pt-BR')}
                         </TableCell>
                         {user?.role === "admin" && (
                           <TableCell>
                             <div className="flex gap-2">
+                              {!isCancelled(expense.category) && (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => handleCancel(expense.id)}
+                                  disabled={cancelMutation.isPending}
+                                  title="Cancelar despesa"
+                                  className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                                >
+                                  <Ban className="h-4 w-4" />
+                                </Button>
+                              )}
                               <Button 
                                 variant="outline" 
                                 size="sm"
                                 onClick={() => handleDelete(expense.id)}
                                 disabled={deleteMutation.isPending}
                                 title="Excluir despesa"
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -386,10 +406,15 @@ export default function ExpenseTable() {
                 </TableHeader>
                 <TableBody>
                   {recentExpenses.map((expense: Expense) => (
-                    <TableRow key={expense.id}>
+                    <TableRow 
+                      key={expense.id}
+                      className={isCancelled(expense.category) ? "bg-red-50" : ""}
+                    >
                       <TableCell>
                         <div>
-                          <div className="font-medium">{expense.item}</div>
+                          <div className={`font-medium ${isCancelled(expense.category) ? "text-red-600" : ""}`}>
+                            {expense.item}
+                          </div>
                           <div className="text-sm text-gray-500">ID: #{expense.id.slice(0, 8)}</div>
                         </div>
                       </TableCell>
@@ -398,31 +423,46 @@ export default function ExpenseTable() {
                           {expense.category}
                         </Badge>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className={isCancelled(expense.category) ? "text-red-600" : ""}>
                         {new Intl.NumberFormat('pt-BR', {
                           style: 'currency',
                           currency: 'BRL'
                         }).format(parseFloat(expense.value))}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className={isCancelled(expense.category) ? "text-red-600" : ""}>
                         <div className="flex items-center gap-2">
                           <span>{getPaymentMethodIcon(expense.paymentMethod)}</span>
                           <span>{expense.paymentMethod}</span>
                         </div>
                       </TableCell>
-                      <TableCell>{expense.contractNumber}</TableCell>
-                      <TableCell>
+                      <TableCell className={isCancelled(expense.category) ? "text-red-600" : ""}>
+                        {expense.contractNumber}
+                      </TableCell>
+                      <TableCell className={isCancelled(expense.category) ? "text-red-600" : ""}>
                         {new Date(expense.paymentDate).toLocaleDateString('pt-BR')}
                       </TableCell>
                       {user?.role === "admin" && (
                         <TableCell>
                           <div className="flex gap-2">
+                            {!isCancelled(expense.category) && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleCancel(expense.id)}
+                                disabled={cancelMutation.isPending}
+                                title="Cancelar despesa"
+                                className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                              >
+                                <Ban className="h-4 w-4" />
+                              </Button>
+                            )}
                             <Button 
                               variant="outline" 
                               size="sm"
                               onClick={() => handleDelete(expense.id)}
                               disabled={deleteMutation.isPending}
                               title="Excluir despesa"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
