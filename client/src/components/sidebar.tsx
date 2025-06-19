@@ -4,8 +4,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authApi } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { BarChart3, FileText, TrendingUp, LogOut, Menu, X } from "lucide-react";
+import { BarChart3, FileText, TrendingUp, LogOut, Menu, X, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import SignupModal from "@/components/signup-modal";
 import logoPath from "@assets/63f5d089-94db-4968-a76f-00d77b188818 (1)_1750213898122.png";
 
 export default function Sidebar() {
@@ -85,21 +86,30 @@ export default function Sidebar() {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-2">
-            {navigation.map((item) => (
-              <button
-                key={item.name}
-                onClick={() => handleNavigation(item.href)}
-                className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  item.current
-                    ? "bg-primary/10 text-primary"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`}
-              >
-                <item.icon className="mr-3 h-5 w-5" />
-                {item.name}
-              </button>
-            ))}
+          <nav className="flex-1 px-4 py-6 space-y-4">
+            <div className="space-y-2">
+              {navigation.map((item) => (
+                <button
+                  key={item.name}
+                  onClick={() => handleNavigation(item.href)}
+                  className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    item.current
+                      ? "bg-primary/10 text-primary"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  <item.icon className="mr-3 h-5 w-5" />
+                  {item.name}
+                </button>
+              ))}
+            </div>
+
+            {user?.role === "admin" && (
+              <div className="border-t border-gray-200 pt-4">
+                <p className="text-xs font-medium text-gray-500 mb-2 px-3">ADMINISTRAÇÃO</p>
+                <SignupModal />
+              </div>
+            )}
           </nav>
 
           {/* User info */}

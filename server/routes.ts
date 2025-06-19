@@ -47,7 +47,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/login", async (req, res) => {
     try {
       const { email, password } = loginSchema.parse(req.body);
-      
+
       const user = await storage.getUserByEmail(email);
       if (!user) {
         return res.status(401).json({ message: "Credenciais inválidas" });
@@ -91,7 +91,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/signup", requireAdmin, async (req, res) => {
     try {
       const { email, password, name, role } = signUpSchema.parse(req.body);
-      
+
       // Verificar se já existe usuário na nossa tabela
       const existingUser = await storage.getUserByEmail(email);
       if (existingUser) {
@@ -107,7 +107,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (authError) {
         console.error("Erro detalhado do Supabase Auth:", authError);
-        
+
         // Se o erro for de email já existente, vamos buscar o usuário existente
         if (authError.message.includes("already been registered")) {
           // Obter lista de usuários para encontrar o authUid
@@ -115,7 +115,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (listError) {
             return res.status(400).json({ message: "Erro ao verificar usuários existentes" });
           }
-          
+
           const existingAuthUser = listData.users.find(u => u.email === email);
           if (!existingAuthUser) {
             return res.status(400).json({ message: "Erro de consistência: usuário existe no auth mas não foi encontrado" });
@@ -137,7 +137,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             authUid: user.authUid,
           });
         }
-        
+
         return res.status(400).json({ message: `Erro no Supabase Auth: ${authError.message}` });
       }
 
@@ -208,11 +208,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { file: fileData, filename } = req.body;
       const userId = req.session.userId;
-      
+
       if (!userId) {
         return res.status(401).json({ message: "Usuário não autenticado" });
       }
-      
+
       // Converter base64 para buffer
       const base64Data = fileData.replace(/^data:image\/\w+;base64,/, '');
       const buffer = Buffer.from(base64Data, 'base64');
@@ -221,27 +221,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const fileName = `${userId}_${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      // Primeiro, verificar se o bucket existe
-      const { data: buckets, error: listError } = await supabase.storage.listBuckets();
-      
-      if (listError) {
-        console.error('Erro ao listar buckets:', listError);
-      } else {
-        const receiptsBucket = buckets.find(bucket => bucket.name === 'receipts');
+      // Verificar/criar bucket usando apenas a API de Storage
+      try {
+        const { data: buckets } = await supabase.storage.listBuckets();
+        const receiptsBucket = buckets?.find(bucket => bucket.name === 'receipts');
+
         if (!receiptsBucket) {
           console.log('Criando bucket receipts...');
-          const { error: createError } = await supabase.storage.createBucket('receipts', {
-            public: true,
-            allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'],
-            fileSizeLimit: 10485760 // 10MB
-          });
-          
-          if (createError) {
-            console.error('Erro ao criar bucket:', createError);
-          } else {
-            console.log('Bucket receipts criado com sucesso');
-          }
+          await supabase.storage.createBucket('receipts', { public: true });
+          console.log('✓ Bucket criado com sucesso');
         }
+      } catch (bucketError) {
+        console.log('Continuando sem verificação de bucket...');
       }
 
       // Upload com service role (deve bypassar RLS)
@@ -274,18 +265,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Expense routes
   app.get("/api/expenses", requireAuth, async (req, res) => {
     try {
-      const { month, category, contractNumber } = req.query;
-      
+      const { year, month, category, contractNumber, paymentMethod } = req.query;
+
       const filters: any = {};
-      
+
       // Regular users can only see their own expenses
       if (req.session.userRole !== "admin") {
         filters.userId = req.session.userId;
       }
-      
+
+      if (year && year !== "all") filters.year = year as string;
       if (month && month !== "all") filters.month = month as string;
       if (category && category !== "all") filters.category = category as string;
       if (contractNumber) filters.contractNumber = contractNumber as string;
+      if (paymentMethod && paymentMethod !== "all") filters.paymentMethod = paymentMethod as string;
 
       const expenses = await storage.getExpenses(filters);
       res.json(expenses);
@@ -297,13 +290,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/expenses", requireAuth, async (req, res) => {
     try {
       console.log('Dados recebidos para criação de despesa:', req.body);
-      
+
       // Converter paymentDate de string para Date
       const bodyWithDate = {
         ...req.body,
         paymentDate: new Date(req.body.paymentDate)
       };
-      
+
       const expenseData = insertExpenseSchema.parse(bodyWithDate);
       console.log('Dados validados:', expenseData);
       const expense = await storage.createExpense({
@@ -325,7 +318,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const expenseData = insertExpenseSchema.partial().parse(req.body);
-      
+
       const expense = await storage.updateExpense(id, expenseData);
       res.json(expense);
     } catch (error) {
@@ -361,10 +354,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { month, contractNumber } = req.query;
       const filters: any = {};
-      
+
       if (month && month !== "all") filters.month = month as string;
       if (contractNumber) filters.contractNumber = contractNumber as string;
-      
+
       const stats = await storage.getCategoryStats(filters);
       res.json(stats);
     } catch (error) {
@@ -376,10 +369,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { month, contractNumber } = req.query;
       const filters: any = {};
-      
+
       if (month && month !== "all") filters.month = month as string;
       if (contractNumber) filters.contractNumber = contractNumber as string;
-      
+
       const stats = await storage.getPaymentMethodStats(filters);
       res.json(stats);
     } catch (error) {

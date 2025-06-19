@@ -65,21 +65,34 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByAuthUid(authUid: string) {
-    const result = await db.select().from(users).where(eq(users.authUid, authUid)).limit(1);
+    const result = await db
+      .select()
+      .from(users)
+      .where(eq(users.authUid, authUid))
+      .limit(1);
     return result[0];
   }
 
   async createUserWithAuth(userData: { authUid: string; email: string; name: string; role?: string }) {
-    const result = await db.insert(users).values({
-      authUid: userData.authUid,
-      email: userData.email,
-      name: userData.name,
-      role: userData.role || 'user',
-    }).returning();
+    const result = await db
+      .insert(users)
+      .values({
+        authUid: userData.authUid,
+        email: userData.email,
+        name: userData.name,
+        role: userData.role || "user",
+        password: null, // Não precisamos de senha para usuários do Supabase Auth
+      })
+      .returning();
     return result[0];
   }
 
   async createUser(user: InsertUser): Promise<User> {
+    const result = await db.insert(users).values(user).returning();
+    return result[0];
+  }
+
+  async createUserWithAuth(user: InsertUser & { authUid: string }): Promise<User> {
     const result = await db.insert(users).values(user).returning();
     return result[0];
   }
@@ -89,7 +102,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTraditionalUsers(): Promise<User[]> {
-    return await db.select().from(users).where(isNull(users.authUid));
+    return await db.select().from(users).where(eq(users.authUid, null));
   }
 
   async clearAllUsers(): Promise<void> {
@@ -187,16 +200,19 @@ export class DatabaseStorage implements IStorage {
 
     if (userId) {
       allExpensesQuery = allExpensesQuery.where(eq(expenses.userId, userId));
-      monthExpensesQuery = monthExpensesQuery.where(eq(expenses.userId, userId));
+      monthExpensesQuery = monthExpensesQuery.where(and(
+        eq(expenses.userId, userId),
+        gte(expenses.paymentDate, startOfMonth),
+        lte(expenses.paymentDate, endOfMonth)
+      ));
     }
 
     const allExpenses = await allExpensesQuery;
     const monthExpenses = await monthExpensesQuery;
 
-    const totalAmount = allExpenses.reduce((sum, expense) => sum + parseFloat(expense.value), 0);
-    const thisMonth = monthExpenses.reduce((sum, expense) => sum + parseFloat(expense.value), 0);
-
-    const activeContracts = new Set(allExpenses.map(expense => expense.contractNumber)).size;
+    const totalAmount = allExpenses.reduce((sum, exp) => sum + parseFloat(exp.totalValue), 0);
+    const thisMonth = monthExpenses.reduce((sum, exp) => sum + parseFloat(exp.totalValue), 0);
+    const activeContracts = new Set(allExpenses.map(exp => exp.contractNumber)).size;
 
     return {
       totalAmount,
@@ -231,20 +247,19 @@ export class DatabaseStorage implements IStorage {
 
     const results = await query;
 
-    const categoryMap = new Map<string, { total: number; count: number }>();
+    const categoryMap = new Map<string, { total: number; count: number; }>();
 
     results.forEach(expense => {
       const existing = categoryMap.get(expense.category) || { total: 0, count: 0 };
       categoryMap.set(expense.category, {
-        total: existing.total + parseFloat(expense.value),
-        count: existing.count + 1
+        total: existing.total + parseFloat(expense.totalValue),
+        count: existing.count + 1,
       });
     });
 
     return Array.from(categoryMap.entries()).map(([category, stats]) => ({
       category,
-      total: stats.total,
-      count: stats.count
+      ...stats,
     }));
   }
 
@@ -273,33 +288,50 @@ export class DatabaseStorage implements IStorage {
 
     const results = await query;
 
-    const paymentMethodMap = new Map<string, number>();
+    const paymentMap = new Map<string, number>();
 
     results.forEach(expense => {
-      const count = paymentMethodMap.get(expense.paymentMethod) || 0;
-      paymentMethodMap.set(expense.paymentMethod, count + 1);
+      const existing = paymentMap.get(expense.paymentMethod) || 0;
+      paymentMap.set(expense.paymentMethod, existing + 1);
     });
 
-    return Array.from(paymentMethodMap.entries()).map(([paymentMethod, count]) => ({
+    return Array.from(paymentMap.entries()).map(([paymentMethod, count]) => ({
       paymentMethod,
-      count
+      count,
     }));
   }
 
   async getMonthlyTrends(): Promise<Array<{ month: string; total: number; }>> {
-    const results = await db.select().from(expenses);
+    const results = await db.select().from(expenses).orderBy(expenses.paymentDate);
 
     const monthlyMap = new Map<string, number>();
 
     results.forEach(expense => {
       const month = expense.paymentDate.toISOString().slice(0, 7);
-      const total = monthlyMap.get(month) || 0;
-      monthlyMap.set(month, total + parseFloat(expense.value));
+      const existing = monthlyMap.get(month) || 0;
+      monthlyMap.set(month, existing + parseFloat(expense.totalValue));
     });
 
-    return Array.from(monthlyMap.entries())
-      .map(([month, total]) => ({ month, total }))
-      .sort((a, b) => a.month.localeCompare(b.month));
+    return Array.from(monthlyMap.entries()).map(([month, total]) => ({
+      month,
+      total,
+    }));
+  }
+
+  async getTraditionalUsers() {
+    return await db.select().from(users).where(isNull(users.authUid));
+  }
+
+  async updateUserAuthUid(userId: number, authUid: string) {
+    await db.update(users).set({ authUid }).where(eq(users.id, userId));
+  }
+
+  async clearAllExpenses() {
+    await db.delete(expenses);
+  }
+
+  async clearAllUsers() {
+    await db.delete(users);
   }
 }
 
