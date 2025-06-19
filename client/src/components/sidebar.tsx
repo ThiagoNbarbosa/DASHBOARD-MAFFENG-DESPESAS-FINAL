@@ -60,7 +60,7 @@ export default function Sidebar() {
   return (
     <>
       {/* Mobile menu button */}
-      <div className="lg:hidden fixed top-6 left-6 z-[60]">
+      <div className="lg:hidden fixed top-4 left-4 z-[60]">
         <Button
           variant="outline"
           size="icon"
@@ -70,6 +70,14 @@ export default function Sidebar() {
           {isOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
         </Button>
       </div>
+
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 z-30 bg-black bg-opacity-50"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
 
       {/* Sidebar */}
       <div className={`fixed inset-y-0 left-0 z-40 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out ${
