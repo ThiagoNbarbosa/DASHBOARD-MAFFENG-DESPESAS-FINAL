@@ -24,6 +24,7 @@ export interface IStorage {
   getExpense(id: string): Promise<Expense | undefined>;
   createExpense(expense: InsertExpense & { userId: number }): Promise<Expense>;
   updateExpense(id: string, expense: Partial<InsertExpense>): Promise<Expense>;
+  cancelExpense(id: string): Promise<Expense>;
   deleteExpense(id: string): Promise<void>;
   
   // Stats methods
@@ -111,6 +112,24 @@ export class DatabaseStorage implements IStorage {
 
   async updateExpense(id: string, expense: Partial<InsertExpense>): Promise<Expense> {
     const result = await db.update(expenses).set(expense).where(eq(expenses.id, id)).returning();
+    return result[0];
+  }
+
+  async cancelExpense(id: string): Promise<Expense> {
+    // Mark expense as cancelled by adding a special prefix to category
+    const expense = await this.getExpense(id);
+    if (!expense) {
+      throw new Error("Expense not found");
+    }
+    
+    const updatedCategory = expense.category.startsWith('[CANCELADA]') 
+      ? expense.category 
+      : `[CANCELADA] ${expense.category}`;
+    
+    const result = await db.update(expenses)
+      .set({ category: updatedCategory })
+      .where(eq(expenses.id, id))
+      .returning();
     return result[0];
   }
 
