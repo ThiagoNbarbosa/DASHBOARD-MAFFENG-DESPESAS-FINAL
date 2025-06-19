@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Filter, X, Edit } from "lucide-react";
+import { Trash2, Filter, X, Ban } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { authApi } from "@/lib/auth";
@@ -87,7 +87,24 @@ export default function ExpenseTable() {
     },
   });
 
-
+  const cancelMutation = useMutation({
+    mutationFn: (id: string) => apiRequest('PATCH', `/api/expenses/${id}/cancel`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
+      toast({
+        title: "Despesa cancelada",
+        description: "A despesa foi cancelada com sucesso.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro ao cancelar",
+        description: "Não foi possível cancelar a despesa.",
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleDelete = (id: string) => {
     if (confirm("Tem certeza que deseja excluir esta despesa?")) {
@@ -95,7 +112,11 @@ export default function ExpenseTable() {
     }
   };
 
-
+  const handleCancel = (id: string) => {
+    if (confirm("Tem certeza que deseja cancelar esta despesa?")) {
+      cancelMutation.mutate(id);
+    }
+  };
 
   const isCancelled = (category: string) => {
     return category.startsWith('[CANCELADA]');
@@ -322,6 +343,18 @@ export default function ExpenseTable() {
                         {user?.role === "admin" && (
                           <TableCell>
                             <div className="flex gap-2">
+                              {!isCancelled(expense.category) && (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => handleCancel(expense.id)}
+                                  disabled={cancelMutation.isPending}
+                                  title="Cancelar despesa"
+                                  className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                                >
+                                  <Ban className="h-4 w-4" />
+                                </Button>
+                              )}
                               <Button 
                                 variant="outline" 
                                 size="sm"
@@ -411,6 +444,18 @@ export default function ExpenseTable() {
                       {user?.role === "admin" && (
                         <TableCell>
                           <div className="flex gap-2">
+                            {!isCancelled(expense.category) && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleCancel(expense.id)}
+                                disabled={cancelMutation.isPending}
+                                title="Cancelar despesa"
+                                className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                              >
+                                <Ban className="h-4 w-4" />
+                              </Button>
+                            )}
                             <Button 
                               variant="outline" 
                               size="sm"
