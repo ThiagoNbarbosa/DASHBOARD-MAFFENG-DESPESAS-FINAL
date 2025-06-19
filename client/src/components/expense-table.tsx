@@ -19,14 +19,16 @@ interface ExpenseFilters {
   month: string;
   category: string;
   contractNumber: string;
+  paymentMethod: string;
 }
 
 export default function ExpenseTable() {
   const [filters, setFilters] = useState<ExpenseFilters>({
-    year: "2025",
+    year: "all",
     month: "all",
     category: "all",
     contractNumber: "",
+    paymentMethod: "all",
   });
   
   const { toast } = useToast();
@@ -37,20 +39,31 @@ export default function ExpenseTable() {
     queryFn: authApi.getCurrentUser,
   });
 
-  const { data: expenses = [], isLoading } = useQuery<Expense[]>({
-    queryKey: ['/api/expenses', filters],
+  // Query para despesas com filtros aplicados
+  const { data: filteredExpenses = [], isLoading: isLoadingFiltered } = useQuery<Expense[]>({
+    queryKey: ['/api/expenses', 'filtered', filters],
     queryFn: async () => {
       const params = new URLSearchParams();
+      if (filters.year && filters.year !== "all") params.set('year', filters.year);
       if (filters.month && filters.month !== "all") {
-        const monthFilter = filters.year + "-" + filters.month;
+        const monthFilter = filters.year !== "all" ? filters.year + "-" + filters.month : "2025-" + filters.month;
         params.set('month', monthFilter);
-      } else if (filters.year && filters.year !== "all") {
-        params.set('year', filters.year);
       }
       if (filters.category && filters.category !== "all") params.set('category', filters.category);
       if (filters.contractNumber) params.set('contractNumber', filters.contractNumber);
+      if (filters.paymentMethod && filters.paymentMethod !== "all") params.set('paymentMethod', filters.paymentMethod);
       
       const response = await apiRequest('GET', `/api/expenses?${params}`);
+      return response.json();
+    },
+    enabled: filters.year !== "all" || filters.month !== "all" || filters.category !== "all" || filters.contractNumber !== "" || filters.paymentMethod !== "all"
+  });
+
+  // Query para despesas recentes (sem filtros)
+  const { data: recentExpenses = [], isLoading: isLoadingRecent } = useQuery<Expense[]>({
+    queryKey: ['/api/expenses', 'recent'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/expenses');
       return response.json();
     },
   });
@@ -83,7 +96,7 @@ export default function ExpenseTable() {
   
 
   const clearFilters = () => {
-    setFilters({ year: "2025", month: "all", category: "all", contractNumber: "" });
+    setFilters({ year: "all", month: "all", category: "all", contractNumber: "", paymentMethod: "all" });
   };
 
   const categories = [
@@ -169,35 +182,49 @@ export default function ExpenseTable() {
               </Select>
             </div>
 
-            {user?.role === "admin" && (
-              <>
-                <div>
-                  <Label htmlFor="categoryFilter">Categoria</Label>
-                  <Select value={filters.category} onValueChange={(value) => setFilters({ ...filters, category: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Todas as categorias" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas as categorias</SelectItem>
-                      {categories.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+            <div>
+              <Label htmlFor="categoryFilter">Categoria</Label>
+              <Select value={filters.category} onValueChange={(value) => setFilters({ ...filters, category: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todas as categorias" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as categorias</SelectItem>
+                  {categories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-                <div>
-                  <Label htmlFor="contractFilter">Número do Contrato</Label>
-                  <Input
-                    id="contractFilter"
-                    placeholder="Digite o número do contrato"
-                    value={filters.contractNumber}
-                    onChange={(e) => setFilters({ ...filters, contractNumber: e.target.value })}
-                  />
-                </div>
-              </>
+            <div>
+              <Label htmlFor="paymentMethodFilter">Forma de Pagamento</Label>
+              <Select value={filters.paymentMethod} onValueChange={(value) => setFilters({ ...filters, paymentMethod: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todas as formas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as formas</SelectItem>
+                  <SelectItem value="Pix">Pix</SelectItem>
+                  <SelectItem value="Cartão de Crédito">Cartão de Crédito</SelectItem>
+                  <SelectItem value="Boleto à Vista">Boleto à Vista</SelectItem>
+                  <SelectItem value="Boleto a Prazo">Boleto a Prazo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {user?.role === "admin" && (
+              <div>
+                <Label htmlFor="contractFilter">Número do Contrato</Label>
+                <Input
+                  id="contractFilter"
+                  placeholder="Digite o número do contrato"
+                  value={filters.contractNumber}
+                  onChange={(e) => setFilters({ ...filters, contractNumber: e.target.value })}
+                />
+              </div>
             )}
 
             <div className="flex items-end">
@@ -210,15 +237,99 @@ export default function ExpenseTable() {
         </CardContent>
       </Card>
 
-      {/* Expenses Table */}
+      {/* Filtered Expenses Section */}
+      {(filters.year !== "all" || filters.month !== "all" || filters.category !== "all" || filters.contractNumber !== "" || filters.paymentMethod !== "all") && (
+        <Card className="shadow-sm border-blue-200">
+          <CardHeader>
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              📅 Despesas Filtradas
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoadingFiltered ? (
+              <div className="text-center py-8">Carregando despesas filtradas...</div>
+            ) : filteredExpenses.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                Nenhuma despesa encontrada com os filtros aplicados
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table className="min-w-full">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Item</TableHead>
+                      <TableHead>Categoria</TableHead>
+                      <TableHead>Valor</TableHead>
+                      <TableHead>Forma de Pagamento</TableHead>
+                      <TableHead>Contrato</TableHead>
+                      <TableHead>Data</TableHead>
+                      {user?.role === "admin" && <TableHead>Ações</TableHead>}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredExpenses.map((expense: Expense) => (
+                      <TableRow key={expense.id}>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{expense.item}</div>
+                            <div className="text-sm text-gray-500">ID: #{expense.id.slice(0, 8)}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={getCategoryColor(expense.category)}>
+                            {expense.category}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {new Intl.NumberFormat('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL'
+                          }).format(parseFloat(expense.value))}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <span>{getPaymentMethodIcon(expense.paymentMethod)}</span>
+                            <span>{expense.paymentMethod}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>{expense.contractNumber}</TableCell>
+                        <TableCell>
+                          {new Date(expense.paymentDate).toLocaleDateString('pt-BR')}
+                        </TableCell>
+                        {user?.role === "admin" && (
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleDelete(expense.id)}
+                                disabled={deleteMutation.isPending}
+                                title="Excluir despesa"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Recent Expenses Table */}
       <Card className="shadow-sm">
         <CardHeader>
           <CardTitle className="text-base font-semibold">Despesas Recentes</CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
+          {isLoadingRecent ? (
             <div className="text-center py-8">Carregando despesas...</div>
-          ) : expenses.length === 0 ? (
+          ) : recentExpenses.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               Nenhuma despesa encontrada
             </div>
@@ -237,7 +348,7 @@ export default function ExpenseTable() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {expenses.map((expense) => (
+                  {recentExpenses.map((expense: Expense) => (
                     <TableRow key={expense.id}>
                       <TableCell>
                         <div>
