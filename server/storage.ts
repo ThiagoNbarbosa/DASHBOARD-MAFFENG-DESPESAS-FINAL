@@ -15,9 +15,11 @@ export interface IStorage {
   // Expense methods
   getExpenses(filters?: {
     userId?: number;
+    year?: string;
     month?: string;
     category?: string;
     contractNumber?: string;
+    paymentMethod?: string;
   }): Promise<Expense[]>;
   getExpense(id: string): Promise<Expense | undefined>;
   createExpense(expense: InsertExpense & { userId: number }): Promise<Expense>;

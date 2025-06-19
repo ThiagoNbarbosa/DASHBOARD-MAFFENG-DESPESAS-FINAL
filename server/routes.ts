@@ -265,7 +265,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Expense routes
   app.get("/api/expenses", requireAuth, async (req, res) => {
     try {
-      const { month, category, contractNumber } = req.query;
+      const { year, month, category, contractNumber, paymentMethod } = req.query;
 
       const filters: any = {};
 
@@ -274,9 +274,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         filters.userId = req.session.userId;
       }
 
+      if (year && year !== "all") filters.year = year as string;
       if (month && month !== "all") filters.month = month as string;
       if (category && category !== "all") filters.category = category as string;
       if (contractNumber) filters.contractNumber = contractNumber as string;
+      if (paymentMethod && paymentMethod !== "all") filters.paymentMethod = paymentMethod as string;
 
       const expenses = await storage.getExpenses(filters);
       res.json(expenses);
