@@ -24,7 +24,6 @@ export interface IStorage {
   getExpense(id: string): Promise<Expense | undefined>;
   createExpense(expense: InsertExpense & { userId: number }): Promise<Expense>;
   updateExpense(id: string, expense: Partial<InsertExpense>): Promise<Expense>;
-  cancelExpense(id: string): Promise<Expense>;
   deleteExpense(id: string): Promise<void>;
   
   // Stats methods
@@ -45,21 +44,7 @@ export interface IStorage {
     contractNumber?: string;
   }): Promise<Array<{ paymentMethod: string; count: number; }>>;
   
-  getMonthlyTrends(): Promise<Array<{ month: string; total: number; }>>;
-  
-  getExpensesByContract(filters?: {
-    month?: string;
-    contractNumber?: string;
-  }): Promise<Array<{
-    contractNumber: string;
-    totalAmount: number;
-    expenseCount: number;
-    categories: Array<{
-      category: string;
-      amount: number;
-      count: number;
-    }>;
-  }>>;
+  getMonthlyTrends(): Promise<Array<{ month: string; total: number; }>>
 }
 
 export class DatabaseStorage implements IStorage {
