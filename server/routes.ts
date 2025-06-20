@@ -419,7 +419,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Billing routes (Admin only)
+  app.get("/api/billing", requireAdmin, async (req, res) => {
+    try {
+      const { year, month, status, contractNumber } = req.query;
+      const filters: any = {};
 
+      if (year) filters.year = year as string;
+      if (month && month !== "all") filters.month = month as string;
+      if (status && status !== "all") filters.status = status as string;
+      if (contractNumber) filters.contractNumber = contractNumber as string;
+
+      const billing = await storage.getBilling(filters);
+      res.json(billing);
+    } catch (error) {
+      console.error("Error fetching billing:", error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  app.post("/api/billing", requireAdmin, async (req, res) => {
+    try {
+      const billingData = req.body;
+      const newBilling = await storage.createBilling({
+        ...billingData,
+        userId: req.session.userId!,
+      });
+      res.status(201).json(newBilling);
+    } catch (error) {
+      console.error("Error creating billing:", error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  app.patch("/api/billing/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      const updatedBilling = await storage.updateBilling(id, updates);
+      res.json(updatedBilling);
+    } catch (error) {
+      console.error("Error updating billing:", error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  app.delete("/api/billing/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteBilling(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting billing:", error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  app.get("/api/billing/stats", requireAdmin, async (req, res) => {
+    try {
+      const stats = await storage.getBillingStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching billing stats:", error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;

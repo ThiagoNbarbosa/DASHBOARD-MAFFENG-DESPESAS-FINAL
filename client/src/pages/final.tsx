@@ -17,13 +17,24 @@ export default function Final() {
   const { data: billingData = [], isLoading: billingLoading } = useQuery({
     queryKey: ['/api/billing', filters],
     queryFn: async () => {
-      // Dados mockados para demonstração do layout - substituir por endpoint real
-      const mockBilling = [
-        { id: "1", value: 15000, status: "pago", contractNumber: "0001", issueDate: "2025-06-01" },
-        { id: "2", value: 8500, status: "pago", contractNumber: "0002", issueDate: "2025-06-01" },
-        { id: "3", value: 12000, status: "pago", contractNumber: "0003", issueDate: "2025-06-01" },
-      ];
-      return mockBilling;
+      const params = new URLSearchParams();
+      if (filters.year) params.append('year', filters.year);
+      if (filters.month && filters.month !== 'all') params.append('month', filters.month);
+      if (filters.contractNumber) params.append('contractNumber', filters.contractNumber);
+
+      const response = await fetch(`/api/billing?${params}`);
+      if (!response.ok) {
+        throw new Error('Erro ao buscar faturamento');
+      }
+      
+      const data = await response.json();
+      return data.map((item: any) => ({
+        id: item.id,
+        value: parseFloat(item.value),
+        status: item.status,
+        contractNumber: item.contractNumber,
+        issueDate: item.issueDate
+      }));
     },
   });
 
