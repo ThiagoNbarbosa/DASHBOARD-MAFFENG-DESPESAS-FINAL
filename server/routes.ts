@@ -354,7 +354,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Not authorized to cancel this expense" });
       }
 
-      const updatedExpense = await storage.cancelExpense(id);
+      // Cancelar despesa adicionando prefixo [CANCELADA] na categoria
+      const cancelledCategory = expense.category.startsWith('[CANCELADA]') 
+        ? expense.category 
+        : `[CANCELADA] ${expense.category}`;
+      
+      const updatedExpense = await storage.updateExpense(id, { 
+        category: cancelledCategory 
+      });
       res.json(updatedExpense);
     } catch (error) {
       console.error("Error cancelling expense:", error);
@@ -412,20 +419,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/expenses/by-contract", requireAdmin, async (req, res) => {
-    try {
-      const { month, contractNumber } = req.query;
-      const filters: any = {};
 
-      if (month && month !== "all") filters.month = month as string;
-      if (contractNumber) filters.contractNumber = contractNumber as string;
-
-      const stats = await storage.getExpensesByContract(filters);
-      res.json(stats);
-    } catch (error) {
-      res.status(500).json({ message: "Server error" });
-    }
-  });
 
   const httpServer = createServer(app);
   return httpServer;
