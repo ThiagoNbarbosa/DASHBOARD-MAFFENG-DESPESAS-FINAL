@@ -1,7 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+// Progress component inline implementation
+const Progress = ({ value, className }: { value: number; className?: string }) => (
+  <div className={`w-full bg-gray-200 rounded-full h-2.5 ${className}`}>
+    <div 
+      className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" 
+      style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
+    />
+  </div>
+);
 import { FileText, TrendingUp, DollarSign } from "lucide-react";
 import { Bar } from "react-chartjs-2";
 import {
@@ -42,19 +50,48 @@ interface ExpensesByContractProps {
 }
 
 export default function ExpensesByContract({ filters }: ExpensesByContractProps) {
-  // Query para buscar despesas agrupadas por contrato
+  // Query com dados mockados para demonstração do layout
   const { data: contractExpenses = [], isLoading } = useQuery({
     queryKey: ['/api/expenses/by-contract', filters],
     queryFn: async (): Promise<ContractExpense[]> => {
-      const params = new URLSearchParams();
-      if (filters?.month) params.append('month', filters.month);
-      if (filters?.contractNumber) params.append('contractNumber', filters.contractNumber);
+      // Simulando delay de carregamento
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      const response = await fetch(`/api/expenses/by-contract?${params}`);
-      if (!response.ok) {
-        throw new Error('Erro ao buscar despesas por contrato');
-      }
-      return response.json();
+      // Dados mockados para demonstração
+      const mockData: ContractExpense[] = [
+        {
+          contractNumber: "0001",
+          totalAmount: 15500.00,
+          expenseCount: 8,
+          categories: [
+            { category: "Pagamento funcionários", amount: 8000.00, count: 3 },
+            { category: "Material de escritório", amount: 2500.00, count: 2 },
+            { category: "Tecnologia", amount: 5000.00, count: 3 }
+          ]
+        },
+        {
+          contractNumber: "0002", 
+          totalAmount: 8750.00,
+          expenseCount: 5,
+          categories: [
+            { category: "Manutenção", amount: 4250.00, count: 2 },
+            { category: "Tecnologia", amount: 3000.00, count: 2 },
+            { category: "Transporte", amount: 1500.00, count: 1 }
+          ]
+        },
+        {
+          contractNumber: "0003",
+          totalAmount: 12300.00,
+          expenseCount: 6,
+          categories: [
+            { category: "Pagamento funcionários", amount: 7800.00, count: 3 },
+            { category: "Material de escritório", amount: 1800.00, count: 1 },
+            { category: "Alimentação", amount: 2700.00, count: 2 }
+          ]
+        }
+      ];
+      
+      return mockData;
     },
   });
 
