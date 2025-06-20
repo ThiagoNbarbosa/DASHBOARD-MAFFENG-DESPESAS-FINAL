@@ -8,6 +8,7 @@ import { authApi } from "./lib/auth";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import Results from "@/pages/results";
+import Faturamento from "@/pages/faturamento";
 import NotFound from "@/pages/not-found";
 
 function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -36,6 +37,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Dashboard} />
+      <Route path="/faturamento" component={Faturamento} />
       <Route path="/results" component={Results} />
       <Route component={NotFound} />
     </Switch>
