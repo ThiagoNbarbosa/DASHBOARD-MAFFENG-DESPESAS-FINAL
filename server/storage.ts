@@ -377,6 +377,96 @@ export class DatabaseStorage implements IStorage {
 
     return result;
   }
+
+  // Billing methods implementation (mock data until table is created)
+  async getBilling(filters?: {
+    userId?: number;
+    year?: string;
+    month?: string;
+    status?: string;
+    contractNumber?: string;
+  }): Promise<Billing[]> {
+    // Mock data for now - will be replaced with real DB queries once table is created
+    const mockBilling: Billing[] = [
+      {
+        id: "bill-001",
+        userId: 1,
+        contractNumber: "0001",
+        clientName: "Cliente Exemplo A",
+        description: "Serviços de consultoria - Janeiro 2025",
+        value: "15000.00",
+        dueDate: new Date("2025-01-31"),
+        issueDate: new Date("2025-01-01"),
+        status: "pago",
+        createdAt: new Date(),
+      },
+      {
+        id: "bill-002",
+        userId: 1,
+        contractNumber: "0002",
+        clientName: "Cliente Exemplo B",
+        description: "Manutenção sistema - Janeiro 2025",
+        value: "8500.00",
+        dueDate: new Date("2025-02-15"),
+        issueDate: new Date("2025-01-15"),
+        status: "pago",
+        createdAt: new Date(),
+      },
+      {
+        id: "bill-003",
+        userId: 1,
+        contractNumber: "0003",
+        clientName: "Cliente Exemplo C",
+        description: "Desenvolvimento - Janeiro 2025",
+        value: "12000.00",
+        dueDate: new Date("2025-02-28"),
+        issueDate: new Date("2025-01-20"),
+        status: "pago",
+        createdAt: new Date(),
+      }
+    ];
+    
+    return mockBilling;
+  }
+
+  async getBillingItem(id: string): Promise<Billing | undefined> {
+    // Mock implementation
+    return undefined;
+  }
+
+  async createBilling(billing: InsertBilling & { userId: number }): Promise<Billing> {
+    // Mock implementation - will be replaced with real DB insert
+    const newBilling: Billing = {
+      id: `bill-${Date.now()}`,
+      ...billing,
+      status: billing.status || "pendente",
+      createdAt: new Date(),
+    };
+    return newBilling;
+  }
+
+  async updateBilling(id: string, billing: Partial<InsertBilling>): Promise<Billing> {
+    // Mock implementation
+    throw new Error("Billing not found");
+  }
+
+  async deleteBilling(id: string): Promise<void> {
+    // Mock implementation
+    throw new Error("Billing not found");
+  }
+
+  async getBillingStats(userId?: number): Promise<{
+    totalPendente: number;
+    totalPago: number;
+    totalVencido: number;
+  }> {
+    // Mock implementation
+    return {
+      totalPendente: 5000,
+      totalPago: 35500, // Total dos valores pagos
+      totalVencido: 2800,
+    };
+  }
 }
 
 export const storage = new DatabaseStorage();

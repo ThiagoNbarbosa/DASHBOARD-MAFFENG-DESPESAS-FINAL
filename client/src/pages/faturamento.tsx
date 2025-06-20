@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Sidebar from "@/components/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -31,44 +31,32 @@ export default function Faturamento() {
   
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
-  // Query para buscar dados de faturamento (implementação futura com endpoint real)
+  // Query para buscar dados de faturamento
   const { data: faturamentos = [], isLoading } = useQuery({
-    queryKey: ['/api/faturamento', filters],
+    queryKey: ['/api/billing', filters],
     queryFn: async () => {
-      // Dados mockados para demonstração do layout
-      const mockData: FaturamentoItem[] = [
-        {
-          id: "FAT001",
-          contractNumber: "0001",
-          clientName: "Cliente Exemplo A",
-          description: "Serviços de consultoria - Janeiro 2025",
-          value: 5000.00,
-          dueDate: "2025-01-31",
-          status: "pendente",
-          issueDate: "2025-01-01"
-        },
-        {
-          id: "FAT002",
-          contractNumber: "0002",
-          clientName: "Cliente Exemplo B",
-          description: "Manutenção sistema - Janeiro 2025",
-          value: 3500.00,
-          dueDate: "2025-02-15",
-          status: "pago",
-          issueDate: "2025-01-15"
-        },
-        {
-          id: "FAT003",
-          contractNumber: "0001",
-          clientName: "Cliente Exemplo A",
-          description: "Serviços adicionais - Dezembro 2024",
-          value: 2800.00,
-          dueDate: "2024-12-31",
-          status: "vencido",
-          issueDate: "2024-12-01"
-        }
-      ];
-      return mockData;
+      const params = new URLSearchParams();
+      if (filters.year) params.append('year', filters.year);
+      if (filters.month && filters.month !== 'all') params.append('month', filters.month);
+      if (filters.status && filters.status !== 'all') params.append('status', filters.status);
+      if (filters.contractNumber) params.append('contractNumber', filters.contractNumber);
+
+      const response = await fetch(`/api/billing?${params}`);
+      if (!response.ok) {
+        throw new Error('Erro ao buscar faturamento');
+      }
+      
+      const data = await response.json();
+      return data.map((item: any) => ({
+        id: item.id,
+        contractNumber: item.contractNumber,
+        clientName: item.clientName,
+        description: item.description,
+        value: parseFloat(item.value),
+        dueDate: item.dueDate,
+        status: item.status,
+        issueDate: item.issueDate
+      }));
     },
   });
 

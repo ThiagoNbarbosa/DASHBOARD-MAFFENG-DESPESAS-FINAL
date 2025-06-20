@@ -40,6 +40,7 @@ function Router() {
       <Route path="/" component={Dashboard} />
       <Route path="/faturamento" component={Faturamento} />
       <Route path="/results" component={Results} />
+      <Route path="/final" component={Final} />
       <Route component={NotFound} />
     </Switch>
   );
