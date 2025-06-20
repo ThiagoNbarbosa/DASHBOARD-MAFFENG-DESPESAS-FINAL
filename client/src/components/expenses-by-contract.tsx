@@ -50,48 +50,78 @@ interface ExpensesByContractProps {
 }
 
 export default function ExpensesByContract({ filters }: ExpensesByContractProps) {
-  // Query com dados mockados para demonstração do layout
+  // Query para buscar despesas agrupadas por contrato com dados reais
   const { data: contractExpenses = [], isLoading } = useQuery({
     queryKey: ['/api/expenses/by-contract', filters],
     queryFn: async (): Promise<ContractExpense[]> => {
-      // Simulando delay de carregamento
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Dados mockados para demonstração
-      const mockData: ContractExpense[] = [
-        {
-          contractNumber: "0001",
-          totalAmount: 15500.00,
-          expenseCount: 8,
-          categories: [
-            { category: "Pagamento funcionários", amount: 8000.00, count: 3 },
-            { category: "Material de escritório", amount: 2500.00, count: 2 },
-            { category: "Tecnologia", amount: 5000.00, count: 3 }
-          ]
-        },
-        {
-          contractNumber: "0002", 
-          totalAmount: 8750.00,
-          expenseCount: 5,
-          categories: [
-            { category: "Manutenção", amount: 4250.00, count: 2 },
-            { category: "Tecnologia", amount: 3000.00, count: 2 },
-            { category: "Transporte", amount: 1500.00, count: 1 }
-          ]
-        },
-        {
-          contractNumber: "0003",
-          totalAmount: 12300.00,
-          expenseCount: 6,
-          categories: [
-            { category: "Pagamento funcionários", amount: 7800.00, count: 3 },
-            { category: "Material de escritório", amount: 1800.00, count: 1 },
-            { category: "Alimentação", amount: 2700.00, count: 2 }
-          ]
+      try {
+        // Buscar todas as despesas
+        const response = await fetch('/api/expenses');
+        if (!response.ok) {
+          throw new Error('Erro ao buscar despesas');
         }
-      ];
-      
-      return mockData;
+        
+        const expenses = await response.json();
+        
+        // Agrupar despesas por contrato
+        const contractMap = new Map<string, {
+          totalAmount: number;
+          expenseCount: number;
+          categories: Map<string, { amount: number; count: number }>;
+        }>();
+
+        expenses.forEach((expense: any) => {
+          // Ignorar despesas canceladas na análise por contrato
+          if (expense.category?.startsWith('[CANCELADA]')) {
+            return;
+          }
+
+          const contractNumber = expense.contractNumber;
+          const value = parseFloat(expense.value);
+
+          if (!contractMap.has(contractNumber)) {
+            contractMap.set(contractNumber, {
+              totalAmount: 0,
+              expenseCount: 0,
+              categories: new Map(),
+            });
+          }
+
+          const contract = contractMap.get(contractNumber)!;
+          contract.totalAmount += value;
+          contract.expenseCount += 1;
+
+          // Agrupar por categoria
+          const category = expense.category;
+          if (!contract.categories.has(category)) {
+            contract.categories.set(category, { amount: 0, count: 0 });
+          }
+
+          const categoryData = contract.categories.get(category)!;
+          categoryData.amount += value;
+          categoryData.count += 1;
+        });
+
+        // Converter para formato final
+        const result = Array.from(contractMap.entries()).map(([contractNumber, data]) => ({
+          contractNumber,
+          totalAmount: data.totalAmount,
+          expenseCount: data.expenseCount,
+          categories: Array.from(data.categories.entries()).map(([category, categoryData]) => ({
+            category,
+            amount: categoryData.amount,
+            count: categoryData.count,
+          })),
+        }));
+
+        // Ordenar por valor total (decrescente)
+        result.sort((a, b) => b.totalAmount - a.totalAmount);
+
+        return result;
+      } catch (error) {
+        console.error('Erro ao carregar despesas por contrato:', error);
+        return [];
+      }
     },
   });
 

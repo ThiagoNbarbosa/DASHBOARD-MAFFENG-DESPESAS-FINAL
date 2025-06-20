@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import Sidebar from "@/components/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Receipt, FileText, Calendar, DollarSign, Filter } from "lucide-react";
+import { Receipt, FileText, Calendar, DollarSign, Filter, Plus } from "lucide-react";
 
 // Interface para dados de faturamento
 interface FaturamentoItem {
@@ -27,6 +28,8 @@ export default function Faturamento() {
     status: "",
     contractNumber: "",
   });
+  
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   // Query para buscar dados de faturamento (implementação futura com endpoint real)
   const { data: faturamentos = [], isLoading } = useQuery({
@@ -124,236 +127,401 @@ export default function Faturamento() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-6">
-            <div className="flex items-center gap-3">
-              <Receipt className="h-8 w-8 text-primary" />
-              <h1 className="text-3xl font-bold text-gray-900">Faturamento</h1>
+      <Sidebar />
+      
+      <div className="lg:pl-64">
+        {/* Header */}
+        <header className="bg-white shadow-sm border-b border-gray-200">
+          <div className="px-4 sm:px-6 py-4 sm:py-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <div className="flex items-center gap-3">
+                  <Receipt className="h-8 w-8 text-primary" />
+                  <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Faturamento</h1>
+                </div>
+                <p className="text-xs sm:text-sm text-gray-600">
+                  Gerencie e acompanhe o faturamento dos contratos
+                </p>
+              </div>
+              
+              {/* Botão Adicionar Pagamento */}
+              <Button 
+                onClick={() => setShowPaymentModal(true)}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar Pagamento
+              </Button>
             </div>
-            <p className="mt-2 text-gray-600">
-              Gerencie e acompanhe o faturamento dos contratos
-            </p>
           </div>
-        </div>
-      </div>
+        </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Cards de Resumo */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Pendente</p>
-                  <p className="text-2xl font-bold text-yellow-600">
-                    {new Intl.NumberFormat('pt-BR', {
-                      style: 'currency',
-                      currency: 'BRL'
-                    }).format(totalPendente)}
-                  </p>
+        <main className="p-4 sm:p-6">
+          {/* Cards de Resumo */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Total Pendente</p>
+                    <p className="text-2xl font-bold text-yellow-600">
+                      {new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL'
+                      }).format(totalPendente)}
+                    </p>
+                  </div>
+                  <div className="h-12 w-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                    <Calendar className="h-6 w-6 text-yellow-600" />
+                  </div>
                 </div>
-                <div className="h-12 w-12 bg-yellow-100 rounded-full flex items-center justify-center">
-                  <Calendar className="h-6 w-6 text-yellow-600" />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Total Recebido</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL'
+                      }).format(totalPago)}
+                    </p>
+                  </div>
+                  <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
+                    <DollarSign className="h-6 w-6 text-green-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Total Vencido</p>
+                    <p className="text-2xl font-bold text-red-600">
+                      {new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL'
+                      }).format(totalVencido)}
+                    </p>
+                  </div>
+                  <div className="h-12 w-12 bg-red-100 rounded-full flex items-center justify-center">
+                    <FileText className="h-6 w-6 text-red-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Filtros */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Filter className="h-5 w-5" />
+                Filtros
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Ano
+                  </label>
+                  <Select
+                    value={filters.year}
+                    onValueChange={(value) => setFilters(prev => ({ ...prev, year: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o ano" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="2024">2024</SelectItem>
+                      <SelectItem value="2025">2025</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Mês
+                  </label>
+                  <Select
+                    value={filters.month}
+                    onValueChange={(value) => setFilters(prev => ({ ...prev, month: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todos os meses" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os meses</SelectItem>
+                      <SelectItem value="01">Janeiro</SelectItem>
+                      <SelectItem value="02">Fevereiro</SelectItem>
+                      <SelectItem value="03">Março</SelectItem>
+                      <SelectItem value="04">Abril</SelectItem>
+                      <SelectItem value="05">Maio</SelectItem>
+                      <SelectItem value="06">Junho</SelectItem>
+                      <SelectItem value="07">Julho</SelectItem>
+                      <SelectItem value="08">Agosto</SelectItem>
+                      <SelectItem value="09">Setembro</SelectItem>
+                      <SelectItem value="10">Outubro</SelectItem>
+                      <SelectItem value="11">Novembro</SelectItem>
+                      <SelectItem value="12">Dezembro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Status
+                  </label>
+                  <Select
+                    value={filters.status}
+                    onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todos os status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os status</SelectItem>
+                      <SelectItem value="pendente">Pendente</SelectItem>
+                      <SelectItem value="pago">Pago</SelectItem>
+                      <SelectItem value="vencido">Vencido</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Contrato
+                  </label>
+                  <Input
+                    placeholder="Número do contrato"
+                    value={filters.contractNumber}
+                    onChange={(e) => setFilters(prev => ({ ...prev, contractNumber: e.target.value }))}
+                  />
                 </div>
               </div>
             </CardContent>
           </Card>
 
+          {/* Tabela de Faturamento */}
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Recebido</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    {new Intl.NumberFormat('pt-BR', {
-                      style: 'currency',
-                      currency: 'BRL'
-                    }).format(totalPago)}
-                  </p>
+            <CardHeader>
+              <CardTitle>Lista de Faturamento</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="text-center py-8">Carregando faturamento...</div>
+              ) : filteredFaturamentos.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  Nenhum faturamento encontrado para os filtros selecionados
                 </div>
-                <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
-                  <DollarSign className="h-6 w-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Vencido</p>
-                  <p className="text-2xl font-bold text-red-600">
-                    {new Intl.NumberFormat('pt-BR', {
-                      style: 'currency',
-                      currency: 'BRL'
-                    }).format(totalVencido)}
-                  </p>
-                </div>
-                <div className="h-12 w-12 bg-red-100 rounded-full flex items-center justify-center">
-                  <FileText className="h-6 w-6 text-red-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Filtros */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Filter className="h-5 w-5" />
-              Filtros
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
-                  Ano
-                </label>
-                <Select
-                  value={filters.year}
-                  onValueChange={(value) => setFilters(prev => ({ ...prev, year: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o ano" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="2024">2024</SelectItem>
-                    <SelectItem value="2025">2025</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
-                  Mês
-                </label>
-                <Select
-                  value={filters.month}
-                  onValueChange={(value) => setFilters(prev => ({ ...prev, month: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todos os meses" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os meses</SelectItem>
-                    <SelectItem value="01">Janeiro</SelectItem>
-                    <SelectItem value="02">Fevereiro</SelectItem>
-                    <SelectItem value="03">Março</SelectItem>
-                    <SelectItem value="04">Abril</SelectItem>
-                    <SelectItem value="05">Maio</SelectItem>
-                    <SelectItem value="06">Junho</SelectItem>
-                    <SelectItem value="07">Julho</SelectItem>
-                    <SelectItem value="08">Agosto</SelectItem>
-                    <SelectItem value="09">Setembro</SelectItem>
-                    <SelectItem value="10">Outubro</SelectItem>
-                    <SelectItem value="11">Novembro</SelectItem>
-                    <SelectItem value="12">Dezembro</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
-                  Status
-                </label>
-                <Select
-                  value={filters.status}
-                  onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todos os status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os status</SelectItem>
-                    <SelectItem value="pendente">Pendente</SelectItem>
-                    <SelectItem value="pago">Pago</SelectItem>
-                    <SelectItem value="vencido">Vencido</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
-                  Contrato
-                </label>
-                <Input
-                  placeholder="Número do contrato"
-                  value={filters.contractNumber}
-                  onChange={(e) => setFilters(prev => ({ ...prev, contractNumber: e.target.value }))}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Tabela de Faturamento */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Lista de Faturamento</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="text-center py-8">Carregando faturamento...</div>
-            ) : filteredFaturamentos.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                Nenhum faturamento encontrado para os filtros selecionados
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>Contrato</TableHead>
-                      <TableHead>Cliente</TableHead>
-                      <TableHead>Descrição</TableHead>
-                      <TableHead>Valor</TableHead>
-                      <TableHead>Vencimento</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Emissão</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredFaturamentos.map((faturamento) => (
-                      <TableRow key={faturamento.id}>
-                        <TableCell className="font-medium">
-                          {faturamento.id}
-                        </TableCell>
-                        <TableCell>{faturamento.contractNumber}</TableCell>
-                        <TableCell>{faturamento.clientName}</TableCell>
-                        <TableCell className="max-w-xs truncate">
-                          {faturamento.description}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {new Intl.NumberFormat('pt-BR', {
-                            style: 'currency',
-                            currency: 'BRL'
-                          }).format(faturamento.value)}
-                        </TableCell>
-                        <TableCell>
-                          {new Date(faturamento.dueDate).toLocaleDateString('pt-BR')}
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={getStatusColor(faturamento.status)}>
-                            {getStatusText(faturamento.status)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {new Date(faturamento.issueDate).toLocaleDateString('pt-BR')}
-                        </TableCell>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Contrato</TableHead>
+                        <TableHead>Cliente</TableHead>
+                        <TableHead>Descrição</TableHead>
+                        <TableHead>Valor</TableHead>
+                        <TableHead>Vencimento</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Emissão</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredFaturamentos.map((faturamento) => (
+                        <TableRow key={faturamento.id}>
+                          <TableCell className="font-medium">
+                            {faturamento.id}
+                          </TableCell>
+                          <TableCell>{faturamento.contractNumber}</TableCell>
+                          <TableCell>{faturamento.clientName}</TableCell>
+                          <TableCell className="max-w-xs truncate">
+                            {faturamento.description}
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {new Intl.NumberFormat('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL'
+                            }).format(faturamento.value)}
+                          </TableCell>
+                          <TableCell>
+                            {new Date(faturamento.dueDate).toLocaleDateString('pt-BR')}
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={getStatusColor(faturamento.status)}>
+                              {getStatusText(faturamento.status)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {new Date(faturamento.issueDate).toLocaleDateString('pt-BR')}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          
+          {/* Modal de Adicionar Pagamento */}
+          <PaymentModal 
+            open={showPaymentModal} 
+            onOpenChange={setShowPaymentModal} 
+          />
+        </main>
+      </div>
+    </div>
+  );
+}
+
+// Modal de Adicionar Pagamento
+function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+  const [formData, setFormData] = useState({
+    clientName: "",
+    contractNumber: "",
+    description: "",
+    value: "",
+    dueDate: "",
+    issueDate: new Date().toISOString().split('T')[0],
+    status: "pendente" as const
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Dados do pagamento:', formData);
+    onOpenChange(false);
+    // Reset form
+    setFormData({
+      clientName: "",
+      contractNumber: "",
+      description: "",
+      value: "",
+      dueDate: "",
+      issueDate: new Date().toISOString().split('T')[0],
+      status: "pendente"
+    });
+  };
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold">Adicionar Pagamento</h2>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => onOpenChange(false)}
+          >
+            ×
+          </Button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Nome do Cliente
+            </label>
+            <Input
+              value={formData.clientName}
+              onChange={(e) => setFormData(prev => ({ ...prev, clientName: e.target.value }))}
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Número do Contrato
+            </label>
+            <Input
+              value={formData.contractNumber}
+              onChange={(e) => setFormData(prev => ({ ...prev, contractNumber: e.target.value }))}
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Descrição
+            </label>
+            <Input
+              value={formData.description}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Valor
+            </label>
+            <Input
+              type="number"
+              step="0.01"
+              value={formData.value}
+              onChange={(e) => setFormData(prev => ({ ...prev, value: e.target.value }))}
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Data de Vencimento
+            </label>
+            <Input
+              type="date"
+              value={formData.dueDate}
+              onChange={(e) => setFormData(prev => ({ ...prev, dueDate: e.target.value }))}
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Status
+            </label>
+            <Select
+              value={formData.status}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, status: value as any }))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pendente">Pendente</SelectItem>
+                <SelectItem value="pago">Pago</SelectItem>
+                <SelectItem value="vencido">Vencido</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex gap-2 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="flex-1"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              className="flex-1 bg-green-600 hover:bg-green-700"
+            >
+              Adicionar Pagamento
+            </Button>
+          </div>
+        </form>
       </div>
     </div>
   );
