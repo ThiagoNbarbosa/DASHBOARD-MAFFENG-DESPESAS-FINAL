@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Sidebar from "@/components/sidebar";
+import ExpensesByContract from "@/components/expenses-by-contract";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -248,6 +249,11 @@ export default function Results() {
                 </div>
               </CardContent>
             </Card>
+          </div>
+
+          {/* Seção de Despesas por Contrato */}
+          <div className="mt-8">
+            <ExpensesByContract filters={filters} />
           </div>
         </main>
       </div>
