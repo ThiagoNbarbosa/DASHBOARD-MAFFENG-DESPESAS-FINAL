@@ -412,6 +412,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/expenses/by-contract", requireAdmin, async (req, res) => {
+    try {
+      const { month, contractNumber } = req.query;
+      const filters: any = {};
+
+      if (month && month !== "all") filters.month = month as string;
+      if (contractNumber) filters.contractNumber = contractNumber as string;
+
+      const stats = await storage.getExpensesByContract(filters);
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -46,6 +46,20 @@ export interface IStorage {
   }): Promise<Array<{ paymentMethod: string; count: number; }>>;
   
   getMonthlyTrends(): Promise<Array<{ month: string; total: number; }>>;
+  
+  getExpensesByContract(filters?: {
+    month?: string;
+    contractNumber?: string;
+  }): Promise<Array<{
+    contractNumber: string;
+    totalAmount: number;
+    expenseCount: number;
+    categories: Array<{
+      category: string;
+      amount: number;
+      count: number;
+    }>;
+  }>>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -272,6 +286,92 @@ export class DatabaseStorage implements IStorage {
       month,
       total,
     }));
+  }
+
+  async getExpensesByContract(filters?: {
+    month?: string;
+    contractNumber?: string;
+  }): Promise<Array<{
+    contractNumber: string;
+    totalAmount: number;
+    expenseCount: number;
+    categories: Array<{
+      category: string;
+      amount: number;
+      count: number;
+    }>;
+  }>> {
+    let query = db.select().from(expenses);
+    
+    const conditions = [];
+    
+    if (filters?.month) {
+      const startDate = new Date(filters.month + '-01');
+      const endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
+      conditions.push(gte(expenses.paymentDate, startDate));
+      conditions.push(lte(expenses.paymentDate, endDate));
+    }
+    
+    if (filters?.contractNumber) {
+      conditions.push(like(expenses.contractNumber, `%${filters.contractNumber}%`));
+    }
+    
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+    
+    const allExpenses = await query;
+
+    // Agrupar por contrato
+    const contractMap = new Map<string, {
+      totalAmount: number;
+      expenseCount: number;
+      categories: Map<string, { amount: number; count: number }>;
+    }>();
+
+    allExpenses.forEach(expense => {
+      const contractNumber = expense.contractNumber;
+      const value = parseFloat(expense.value);
+
+      if (!contractMap.has(contractNumber)) {
+        contractMap.set(contractNumber, {
+          totalAmount: 0,
+          expenseCount: 0,
+          categories: new Map(),
+        });
+      }
+
+      const contract = contractMap.get(contractNumber)!;
+      contract.totalAmount += value;
+      contract.expenseCount += 1;
+
+      // Agrupar por categoria
+      const category = expense.category;
+      if (!contract.categories.has(category)) {
+        contract.categories.set(category, { amount: 0, count: 0 });
+      }
+
+      const categoryData = contract.categories.get(category)!;
+      categoryData.amount += value;
+      categoryData.count += 1;
+    });
+
+    // Converter para formato final
+    const result = Array.from(contractMap.entries()).map(([contractNumber, data]) => ({
+      contractNumber,
+      totalAmount: data.totalAmount,
+      expenseCount: data.expenseCount,
+      categories: Array.from(data.categories.entries()).map(([category, categoryData]) => ({
+        category,
+        amount: categoryData.amount,
+        count: categoryData.count,
+      })),
+    }));
+
+    // Ordenar por valor total (decrescente)
+    result.sort((a, b) => b.totalAmount - a.totalAmount);
+
+    return result;
   }
 }
 

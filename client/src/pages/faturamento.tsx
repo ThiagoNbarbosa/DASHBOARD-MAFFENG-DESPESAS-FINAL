@@ -115,9 +115,9 @@ export default function Faturamento() {
     const fatYear = fatDate.getFullYear().toString();
 
     return (
-      (!filters.month || fatMonth === filters.month) &&
+      (!filters.month || filters.month === "all" || fatMonth === filters.month) &&
       (!filters.year || fatYear === filters.year) &&
-      (!filters.status || faturamento.status === filters.status) &&
+      (!filters.status || filters.status === "all" || faturamento.status === filters.status) &&
       (!filters.contractNumber || faturamento.contractNumber.includes(filters.contractNumber))
     );
   });
@@ -240,7 +240,7 @@ export default function Faturamento() {
                     <SelectValue placeholder="Todos os meses" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos os meses</SelectItem>
+                    <SelectItem value="all">Todos os meses</SelectItem>
                     <SelectItem value="01">Janeiro</SelectItem>
                     <SelectItem value="02">Fevereiro</SelectItem>
                     <SelectItem value="03">Março</SelectItem>
@@ -269,7 +269,7 @@ export default function Faturamento() {
                     <SelectValue placeholder="Todos os status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos os status</SelectItem>
+                    <SelectItem value="all">Todos os status</SelectItem>
                     <SelectItem value="pendente">Pendente</SelectItem>
                     <SelectItem value="pago">Pago</SelectItem>
                     <SelectItem value="vencido">Vencido</SelectItem>
