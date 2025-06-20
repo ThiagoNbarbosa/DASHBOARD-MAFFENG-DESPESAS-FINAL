@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { authApi } from "@/lib/auth";
 import Sidebar from "@/components/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Receipt, FileText, Calendar, DollarSign, Filter, Plus } from "lucide-react";
+import { Receipt, FileText, Calendar, DollarSign, Filter, Plus, X, Trash2 } from "lucide-react";
 
 // Interface para dados de faturamento
 interface FaturamentoItem {
@@ -30,6 +31,50 @@ export default function Faturamento() {
   });
   
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const queryClient = useQueryClient();
+
+  // Buscar dados do usuário atual
+  const { data: user } = useQuery({
+    queryKey: ['/api/auth/me'],
+    queryFn: authApi.getCurrentUser,
+  });
+
+  // Mutations para cancelar e deletar faturamento (apenas admin)
+  const cancelBillingMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/billing/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: 'vencido' }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao cancelar faturamento');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/billing'] });
+    },
+  });
+
+  const deleteBillingMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/billing/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao deletar faturamento');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/billing'] });
+    },
+  });
 
   // Query para buscar dados de faturamento
   const { data: faturamentos = [], isLoading } = useQuery({
@@ -321,6 +366,7 @@ export default function Faturamento() {
                         <TableHead>Vencimento</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Emissão</TableHead>
+                        {user?.role === 'admin' && <TableHead>Ações</TableHead>}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -351,6 +397,32 @@ export default function Faturamento() {
                           <TableCell>
                             {new Date(faturamento.issueDate).toLocaleDateString('pt-BR')}
                           </TableCell>
+                          {user?.role === 'admin' && (
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-orange-600 border-orange-600 hover:bg-orange-50"
+                                  onClick={() => cancelBillingMutation.mutate(faturamento.id)}
+                                  disabled={cancelBillingMutation.isPending}
+                                >
+                                  <X className="h-4 w-4" />
+                                  Cancelar
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-red-600 border-red-600 hover:bg-red-50"
+                                  onClick={() => deleteBillingMutation.mutate(faturamento.id)}
+                                  disabled={deleteBillingMutation.isPending}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  Excluir
+                                </Button>
+                              </div>
+                            </TableCell>
+                          )}
                         </TableRow>
                       ))}
                     </TableBody>
@@ -373,6 +445,7 @@ export default function Faturamento() {
 
 // Modal de Adicionar Pagamento
 function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+  const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     clientName: "",
     contractNumber: "",
@@ -383,20 +456,49 @@ function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
     status: "pendente" as const
   });
 
+  const createPaymentMutation = useMutation({
+    mutationFn: async (data: typeof formData) => {
+      const response = await fetch('/api/billing', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          clientName: data.clientName,
+          contractNumber: data.contractNumber,
+          description: data.description,
+          value: data.value,
+          dueDate: new Date(data.dueDate),
+          issueDate: new Date(data.issueDate),
+          status: data.status,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao criar pagamento');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/billing'] });
+      onOpenChange(false);
+      // Reset form
+      setFormData({
+        clientName: "",
+        contractNumber: "",
+        description: "",
+        value: "",
+        dueDate: "",
+        issueDate: new Date().toISOString().split('T')[0],
+        status: "pendente"
+      });
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Dados do pagamento:', formData);
-    onOpenChange(false);
-    // Reset form
-    setFormData({
-      clientName: "",
-      contractNumber: "",
-      description: "",
-      value: "",
-      dueDate: "",
-      issueDate: new Date().toISOString().split('T')[0],
-      status: "pendente"
-    });
+    createPaymentMutation.mutate(formData);
   };
 
   if (!open) return null;
