@@ -9,6 +9,7 @@ import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import Results from "@/pages/results";
 import Faturamento from "@/pages/faturamento";
+import Final from "@/pages/final";
 import NotFound from "@/pages/not-found";
 
 function AuthProvider({ children }: { children: React.ReactNode }) {
