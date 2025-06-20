@@ -1,4 +1,4 @@
-import { users, expenses, type User, type InsertUser, type Expense, type InsertExpense } from "@shared/schema";
+import { users, expenses, billing, type User, type InsertUser, type Expense, type InsertExpense, type Billing, type InsertBilling } from "@shared/schema";
 import { eq, and, like, gte, lte, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
@@ -44,7 +44,26 @@ export interface IStorage {
     contractNumber?: string;
   }): Promise<Array<{ paymentMethod: string; count: number; }>>;
   
-  getMonthlyTrends(): Promise<Array<{ month: string; total: number; }>>
+  getMonthlyTrends(): Promise<Array<{ month: string; total: number; }>>;
+  
+  // Billing methods
+  getBilling(filters?: {
+    userId?: number;
+    year?: string;
+    month?: string;
+    status?: string;
+    contractNumber?: string;
+  }): Promise<Billing[]>;
+  getBillingItem(id: string): Promise<Billing | undefined>;
+  createBilling(billing: InsertBilling & { userId: number }): Promise<Billing>;
+  updateBilling(id: string, billing: Partial<InsertBilling>): Promise<Billing>;
+  deleteBilling(id: string): Promise<void>;
+  
+  getBillingStats(userId?: number): Promise<{
+    totalPendente: number;
+    totalPago: number;
+    totalVencido: number;
+  }>;
 }
 
 export class DatabaseStorage implements IStorage {
