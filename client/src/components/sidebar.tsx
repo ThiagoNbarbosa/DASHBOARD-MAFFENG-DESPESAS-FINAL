@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authApi } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { BarChart3, FileText, TrendingUp, LogOut, Menu, X, UserPlus, Receipt } from "lucide-react";
+import { BarChart3, FileText, TrendingUp, LogOut, Menu, X, UserPlus, Receipt, Calculator } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import SignupModal from "@/components/signup-modal";
 import logoPath from "@assets/63f5d089-94db-4968-a76f-00d77b188818 (1)_1750213898122.png";
@@ -44,17 +44,22 @@ export default function Sidebar() {
       icon: FileText,
       current: location === "/",
     },
-    {
+    ...(user?.role === "admin" ? [{
       name: "Faturamento",
       href: "/faturamento",
       icon: Receipt,
       current: location === "/faturamento",
-    },
+    }] : []),
     ...(user?.role === "admin" ? [{
       name: "Resultados",
       href: "/results",
       icon: TrendingUp,
       current: location === "/results",
+    }, {
+      name: "Final",
+      href: "/final",
+      icon: Calculator,
+      current: location === "/final",
     }] : []),
   ];
 
