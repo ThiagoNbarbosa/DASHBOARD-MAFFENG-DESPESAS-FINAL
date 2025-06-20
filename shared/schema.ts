@@ -26,6 +26,19 @@ export const expenses = pgTable("expenses", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const billing = pgTable("billing", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: serial("user_id").references(() => users.id),
+  contractNumber: text("contract_number").notNull(),
+  clientName: text("client_name").notNull(),
+  description: text("description").notNull(),
+  value: numeric("value").notNull(),
+  dueDate: timestamp("due_date").notNull(),
+  issueDate: timestamp("issue_date").notNull(),
+  status: text("status").notNull().default("pendente"), // pendente, pago, vencido
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
@@ -44,6 +57,12 @@ export const insertExpenseSchema = createInsertSchema(expenses).omit({
   createdAt: true,
 });
 
+export const insertBillingSchema = createInsertSchema(billing).omit({
+  id: true,
+  userId: true,
+  createdAt: true,
+});
+
 export const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
@@ -53,5 +72,7 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertExpense = z.infer<typeof insertExpenseSchema>;
 export type Expense = typeof expenses.$inferSelect;
+export type InsertBilling = z.infer<typeof insertBillingSchema>;
+export type Billing = typeof billing.$inferSelect;
 export type LoginData = z.infer<typeof loginSchema>;
 export type SignUpData = z.infer<typeof signUpSchema>;
