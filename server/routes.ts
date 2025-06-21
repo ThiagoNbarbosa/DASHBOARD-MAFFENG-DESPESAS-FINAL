@@ -465,6 +465,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/billing/:id/cancel", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updatedBilling = await billingStorage.updateBilling(id, { status: 'cancelado' });
+      res.json(updatedBilling);
+    } catch (error) {
+      console.error("Error cancelling billing:", error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
   app.delete("/api/billing/:id", requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
