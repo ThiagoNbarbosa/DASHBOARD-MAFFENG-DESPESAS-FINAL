@@ -535,27 +535,15 @@ function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
 
   const createPaymentMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const response = await fetch('/api/billing', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          clientName: data.clientName,
-          contractNumber: data.contractNumber,
-          description: data.description,
-          value: parseFloat(data.value.replace(/[^\d,]/g, '').replace(',', '.')).toFixed(2),
-          dueDate: new Date(data.dueDate),
-          issueDate: new Date(data.issueDate),
-          status: data.status,
-        }),
+      return await apiRequest('/api/billing', 'POST', {
+        clientName: data.clientName,
+        contractNumber: data.contractNumber,
+        description: data.description,
+        value: parseFloat(data.value),
+        dueDate: new Date(data.dueDate).toISOString(),
+        issueDate: new Date(data.issueDate).toISOString(),
+        status: data.status,
       });
-
-      if (!response.ok) {
-        throw new Error('Erro ao criar pagamento');
-      }
-
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/billing'] });
