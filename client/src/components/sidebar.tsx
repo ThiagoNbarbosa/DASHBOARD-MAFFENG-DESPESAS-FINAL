@@ -37,30 +37,35 @@ export default function Sidebar() {
       href: "/",
       icon: BarChart3,
       current: location === "/",
+      description: "Visão geral financeira"
     },
     {
-      name: "Despesas Recentes",
+      name: "Despesas",
       href: "/",
       icon: FileText,
       current: location === "/",
+      description: "Gestão de gastos"
     },
-    ...(user?.role === "admin" ? [{
+    {
       name: "Faturamento",
       href: "/faturamento",
       icon: Receipt,
       current: location === "/faturamento",
-    }] : []),
+      description: "Gestão de receitas"
+    },
     ...(user?.role === "admin" ? [{
       name: "Resultados",
       href: "/results",
       icon: TrendingUp,
       current: location === "/results",
+      description: "Analytics avançados"
     }, {
       name: "Final",
       href: "/final",
       icon: Calculator,
       current: location === "/final",
-    }] : []),
+      description: "Lucro e balanço"
+    }] : [])
   ];
 
   const handleNavigation = (href: string) => {
@@ -112,14 +117,21 @@ export default function Sidebar() {
                 <button
                   key={item.name}
                   onClick={() => handleNavigation(item.href)}
-                  className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  className={`w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 group ${
                     item.current
-                      ? "bg-primary/10 text-primary"
-                      : "text-gray-700 hover:bg-gray-100"
+                      ? "bg-orange-50 text-orange-700 border border-orange-200 shadow-sm"
+                      : "text-gray-700 hover:bg-gray-50 hover:text-gray-900 border border-transparent"
                   }`}
                 >
-                  <item.icon className="mr-3 h-5 w-5" />
-                  {item.name}
+                  <item.icon className={`mr-3 h-5 w-5 transition-colors ${
+                    item.current ? "text-orange-600" : "text-gray-500 group-hover:text-gray-700"
+                  }`} />
+                  <div className="flex flex-col items-start">
+                    <span>{item.name}</span>
+                    {item.description && (
+                      <span className="text-xs text-gray-500 mt-0.5">{item.description}</span>
+                    )}
+                  </div>
                 </button>
               ))}
             </div>

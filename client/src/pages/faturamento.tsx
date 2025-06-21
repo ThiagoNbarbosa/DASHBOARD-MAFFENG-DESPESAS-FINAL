@@ -18,10 +18,11 @@ interface FaturamentoItem {
   contractNumber: string;
   clientName: string;
   description: string;
-  value: number;
+  value: string;
   dueDate: string;
   status: "pendente" | "pago" | "vencido" | "cancelado";
   issueDate: string;
+  createdAt?: string;
 }
 
 export default function Faturamento() {
@@ -97,23 +98,24 @@ export default function Faturamento() {
     queryFn: authApi.getCurrentUser,
   });
 
-  // Verificar se usuário é admin antes de carregar a página
+  // Verificar se usuário está autenticado
   if (userLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-lg">Carregando...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto mb-4"></div>
+          <p className="text-lg text-gray-600">Carregando dados...</p>
         </div>
       </div>
     );
   }
 
-  if (!user || user.role !== 'admin') {
+  if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-xl font-semibold text-red-600 mb-2">Acesso Negado</h2>
-          <p className="text-gray-600">Apenas administradores podem acessar esta página.</p>
+          <p className="text-gray-600">Você precisa estar logado para acessar esta página.</p>
         </div>
       </div>
     );
