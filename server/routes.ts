@@ -260,11 +260,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('AuthUid do usuário:', currentUser.authUid);
 
+      // Corrigir MIME type para JPG
+      let contentType = `image/${fileExt}`;
+      if (fileExt === 'jpg') {
+        contentType = 'image/jpeg';
+      }
+
       // Upload com service role (deve bypassar RLS)
       const { data, error: uploadError } = await supabase.storage
         .from('receipts')
         .upload(filePath, buffer, {
-          contentType: `image/${fileExt}`,
+          contentType,
           cacheControl: '3600',
           upsert: true
         });
