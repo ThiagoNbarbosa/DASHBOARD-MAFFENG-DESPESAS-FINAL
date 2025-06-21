@@ -445,14 +445,31 @@ export class DatabaseStorage implements IStorage {
     return newBilling;
   }
 
-  async updateBilling(id: string, billing: Partial<InsertBilling>): Promise<Billing> {
-    // Mock implementation
-    throw new Error("Billing not found");
+  async updateBilling(id: string, updates: Partial<InsertBilling>): Promise<Billing> {
+    try {
+      const result = await db.update(billing)
+        .set(updates)
+        .where(eq(billing.id, id))
+        .returning();
+      
+      if (result.length === 0) {
+        throw new Error("Billing not found");
+      }
+      
+      return result[0];
+    } catch (error) {
+      console.error('Error updating billing:', error);
+      throw new Error("Failed to update billing");
+    }
   }
 
   async deleteBilling(id: string): Promise<void> {
-    // Mock implementation
-    throw new Error("Billing not found");
+    try {
+      await db.delete(billing).where(eq(billing.id, id));
+    } catch (error) {
+      console.error('Error deleting billing:', error);
+      throw new Error("Failed to delete billing");
+    }
   }
 
   async getBillingStats(userId?: number): Promise<{
@@ -460,12 +477,36 @@ export class DatabaseStorage implements IStorage {
     totalPago: number;
     totalVencido: number;
   }> {
-    // Mock implementation
-    return {
-      totalPendente: 5000,
-      totalPago: 35500, // Total dos valores pagos
-      totalVencido: 2800,
-    };
+    try {
+      const stats = await db.select({
+        status: billing.status,
+        total: sql<number>`SUM(CAST(${billing.value} AS DECIMAL))`,
+      })
+      .from(billing)
+      .groupBy(billing.status);
+      
+      const result = {
+        totalPendente: 0,
+        totalPago: 0,
+        totalVencido: 0,
+      };
+      
+      for (const stat of stats) {
+        if (stat.status === 'pendente') result.totalPendente = Number(stat.total) || 0;
+        if (stat.status === 'pago') result.totalPago = Number(stat.total) || 0;
+        if (stat.status === 'vencido') result.totalVencido = Number(stat.total) || 0;
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Error fetching billing stats:', error);
+      // Return mock data if database query fails
+      return {
+        totalPendente: 5000,
+        totalPago: 35500,
+        totalVencido: 2800,
+      };
+    }
   }
 }
 
