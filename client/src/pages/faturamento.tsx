@@ -174,6 +174,8 @@ export default function Faturamento() {
         return "bg-yellow-100 text-yellow-800";
       case "vencido":
         return "bg-red-100 text-red-800";
+      case "cancelado":
+        return "bg-gray-100 text-gray-800 line-through";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -187,6 +189,8 @@ export default function Faturamento() {
         return "Pendente";
       case "vencido":
         return "Vencido";
+      case "cancelado":
+        return "Cancelado";
       default:
         return status;
     }
