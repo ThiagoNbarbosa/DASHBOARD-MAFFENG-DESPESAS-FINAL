@@ -32,35 +32,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Authentication middleware
   const requireAuth = (req: any, res: any, next: any) => {
-    console.log('🔐 Verificando autenticação:', {
-      sessionId: req.sessionID,
-      userId: req.session.userId,
-      userRole: req.session.userRole,
-      method: req.method,
-      url: req.url
-    });
-    
     if (!req.session.userId) {
-      console.log('❌ Autenticação falhou - sem userId na sessão');
       return res.status(401).json({ message: "Authentication required" });
     }
-    
-    console.log('✅ Autenticação confirmada para usuário:', req.session.userId);
     next();
   };
 
   const requireAdmin = (req: any, res: any, next: any) => {
-    console.log('🔐 Verificando acesso admin:', {
-      userId: req.session.userId,
-      userRole: req.session.userRole
-    });
-    
     if (!req.session.userId || req.session.userRole !== "admin") {
-      console.log('❌ Acesso admin negado');
       return res.status(403).json({ message: "Admin access required" });
     }
-    
-    console.log('✅ Acesso admin confirmado');
     next();
   };
 
@@ -223,12 +204,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Image upload route - Supabase Storage
   app.post("/api/upload", requireAuth, async (req, res) => {
     try {
-      console.log('=== UPLOAD DEBUG INFO ===');
-      console.log('Supabase URL:', process.env.VITE_SUPABASE_URL ? 'Configurada' : 'NÃO CONFIGURADA');
-      console.log('Service Key:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Configurada' : 'NÃO CONFIGURADA');
-      
       if (!req.body || !req.body.file || !req.body.filename) {
-        console.log('Erro: Dados do arquivo faltando');
         return res.status(400).json({ message: "Arquivo e nome do arquivo são obrigatórios" });
       }
 
@@ -236,60 +212,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.session.userId;
 
       if (!userId) {
-        console.log('Erro: Usuário não autenticado');
         return res.status(401).json({ message: "Usuário não autenticado" });
       }
-
-      console.log('Upload iniciado para usuário:', userId);
-      console.log('Nome do arquivo:', filename);
 
       // Converter base64 para buffer
       const base64Data = fileData.replace(/^data:image\/\w+;base64,/, '');
       const buffer = Buffer.from(base64Data, 'base64');
-      console.log('Tamanho do buffer:', buffer.length, 'bytes');
 
       const fileExt = filename.split('.').pop();
       const fileName = `${userId}_${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      console.log('Caminho do arquivo:', filePath);
-
       // Verificar/criar bucket usando apenas a API de Storage
       try {
-        console.log('Verificando buckets existentes...');
-        const { data: buckets, error: listError } = await supabase.storage.listBuckets();
-        
-        if (listError) {
-          console.log('Erro ao listar buckets:', listError);
-        } else {
-          console.log('Buckets encontrados:', buckets?.map(b => b.name) || []);
-        }
-        
+        const { data: buckets } = await supabase.storage.listBuckets();
         const receiptsBucket = buckets?.find(bucket => bucket.name === 'receipts');
 
         if (!receiptsBucket) {
-          console.log('Criando bucket receipts...');
-          const { data: newBucket, error: createError } = await supabase.storage.createBucket('receipts', { 
+          await supabase.storage.createBucket('receipts', { 
             public: true,
             allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
             fileSizeLimit: 5242880
           });
-          
-          if (createError) {
-            console.log('Erro ao criar bucket:', createError);
-          } else {
-            console.log('✓ Bucket criado com sucesso');
-          }
-        } else {
-          console.log('✓ Bucket receipts já existe');
         }
       } catch (bucketError) {
-        console.log('Erro na verificação do bucket:', bucketError);
-        console.log('Continuando com o upload...');
+        // Continue com upload mesmo se verificação do bucket falhar
       }
 
       // Upload com service role (deve bypassar RLS)
-      console.log('Iniciando upload para Supabase...');
       const { data, error: uploadError } = await supabase.storage
         .from('receipts')
         .upload(filePath, buffer, {
@@ -299,24 +249,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
 
       if (uploadError) {
-        console.error('❌ Erro no upload para Supabase:', uploadError);
-        console.error('Detalhes do erro:', JSON.stringify(uploadError, null, 2));
+        console.error('Erro no upload para Supabase:', uploadError);
         return res.status(500).json({ 
-          message: `Erro no upload: ${uploadError.message}`,
-          details: uploadError 
+          message: `Erro no upload: ${uploadError.message}`
         });
       }
-
-      console.log('✓ Upload realizado com sucesso');
-      console.log('Dados retornados:', data);
 
       // Obter URL pública
       const { data: { publicUrl } } = supabase.storage
         .from('receipts')
         .getPublicUrl(filePath);
-
-      console.log('✓ URL pública gerada:', publicUrl);
-      console.log('=== FIM UPLOAD DEBUG ===');
       
       res.json({ url: publicUrl });
     } catch (error: any) {
@@ -508,16 +450,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/billing", requireAuth, async (req, res) => {
     try {
-      console.log('Criando faturamento para usuário:', req.session.userId);
-      console.log('Dados recebidos:', req.body);
-      
       const billingData = req.body;
       const newBilling = await billingStorage.createBilling({
         ...billingData,
         userId: req.session.userId!,
       });
-      
-      console.log('Faturamento criado com sucesso:', newBilling);
       res.status(201).json(newBilling);
     } catch (error) {
       console.error("Error creating billing:", error);
