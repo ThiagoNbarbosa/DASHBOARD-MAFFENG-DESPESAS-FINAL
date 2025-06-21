@@ -39,10 +39,16 @@ export default function ExpenseTable() {
     queryFn: authApi.getCurrentUser,
   });
 
-  // Query para despesas com filtros aplicados
-  const { data: filteredExpenses = [], isLoading: isLoadingFiltered } = useQuery<Expense[]>({
-    queryKey: ['/api/expenses', 'filtered', filters],
+  // Query unificada para despesas (reduz consultas duplicadas)
+  const hasActiveFilters = filters.year !== "all" || filters.month !== "all" || filters.category !== "all" || filters.contractNumber !== "" || filters.paymentMethod !== "all";
+  
+  const { data: allExpenses = [], isLoading } = useQuery<Expense[]>({
+    queryKey: ['/api/expenses', hasActiveFilters ? 'filtered' : 'recent', filters],
     queryFn: async () => {
+      if (!hasActiveFilters) {
+        return await apiRequest('/api/expenses', 'GET');
+      }
+      
       const params = new URLSearchParams();
       if (filters.year && filters.year !== "all") params.set('year', filters.year);
       if (filters.month && filters.month !== "all") {
@@ -55,16 +61,11 @@ export default function ExpenseTable() {
       
       return await apiRequest(`/api/expenses?${params}`, 'GET');
     },
-    enabled: filters.year !== "all" || filters.month !== "all" || filters.category !== "all" || filters.contractNumber !== "" || filters.paymentMethod !== "all"
   });
 
-  // Query para despesas recentes (sem filtros)
-  const { data: recentExpenses = [], isLoading: isLoadingRecent } = useQuery<Expense[]>({
-    queryKey: ['/api/expenses', 'recent'],
-    queryFn: async () => {
-      return await apiRequest('/api/expenses', 'GET');
-    },
-  });
+  // Separar dados para exibição
+  const filteredExpenses = hasActiveFilters ? allExpenses : [];
+  const recentExpenses = hasActiveFilters ? [] : allExpenses;
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => apiRequest(`/api/expenses/${id}`, 'DELETE'),
@@ -283,7 +284,7 @@ export default function ExpenseTable() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {isLoadingFiltered ? (
+            {isLoading ? (
               <div className="text-center py-8">Carregando despesas filtradas...</div>
             ) : filteredExpenses.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
@@ -388,7 +389,7 @@ export default function ExpenseTable() {
           <CardTitle className="text-base font-semibold">Despesas Recentes</CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoadingRecent ? (
+          {isLoading ? (
             <div className="text-center py-8">Carregando despesas...</div>
           ) : recentExpenses.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
