@@ -16,7 +16,10 @@ export interface IStorage {
   // User methods
   getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUsersByRole(role: string): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
+  createUserWithAuth(user: InsertUser & { authUid: string }): Promise<User>;
+  updateUserAuthUid(id: number, authUid: string): Promise<User>;
   
   // Expense methods
   getExpenses(filters?: {
@@ -88,11 +91,28 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
+  async getUsersByRole(role: string): Promise<User[]> {
+    const result = await db.select().from(users).where(eq(users.role, role));
+    return result;
+  }
+
+  async createUserWithAuth(user: InsertUser & { authUid: string }): Promise<User> {
+    const result = await db.insert(users).values(user).returning();
+    return result[0];
+  }
+
+  async updateUserAuthUid(id: number, authUid: string): Promise<User> {
+    const result = await db.update(users).set({ authUid }).where(eq(users.id, id)).returning();
+    return result[0];
+  }
+
   async getExpenses(filters?: {
     userId?: number;
+    userIds?: number[];
     month?: string;
     category?: string;
     contractNumber?: string;
+    paymentMethod?: string;
   }): Promise<Expense[]> {
     let query = db.select().from(expenses);
     
@@ -100,6 +120,8 @@ export class DatabaseStorage implements IStorage {
     
     if (filters?.userId) {
       conditions.push(eq(expenses.userId, filters.userId));
+    } else if (filters?.userIds && filters.userIds.length > 0) {
+      conditions.push(sql`${expenses.userId} IN (${filters.userIds.join(',')})`);
     }
     
     if (filters?.month) {
