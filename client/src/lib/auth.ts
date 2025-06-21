@@ -10,23 +10,20 @@ export interface AuthUser {
 
 export const authApi = {
   login: async (credentials: LoginData): Promise<AuthUser> => {
-    const response = await apiRequest('POST', '/api/auth/login', credentials);
-    return response.json();
+    return await apiRequest('/api/auth/login', 'POST', credentials);
   },
 
   signup: async (userData: SignUpData): Promise<AuthUser> => {
-    const response = await apiRequest('POST', '/api/auth/signup', userData);
-    return response.json();
+    return await apiRequest('/api/auth/signup', 'POST', userData);
   },
 
   logout: async (): Promise<void> => {
-    await apiRequest('POST', '/api/auth/logout');
+    await apiRequest('/api/auth/logout', 'POST');
   },
 
   getCurrentUser: async (): Promise<AuthUser | null> => {
     try {
-      const response = await apiRequest('GET', '/api/auth/me');
-      return response.json();
+      return await apiRequest('/api/auth/me', 'GET');
     } catch (error) {
       return null;
     }

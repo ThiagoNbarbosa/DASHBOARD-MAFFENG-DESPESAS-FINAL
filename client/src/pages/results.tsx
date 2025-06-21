@@ -58,8 +58,7 @@ export default function Results() {
       }
       if (filters.contractNumber) params.set('contractNumber', filters.contractNumber);
 
-      const response = await apiRequest('GET', `/api/stats/categories?${params}`);
-      return response.json();
+      return await apiRequest(`/api/stats/categories?${params}`, 'GET');
     },
   });
 
@@ -73,16 +72,14 @@ export default function Results() {
       }
       if (filters.contractNumber) params.set('contractNumber', filters.contractNumber);
 
-      const response = await apiRequest('GET', `/api/stats/payment-methods?${params}`);
-      return response.json();
+      return await apiRequest(`/api/stats/payment-methods?${params}`, 'GET');
     },
   });
 
   const { data: monthlyStats = [] } = useQuery({
     queryKey: ['/api/stats/monthly'],
     queryFn: async () => {
-      const response = await apiRequest('GET', '/api/stats/monthly');
-      return response.json();
+      return await apiRequest('/api/stats/monthly', 'GET');
     },
   });
 

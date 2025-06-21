@@ -87,11 +87,7 @@ export default function ExpenseModal() {
         paymentDate: new Date(data.paymentDate).toISOString(),
       };
 
-      const response = await apiRequest('POST', '/api/expenses', expenseData);
-      if (!response.ok) {
-        throw new Error("Erro ao salvar despesa");
-      }
-      return response.json();
+      return await apiRequest('/api/expenses', 'POST', expenseData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/expenses'] });
