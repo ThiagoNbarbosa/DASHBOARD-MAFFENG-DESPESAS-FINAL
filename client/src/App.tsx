@@ -10,6 +10,7 @@ import Dashboard from "@/pages/dashboard";
 import Despesas from "@/pages/despesas";
 import Results from "@/pages/results";
 import Faturamento from "@/pages/faturamento";
+import Relatorios from "@/pages/relatorios";
 import Final from "@/pages/final";
 import NotFound from "@/pages/not-found";
 
@@ -41,6 +42,7 @@ function Router() {
       <Route path="/" component={Dashboard} />
       <Route path="/despesas" component={Despesas} />
       <Route path="/faturamento" component={Faturamento} />
+      <Route path="/relatorios" component={Relatorios} />
       <Route path="/results" component={Results} />
       <Route path="/final" component={Final} />
       <Route component={NotFound} />
