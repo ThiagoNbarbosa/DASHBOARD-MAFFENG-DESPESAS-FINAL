@@ -155,27 +155,26 @@ export default function ExpenseModal() {
   };
 
   const formatCurrency = (value: string) => {
-    // Remove tudo que não é número
-    const numbers = value.replace(/\D/g, '');
+    if (!value) return "";
+    const numericValue = parseFloat(value);
+    if (isNaN(numericValue)) return "";
     
-    // Converte para centavos
-    const cents = parseFloat(numbers) / 100;
-    
-    // Formata como moeda brasileira
-    return cents.toLocaleString('pt-BR', {
+    return numericValue.toLocaleString('pt-BR', {
       style: 'currency',
-      currency: 'BRL'
+      currency: 'BRL',
+      minimumFractionDigits: 2,
     });
   };
 
   const handleTotalValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value.replace(/\D/g, '');
-    const numericValue = (parseFloat(rawValue) / 100).toFixed(2);
-    
-    setFormData({ 
-      ...formData, 
-      totalValue: rawValue ? numericValue : ""
-    });
+    const inputValue = e.target.value;
+    const numericValue = inputValue.replace(/\D/g, '');
+    if (numericValue === '') {
+      setFormData({ ...formData, totalValue: '' });
+    } else {
+      const decimalValue = (parseInt(numericValue) / 100).toFixed(2);
+      setFormData({ ...formData, totalValue: decimalValue });
+    }
   };
 
   const categories = [
@@ -228,7 +227,7 @@ export default function ExpenseModal() {
               <Input
                 id="totalValue"
                 type="text"
-                value={formData.totalValue ? formatCurrency((parseFloat(formData.totalValue) * 100).toString()) : ""}
+                value={formData.totalValue ? formatCurrency(formData.totalValue) : ""}
                 onChange={handleTotalValueChange}
                 placeholder="R$ 0,00"
                 required
