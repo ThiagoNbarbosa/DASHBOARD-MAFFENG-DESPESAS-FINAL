@@ -457,7 +457,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const updates = req.body;
-      const updatedBilling = await storage.updateBilling(id, updates);
+      const updatedBilling = await billingStorage.updateBilling(id, updates);
       res.json(updatedBilling);
     } catch (error) {
       console.error("Error updating billing:", error);
@@ -468,7 +468,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/billing/:id", requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      await storage.deleteBilling(id);
+      await billingStorage.deleteBilling(id);
       res.status(204).send();
     } catch (error) {
       console.error("Error deleting billing:", error);
@@ -478,7 +478,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/billing/stats", requireAdmin, async (req, res) => {
     try {
-      const stats = await storage.getBillingStats();
+      const stats = await billingStorage.getBillingStats();
       res.json(stats);
     } catch (error) {
       console.error("Error fetching billing stats:", error);
