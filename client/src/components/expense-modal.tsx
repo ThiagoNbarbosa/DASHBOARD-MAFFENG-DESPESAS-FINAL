@@ -57,17 +57,10 @@ export default function ExpenseModal() {
           console.log('Enviando arquivo para o servidor...');
 
           // Enviar para o servidor backend que tem service role key
-          const uploadResponse = await apiRequest('POST', '/api/upload', {
+          const result = await apiRequest('/api/upload', 'POST', {
             file: fileData,
             filename: imageFile.name
           });
-
-          if (!uploadResponse.ok) {
-            const error = await uploadResponse.json();
-            throw new Error(error.message || 'Erro no upload');
-          }
-
-          const result = await uploadResponse.json();
           imageUrl = result.url;
           
           console.log('Upload concluído, URL:', imageUrl);
