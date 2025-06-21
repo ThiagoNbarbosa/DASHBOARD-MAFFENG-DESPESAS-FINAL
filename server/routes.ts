@@ -308,12 +308,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Para usuários não-admin, mostrar dados de usuários com mesma função
           const currentUser = await storage.getUser(req.session.userId!);
           if (currentUser) {
-            console.log('Buscando usuários com função:', currentUser.role);
-            // Buscar todos os usuários com a mesma função
-            const usersWithSameRole = await (storage as any).getUsersByRole(currentUser.role);
-            console.log('Usuários encontrados:', usersWithSameRole.length);
-            const userIds = usersWithSameRole.map((u: any) => u.id);
-            filters.userIds = userIds;
+            // Para usuários não-admin, usar apenas seus próprios dados por enquanto
+            // TODO: Implementar compartilhamento por função quando getUsersByRole for corrigido
+            filters.userId = currentUser.id;
           } else {
             filters.userId = req.session.userId;
           }
@@ -476,15 +473,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Usuários com mesma função podem ver dados uns dos outros
       if (req.session.userRole !== "admin") {
-        const currentUser = await storage.getUser(req.session.userId!);
-        if (currentUser) {
-          // Buscar todos os usuários com a mesma função
-          const usersWithSameRole = await (storage as any).getUsersByRole(currentUser.role);
-          const userIds = usersWithSameRole.map((u: any) => u.id);
-          filters.userIds = userIds;
-        } else {
-          filters.userId = req.session.userId;
-        }
+        // Para usuários não-admin, mostrar apenas seus próprios dados
+        filters.userId = req.session.userId;
       }
 
       if (year) filters.year = year as string;
