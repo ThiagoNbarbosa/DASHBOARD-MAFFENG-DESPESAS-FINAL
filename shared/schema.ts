@@ -34,6 +34,7 @@ export const billing = pgTable("billing", {
   description: text("description").notNull(),
   value: numeric("value").notNull(),
   dueDate: timestamp("due_date").notNull(),
+  paymentDate: timestamp("payment_date"),
   issueDate: timestamp("issue_date").notNull(),
   status: text("status").notNull().default("pendente"), // pendente, pago, vencido
   createdAt: timestamp("created_at").defaultNow(),
