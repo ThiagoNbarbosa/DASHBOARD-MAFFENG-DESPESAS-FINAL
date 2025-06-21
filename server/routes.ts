@@ -204,7 +204,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Image upload route - Supabase Storage
   app.post("/api/upload", requireAuth, async (req, res) => {
     try {
+      console.log('=== DEBUG UPLOAD ===');
+      console.log('Usuário ID:', req.session.userId);
+      console.log('Função do usuário:', req.session.userRole);
+      console.log('Body recebido:', req.body ? 'Presente' : 'Ausente');
+      
       if (!req.body || !req.body.file || !req.body.filename) {
+        console.log('Erro: Dados faltando no body');
         return res.status(400).json({ message: "Arquivo e nome do arquivo são obrigatórios" });
       }
 
@@ -212,6 +218,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.session.userId;
 
       if (!userId) {
+        console.log('Erro: Usuário não autenticado');
         return res.status(401).json({ message: "Usuário não autenticado" });
       }
 
@@ -238,6 +245,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (bucketError) {
         // Continue com upload mesmo se verificação do bucket falhar
       }
+
+      // Verificar se o usuário existe no Supabase Auth
+      const currentUser = await storage.getUser(userId);
+      if (!currentUser || !currentUser.authUid) {
+        console.log('Erro: Usuário não tem authUid válido');
+        return res.status(400).json({ message: "Usuário não está sincronizado com Supabase Auth" });
+      }
+
+      console.log('AuthUid do usuário:', currentUser.authUid);
 
       // Upload com service role (deve bypassar RLS)
       const { data, error: uploadError } = await supabase.storage
@@ -274,9 +290,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const filters: any = {};
 
-      // Regular users can only see their own expenses
+      // Usuários com mesma função podem ver dados uns dos outros
+      // Apenas admins veem todos os dados
       if (req.session.userRole !== "admin") {
-        filters.userId = req.session.userId;
+        // Para usuários não-admin, mostrar dados de usuários com mesma função
+        const currentUser = await storage.getUser(req.session.userId!);
+        if (currentUser) {
+          // Buscar todos os usuários com a mesma função
+          const usersWithSameRole = await storage.getUsersByRole(currentUser.role);
+          const userIds = usersWithSameRole.map(u => u.id);
+          filters.userIds = userIds;
+        } else {
+          filters.userId = req.session.userId;
+        }
       }
 
       if (year && year !== "all") filters.year = year as string;
@@ -430,9 +456,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { year, month, status, contractNumber } = req.query;
       const filters: any = {};
 
-      // Regular users can only see their own billing
+      // Usuários com mesma função podem ver dados uns dos outros
       if (req.session.userRole !== "admin") {
-        filters.userId = req.session.userId;
+        const currentUser = await storage.getUser(req.session.userId!);
+        if (currentUser) {
+          // Buscar todos os usuários com a mesma função
+          const usersWithSameRole = await storage.getUsersByRole(currentUser.role);
+          const userIds = usersWithSameRole.map(u => u.id);
+          filters.userIds = userIds;
+        } else {
+          filters.userId = req.session.userId;
+        }
       }
 
       if (year) filters.year = year as string;
