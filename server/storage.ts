@@ -3,7 +3,13 @@ import { eq, and, like, gte, lte, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 
-const sql = neon(process.env.DATABASE_URL!);
+// Verificar se DATABASE_URL está configurada corretamente
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) {
+  console.error('DATABASE_URL não está configurada');
+}
+
+const sql = neon(databaseUrl!);
 const db = drizzle(sql);
 
 export interface IStorage {

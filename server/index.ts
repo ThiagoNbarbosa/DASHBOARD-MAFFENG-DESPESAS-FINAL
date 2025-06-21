@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initBillingTable } from "./init-billing";
+import { initUsersTable } from "./init-users";
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
