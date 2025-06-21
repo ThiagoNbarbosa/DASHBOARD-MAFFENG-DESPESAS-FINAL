@@ -301,24 +301,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const filters: any = {};
 
-      // Usuários com mesma função podem ver dados uns dos outros
-      // Apenas admins veem todos os dados
+      // Administradores podem ver despesas de todos os usuários
+      // Usuários regulares veem apenas suas próprias despesas
       if (req.session.userRole !== "admin") {
-        try {
-          // Para usuários não-admin, mostrar dados de usuários com mesma função
-          const currentUser = await storage.getUser(req.session.userId!);
-          if (currentUser) {
-            // Para usuários não-admin, usar apenas seus próprios dados por enquanto
-            // TODO: Implementar compartilhamento por função quando getUsersByRole for corrigido
-            filters.userId = currentUser.id;
-          } else {
-            filters.userId = req.session.userId;
-          }
-        } catch (error) {
-          console.error('Erro ao buscar usuários por função:', error);
-          filters.userId = req.session.userId;
-        }
+        filters.userId = req.session.userId;
       }
+      // Para admins, não definimos userId no filtro, permitindo ver todas as despesas
 
       if (year && year !== "all") filters.year = year as string;
       if (month && month !== "all") filters.month = month as string;
@@ -426,7 +414,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/stats/categories", requireAdmin, async (req, res) => {
+  app.get("/api/stats/categories", requireAuth, async (req, res) => {
     try {
       const { month, contractNumber } = req.query;
       const filters: any = {};
@@ -441,7 +429,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/stats/payment-methods", requireAdmin, async (req, res) => {
+  app.get("/api/stats/payment-methods", requireAuth, async (req, res) => {
     try {
       const { month, contractNumber } = req.query;
       const filters: any = {};
@@ -456,7 +444,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/stats/monthly", requireAdmin, async (req, res) => {
+  app.get("/api/stats/monthly", requireAuth, async (req, res) => {
     try {
       const stats = await storage.getMonthlyTrends();
       res.json(stats);
