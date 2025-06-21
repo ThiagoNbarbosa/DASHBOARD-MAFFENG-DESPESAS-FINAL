@@ -42,7 +42,7 @@ export default function Sidebar() {
     {
       name: "Despesas",
       href: "/despesas",
-      icon: FileText,
+      icon: CreditCard,
       current: location === "/despesas",
       description: "Gestão de gastos"
     },
@@ -56,7 +56,7 @@ export default function Sidebar() {
     {
       name: "Relatórios",
       href: "/relatorios",
-      icon: FileText,
+      icon: Download,
       current: location === "/relatorios",
       description: "Exportar dados filtrados"
     },
