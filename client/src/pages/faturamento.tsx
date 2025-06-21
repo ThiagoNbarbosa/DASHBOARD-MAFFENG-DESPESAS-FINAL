@@ -121,7 +121,7 @@ export default function Faturamento() {
 
 
 
-  // Query para buscar dados de faturamento
+  // Query para buscar dados de faturamento com otimização
   const { data: faturamentos = [], isLoading } = useQuery({
     queryKey: ['/api/billing', filters],
     queryFn: async () => {
@@ -148,6 +148,8 @@ export default function Faturamento() {
         issueDate: item.issueDate
       }));
     },
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    refetchOnWindowFocus: false,
   });
 
   const getStatusColor = (status: string) => {
@@ -536,13 +538,21 @@ function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
 
   const createPaymentMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
+      // Validar datas
+      const issueDate = new Date(data.issueDate);
+      const dueDate = new Date(data.dueDate);
+      
+      if (dueDate <= issueDate) {
+        throw new Error('Data de vencimento deve ser posterior à data de emissão');
+      }
+      
       return await apiRequest('/api/billing', 'POST', {
         clientName: data.clientName,
         contractNumber: data.contractNumber,
         description: data.description,
         value: parseFloat(data.value),
-        dueDate: new Date(data.dueDate).toISOString(),
-        issueDate: new Date(data.issueDate).toISOString(),
+        dueDate: dueDate.toISOString(),
+        issueDate: issueDate.toISOString(),
         status: data.status,
       });
     },
