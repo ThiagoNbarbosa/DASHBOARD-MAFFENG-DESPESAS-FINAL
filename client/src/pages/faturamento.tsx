@@ -519,6 +519,7 @@ function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
     description: "",
     value: "",
     dueDate: "",
+    paymentDate: "",
     issueDate: new Date().toISOString().split('T')[0],
     status: "pendente" as const
   });
@@ -564,6 +565,7 @@ function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
         description: data.description,
         value: parseFloat(data.value),
         dueDate: dueDate.toISOString(),
+        paymentDate: data.paymentDate ? new Date(data.paymentDate).toISOString() : null,
         issueDate: issueDate.toISOString(),
         status: data.status,
       });
@@ -588,6 +590,7 @@ function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
         description: "",
         value: "",
         dueDate: "",
+        paymentDate: "",
         issueDate: new Date().toISOString().split('T')[0],
         status: "pendente"
       });
@@ -683,6 +686,17 @@ function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
               value={formData.dueDate}
               onChange={(e) => setFormData(prev => ({ ...prev, dueDate: e.target.value }))}
               required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Data de Pagamento <span className="text-sm text-gray-500">(opcional)</span>
+            </label>
+            <Input
+              type="date"
+              value={formData.paymentDate}
+              onChange={(e) => setFormData(prev => ({ ...prev, paymentDate: e.target.value }))}
             />
           </div>
 
