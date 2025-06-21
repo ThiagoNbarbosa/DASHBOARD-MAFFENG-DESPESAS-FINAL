@@ -510,21 +510,27 @@ function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
 
   // Função para formatar moeda
   const formatCurrency = (value: string) => {
-    const numericValue = value.replace(/\D/g, '');
-    const formattedValue = (parseInt(numericValue) / 100).toLocaleString('pt-BR', {
+    if (!value) return "";
+    const numericValue = parseFloat(value);
+    if (isNaN(numericValue)) return "";
+    
+    return numericValue.toLocaleString('pt-BR', {
       style: 'currency',
       currency: 'BRL',
       minimumFractionDigits: 2,
     });
-    return formattedValue;
   };
 
   // Handler para mudança no valor
   const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     const numericValue = inputValue.replace(/\D/g, '');
-    const decimalValue = (parseInt(numericValue) / 100).toFixed(2);
-    setFormData(prev => ({ ...prev, value: decimalValue }));
+    if (numericValue === '') {
+      setFormData(prev => ({ ...prev, value: '' }));
+    } else {
+      const decimalValue = (parseInt(numericValue) / 100).toFixed(2);
+      setFormData(prev => ({ ...prev, value: decimalValue }));
+    }
   };
 
   const createPaymentMutation = useMutation({
@@ -628,7 +634,7 @@ function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
             </label>
             <Input
               type="text"
-              value={formData.value ? formatCurrency((parseFloat(formData.value) * 100).toString()) : ""}
+              value={formData.value ? formatCurrency(formData.value) : ""}
               onChange={handleValueChange}
               placeholder="R$ 0,00"
               required
