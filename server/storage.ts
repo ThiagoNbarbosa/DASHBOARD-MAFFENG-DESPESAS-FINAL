@@ -24,6 +24,7 @@ export interface IStorage {
   // Expense methods
   getExpenses(filters?: {
     userId?: number;
+    userIds?: number[];
     year?: string;
     month?: string;
     category?: string;
@@ -92,8 +93,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUsersByRole(role: string): Promise<User[]> {
-    const result = await db.select().from(users).where(eq(users.role, role));
-    return result;
+    try {
+      const result = await db.select().from(users).where(eq(users.role, role));
+      return result;
+    } catch (error) {
+      console.error('Erro ao buscar usuários por função:', error);
+      return [];
+    }
   }
 
   async createUserWithAuth(user: InsertUser & { authUid: string }): Promise<User> {
@@ -121,7 +127,7 @@ export class DatabaseStorage implements IStorage {
     if (filters?.userId) {
       conditions.push(eq(expenses.userId, filters.userId));
     } else if (filters?.userIds && filters.userIds.length > 0) {
-      conditions.push(sql`${expenses.userId} IN (${filters.userIds.join(',')})`);
+      conditions.push(inArray(expenses.userId, filters.userIds));
     }
     
     if (filters?.month) {
