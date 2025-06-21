@@ -509,7 +509,7 @@ function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
           clientName: data.clientName,
           contractNumber: data.contractNumber,
           description: data.description,
-          value: data.value,
+          value: parseFloat(data.value.replace(/[^\d,]/g, '').replace(',', '.')).toFixed(2),
           dueDate: new Date(data.dueDate),
           issueDate: new Date(data.issueDate),
           status: data.status,
