@@ -39,7 +39,8 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Inicializar tabela billing
+  // Inicializar tabelas do banco
+  await initUsersTable();
   await initBillingTable();
   
   const server = await registerRoutes(app);
