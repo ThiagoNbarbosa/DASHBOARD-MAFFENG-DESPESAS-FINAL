@@ -299,7 +299,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (currentUser) {
             console.log('Buscando usuários com função:', currentUser.role);
             // Buscar todos os usuários com a mesma função
-            const usersWithSameRole = await storage.getUsersByRole(currentUser.role);
+            const usersWithSameRole = await (storage as any).getUsersByRole(currentUser.role);
             console.log('Usuários encontrados:', usersWithSameRole.length);
             const userIds = usersWithSameRole.map((u: any) => u.id);
             filters.userIds = userIds;
@@ -468,8 +468,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const currentUser = await storage.getUser(req.session.userId!);
         if (currentUser) {
           // Buscar todos os usuários com a mesma função
-          const usersWithSameRole = await storage.getUsersByRole(currentUser.role);
-          const userIds = usersWithSameRole.map(u => u.id);
+          const usersWithSameRole = await (storage as any).getUsersByRole(currentUser.role);
+          const userIds = usersWithSameRole.map((u: any) => u.id);
           filters.userIds = userIds;
         } else {
           filters.userId = req.session.userId;

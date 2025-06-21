@@ -59,6 +59,7 @@ export interface IStorage {
   // Billing methods
   getBilling(filters?: {
     userId?: number;
+    userIds?: number[];
     year?: string;
     month?: string;
     status?: string;
@@ -417,6 +418,7 @@ export class DatabaseStorage implements IStorage {
   // Billing methods implementation (mock data until table is created)
   async getBilling(filters?: {
     userId?: number;
+    userIds?: number[];
     year?: string;
     month?: string;
     status?: string;
