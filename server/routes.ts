@@ -2,6 +2,7 @@ import type { Express } from "express";
 import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage-pg";
+import { billingStorage } from "./billing-storage";
 import { insertExpenseSchema, loginSchema, signUpSchema } from "@shared/schema";
 import bcrypt from "bcrypt";
 import { supabase } from "./supabase";
@@ -430,7 +431,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (status && status !== "all") filters.status = status as string;
       if (contractNumber) filters.contractNumber = contractNumber as string;
 
-      const billing = await storage.getBilling(filters);
+      const billing = await billingStorage.getBilling(filters);
       res.json(billing);
     } catch (error) {
       console.error("Error fetching billing:", error);
@@ -441,7 +442,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/billing", requireAdmin, async (req, res) => {
     try {
       const billingData = req.body;
-      const newBilling = await storage.createBilling({
+      const newBilling = await billingStorage.createBilling({
         ...billingData,
         userId: req.session.userId!,
       });

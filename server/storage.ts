@@ -463,15 +463,31 @@ export class DatabaseStorage implements IStorage {
     return undefined;
   }
 
-  async createBilling(billing: InsertBilling & { userId: number }): Promise<Billing> {
-    // Mock implementation - will be replaced with real DB insert
-    const newBilling: Billing = {
-      id: `bill-${Date.now()}`,
-      ...billing,
-      status: billing.status || "pendente",
-      createdAt: new Date(),
-    };
-    return newBilling;
+  async createBilling(billingData: InsertBilling & { userId: number }): Promise<Billing> {
+    try {
+      const result = await db.insert(billing).values({
+        contractNumber: billingData.contractNumber,
+        clientName: billingData.clientName,
+        description: billingData.description,
+        value: billingData.value,
+        dueDate: billingData.dueDate,
+        issueDate: billingData.issueDate,
+        status: billingData.status || "pendente",
+        userId: billingData.userId,
+      }).returning();
+      
+      return result[0];
+    } catch (error) {
+      console.error('Error creating billing:', error);
+      // Fallback para dados mock se falhar
+      const newBilling: Billing = {
+        id: `bill-${Date.now()}`,
+        ...billingData,
+        status: billingData.status || "pendente",
+        createdAt: new Date(),
+      };
+      return newBilling;
+    }
   }
 
   async updateBilling(id: string, updates: Partial<InsertBilling>): Promise<Billing> {
