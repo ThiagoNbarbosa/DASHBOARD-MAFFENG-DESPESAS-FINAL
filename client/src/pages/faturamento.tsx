@@ -199,13 +199,14 @@ export default function Faturamento() {
                 </p>
               </div>
               
-              {/* Botão Adicionar Pagamento */}
+              {/* Botão Adicionar Pagamento - Responsivo */}
               <Button 
                 onClick={() => setShowPaymentModal(true)}
-                className="bg-green-600 hover:bg-green-700 text-white"
+                className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base"
               >
-                <Plus className="h-4 w-4 mr-2" />
-                Adicionar Pagamento
+                <Plus className="h-4 w-4 flex-shrink-0" />
+                <span className="hidden sm:inline">Adicionar Pagamento</span>
+                <span className="sm:hidden">Adicionar</span>
               </Button>
             </div>
           </div>
@@ -636,20 +637,21 @@ function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
             </Select>
           </div>
 
-          <div className="flex gap-2 pt-4">
+          <div className="flex flex-col sm:flex-row gap-2 pt-4">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="flex-1"
+              className="flex-1 order-2 sm:order-1"
             >
               Cancelar
             </Button>
             <Button
               type="submit"
-              className="flex-1 bg-green-600 hover:bg-green-700"
+              className="flex-1 bg-green-600 hover:bg-green-700 order-1 sm:order-2"
+              disabled={createPaymentMutation.isPending}
             >
-              Adicionar Pagamento
+              {createPaymentMutation.isPending ? "Adicionando..." : "Adicionar Pagamento"}
             </Button>
           </div>
         </form>
