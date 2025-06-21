@@ -119,42 +119,7 @@ export default function Faturamento() {
     );
   }
 
-  // Mutations para cancelar e deletar faturamento (apenas admin)
-  const cancelBillingMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await fetch(`/api/billing/${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: 'vencido' }),
-      });
 
-      if (!response.ok) {
-        throw new Error('Erro ao cancelar faturamento');
-      }
-
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/billing'] });
-    },
-  });
-
-  const deleteBillingMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await fetch(`/api/billing/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Erro ao deletar faturamento');
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/billing'] });
-    },
-  });
 
   // Query para buscar dados de faturamento
   const { data: faturamentos = [], isLoading } = useQuery({
