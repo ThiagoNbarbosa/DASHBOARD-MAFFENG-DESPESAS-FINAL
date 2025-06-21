@@ -471,11 +471,15 @@ export default function Faturamento() {
                                     size="sm"
                                     variant="outline"
                                     className="text-orange-600 border-orange-600 hover:bg-orange-50"
-                                    onClick={() => cancelPaymentMutation.mutate(faturamento.id)}
+                                    onClick={() => {
+                                      if (confirm('Tem certeza que deseja cancelar este pagamento?')) {
+                                        cancelPaymentMutation.mutate(faturamento.id);
+                                      }
+                                    }}
                                     disabled={cancelPaymentMutation.isPending}
                                   >
                                     <XCircle className="h-4 w-4" />
-                                    Cancelar
+                                    <span className="ml-2 hidden sm:inline">Cancelar</span>
                                   </Button>
                                 )}
                                 <Button
@@ -483,14 +487,14 @@ export default function Faturamento() {
                                   variant="outline"
                                   className="text-red-600 border-red-600 hover:bg-red-50"
                                   onClick={() => {
-                                    if (confirm('Tem certeza que deseja excluir este pagamento?')) {
+                                    if (confirm('Tem certeza que deseja excluir este pagamento? Esta ação não pode ser desfeita.')) {
                                       deletePaymentMutation.mutate(faturamento.id);
                                     }
                                   }}
                                   disabled={deletePaymentMutation.isPending}
                                 >
                                   <Trash2 className="h-4 w-4" />
-                                  Excluir
+                                  <span className="ml-2 hidden sm:inline">Excluir</span>
                                 </Button>
                               </div>
                             </TableCell>
