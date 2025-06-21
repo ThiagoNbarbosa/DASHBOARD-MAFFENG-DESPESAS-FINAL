@@ -69,7 +69,7 @@ export default function ExpenseTable() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => apiRequest('DELETE', `/api/expenses/${id}`),
+    mutationFn: (id: string) => apiRequest(`/api/expenses/${id}`, 'DELETE'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/expenses'] });
       queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
@@ -88,7 +88,7 @@ export default function ExpenseTable() {
   });
 
   const cancelMutation = useMutation({
-    mutationFn: (id: string) => apiRequest('PATCH', `/api/expenses/${id}/cancel`),
+    mutationFn: (id: string) => apiRequest(`/api/expenses/${id}/cancel`, 'PATCH'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/expenses'] });
       queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
