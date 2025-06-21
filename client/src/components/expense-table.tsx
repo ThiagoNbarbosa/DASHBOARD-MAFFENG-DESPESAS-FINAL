@@ -53,8 +53,7 @@ export default function ExpenseTable() {
       if (filters.contractNumber) params.set('contractNumber', filters.contractNumber);
       if (filters.paymentMethod && filters.paymentMethod !== "all") params.set('paymentMethod', filters.paymentMethod);
       
-      const response = await apiRequest('GET', `/api/expenses?${params}`);
-      return response.json();
+      return await apiRequest(`/api/expenses?${params}`, 'GET');
     },
     enabled: filters.year !== "all" || filters.month !== "all" || filters.category !== "all" || filters.contractNumber !== "" || filters.paymentMethod !== "all"
   });
