@@ -203,7 +203,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Image upload route - Supabase Storage
   app.post("/api/upload", requireAuth, async (req, res) => {
     try {
+      console.log('=== UPLOAD DEBUG INFO ===');
+      console.log('Supabase URL:', process.env.VITE_SUPABASE_URL ? 'Configurada' : 'NÃO CONFIGURADA');
+      console.log('Service Key:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Configurada' : 'NÃO CONFIGURADA');
+      
       if (!req.body || !req.body.file || !req.body.filename) {
+        console.log('Erro: Dados do arquivo faltando');
         return res.status(400).json({ message: "Arquivo e nome do arquivo são obrigatórios" });
       }
 
@@ -211,32 +216,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.session.userId;
 
       if (!userId) {
+        console.log('Erro: Usuário não autenticado');
         return res.status(401).json({ message: "Usuário não autenticado" });
       }
+
+      console.log('Upload iniciado para usuário:', userId);
+      console.log('Nome do arquivo:', filename);
 
       // Converter base64 para buffer
       const base64Data = fileData.replace(/^data:image\/\w+;base64,/, '');
       const buffer = Buffer.from(base64Data, 'base64');
+      console.log('Tamanho do buffer:', buffer.length, 'bytes');
 
       const fileExt = filename.split('.').pop();
       const fileName = `${userId}_${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
+      console.log('Caminho do arquivo:', filePath);
+
       // Verificar/criar bucket usando apenas a API de Storage
       try {
-        const { data: buckets } = await supabase.storage.listBuckets();
+        console.log('Verificando buckets existentes...');
+        const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+        
+        if (listError) {
+          console.log('Erro ao listar buckets:', listError);
+        } else {
+          console.log('Buckets encontrados:', buckets?.map(b => b.name) || []);
+        }
+        
         const receiptsBucket = buckets?.find(bucket => bucket.name === 'receipts');
 
         if (!receiptsBucket) {
           console.log('Criando bucket receipts...');
-          await supabase.storage.createBucket('receipts', { public: true });
-          console.log('✓ Bucket criado com sucesso');
+          const { data: newBucket, error: createError } = await supabase.storage.createBucket('receipts', { 
+            public: true,
+            allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+            fileSizeLimit: 5242880
+          });
+          
+          if (createError) {
+            console.log('Erro ao criar bucket:', createError);
+          } else {
+            console.log('✓ Bucket criado com sucesso');
+          }
+        } else {
+          console.log('✓ Bucket receipts já existe');
         }
       } catch (bucketError) {
-        console.log('Continuando sem verificação de bucket...');
+        console.log('Erro na verificação do bucket:', bucketError);
+        console.log('Continuando com o upload...');
       }
 
       // Upload com service role (deve bypassar RLS)
+      console.log('Iniciando upload para Supabase...');
       const { data, error: uploadError } = await supabase.storage
         .from('receipts')
         .upload(filePath, buffer, {
@@ -246,16 +279,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
 
       if (uploadError) {
-        console.error('Erro no upload para Supabase:', uploadError);
-        return res.status(500).json({ message: `Erro no upload: ${uploadError.message}` });
+        console.error('❌ Erro no upload para Supabase:', uploadError);
+        console.error('Detalhes do erro:', JSON.stringify(uploadError, null, 2));
+        return res.status(500).json({ 
+          message: `Erro no upload: ${uploadError.message}`,
+          details: uploadError 
+        });
       }
+
+      console.log('✓ Upload realizado com sucesso');
+      console.log('Dados retornados:', data);
 
       // Obter URL pública
       const { data: { publicUrl } } = supabase.storage
         .from('receipts')
         .getPublicUrl(filePath);
 
-      console.log('Upload realizado com sucesso no Supabase:', publicUrl);
+      console.log('✓ URL pública gerada:', publicUrl);
+      console.log('=== FIM UPLOAD DEBUG ===');
+      
       res.json({ url: publicUrl });
     } catch (error: any) {
       console.error("Erro no upload:", error);

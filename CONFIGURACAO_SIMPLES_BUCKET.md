@@ -1,57 +1,94 @@
+# Guia Simples: Configurar Upload de Imagens no Deploy
 
-# Configuração Simples do Bucket - Supabase Storage
+## Problema
+As fotos não estão sendo salvas no ambiente de produção (deploy).
 
-## ❌ Problema Resolvido
-O erro "relation storage.policies does not exist" indica que as tabelas de políticas do Supabase Storage não existem no seu projeto.
+## Solução em 3 Passos
 
-## ✅ Solução Manual no Dashboard
+### Passo 1: Configurar Variáveis de Ambiente no Deploy
+No painel de deploy do Replit, adicione estas variáveis:
 
-### 1. Acesse o Supabase Dashboard
-1. Vá para https://supabase.com/dashboard
-2. Selecione seu projeto
-3. No menu lateral, clique em **Storage**
-
-### 2. Criar o Bucket "receipts"
-1. Clique em **New bucket**
-2. Nome: `receipts`
-3. **✓ Marque "Public bucket"** (IMPORTANTE!)
-4. Clique em **Create bucket**
-
-### 3. Configurar RLS (Row Level Security)
-1. Ainda em **Storage**, clique na aba **Policies**
-2. Clique em **New policy**
-3. Selecione o bucket **receipts**
-4. Escolha **Custom policy**
-5. Use este código:
-
-```sql
--- Política para permitir tudo através do service role
-CREATE POLICY "Allow all for service role" ON storage.objects
-FOR ALL USING (bucket_id = 'receipts');
+```
+VITE_SUPABASE_URL=https://seu-projeto.supabase.co
+VITE_SUPABASE_ANON_KEY=sua_chave_anonima
+SUPABASE_SERVICE_ROLE_KEY=sua_chave_service_role
 ```
 
-### 4. Alternativa: Desabilitar RLS
-Se as políticas não funcionarem, você pode desabilitar RLS:
+**Onde encontrar estas chaves:**
+1. Acesse seu projeto no Supabase
+2. Vá em Settings > API
+3. Copie as chaves
 
-1. Vá em **SQL Editor**
-2. Execute:
+### Passo 2: Executar SQL no Supabase
+1. Acesse o Supabase Dashboard
+2. Vá em SQL Editor
+3. Cole e execute este comando:
 
 ```sql
-ALTER TABLE storage.objects DISABLE ROW LEVEL SECURITY;
+-- Criar bucket público para imagens
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'receipts',
+  'receipts', 
+  true,
+  5242880,
+  ARRAY['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+) ON CONFLICT (id) DO UPDATE SET
+  public = true,
+  file_size_limit = 5242880,
+  allowed_mime_types = ARRAY['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
+-- Criar políticas de acesso
+DELETE FROM storage.policies WHERE bucket_id IN (
+  SELECT id FROM storage.buckets WHERE name = 'receipts'
+);
+
+INSERT INTO storage.policies (name, bucket_id, policy_role, policy, check_)
+SELECT 'Allow service role all operations', id, 'service_role', 'true', 'true' 
+FROM storage.buckets WHERE name = 'receipts';
+
+INSERT INTO storage.policies (name, bucket_id, policy_role, policy, check_)
+SELECT 'Allow public read access', id, 'public', 'true', 'true' 
+FROM storage.buckets WHERE name = 'receipts';
 ```
 
-## Como Funciona Agora
+### Passo 3: Testar
+1. Faça o deploy da aplicação
+2. Acesse a aplicação
+3. Tente fazer upload de uma imagem
+4. Verifique se ela aparece na lista
 
-1. **Backend simplificado**: Não tenta manipular tabelas de políticas
-2. **Service role**: Tem permissões totais no Supabase
-3. **Bucket público**: Permite visualização direta das imagens
-4. **Sem dependência de tabelas específicas**: Funciona independente da estrutura do storage
+## Verificação
+Se ainda não funcionar, verifique:
 
-## Teste o Upload
+1. **No Supabase Dashboard > Storage:**
+   - O bucket "receipts" deve estar visível
+   - Deve estar marcado como "Public"
 
-1. Faça login na aplicação
-2. Abra "Nova Despesa"
-3. Selecione uma imagem
-4. Preencha os dados e salve
+2. **Logs do Deploy:**
+   - Procure por mensagens de erro relacionadas ao upload
+   - Verifique se as variáveis de ambiente estão configuradas
 
-**✓ Deve funcionar sem erros de políticas!**
+3. **Teste Manual:**
+   - No Supabase Storage, tente fazer upload manual de uma imagem
+   - Se não funcionar, o problema está na configuração do Supabase
+
+## Comandos de Debug
+Execute no SQL Editor para verificar:
+
+```sql
+-- Verificar bucket
+SELECT * FROM storage.buckets WHERE name = 'receipts';
+
+-- Verificar políticas
+SELECT p.name, p.policy_role, b.name as bucket_name
+FROM storage.policies p
+JOIN storage.buckets b ON p.bucket_id = b.id
+WHERE b.name = 'receipts';
+```
+
+## Contato
+Se ainda não funcionar, verifique:
+- As chaves do Supabase estão corretas?
+- O bucket foi criado corretamente?
+- As variáveis de ambiente estão no deploy?
