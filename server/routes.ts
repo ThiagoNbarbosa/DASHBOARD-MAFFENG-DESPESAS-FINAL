@@ -246,11 +246,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Continue com upload mesmo se verificação do bucket falhar
       }
 
-      // Verificar se o usuário existe no Supabase Auth
+      // Verificar se o usuário existe no sistema
       const currentUser = await storage.getUser(userId);
-      if (!currentUser || !currentUser.authUid) {
-        console.log('Erro: Usuário não tem authUid válido');
-        return res.status(400).json({ message: "Usuário não está sincronizado com Supabase Auth" });
+      if (!currentUser) {
+        console.log('Erro: Usuário não encontrado');
+        return res.status(400).json({ message: "Usuário não encontrado" });
+      }
+      
+      // Log para debug - não bloquear upload se authUid não existir
+      if (!currentUser.authUid) {
+        console.log('Aviso: Usuário não tem authUid - upload pode falhar por políticas RLS');
       }
 
       console.log('AuthUid do usuário:', currentUser.authUid);

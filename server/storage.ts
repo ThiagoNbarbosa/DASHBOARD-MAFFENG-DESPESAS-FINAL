@@ -148,11 +148,16 @@ export class DatabaseStorage implements IStorage {
       conditions.push(like(expenses.contractNumber, `%${filters.contractNumber}%`));
     }
     
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions)) as any;
+    try {
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions)) as any;
+      }
+      
+      return await (query as any).orderBy(desc(expenses.createdAt));
+    } catch (error) {
+      console.error('Erro na consulta de despesas:', error);
+      return [];
     }
-    
-    return await (query as any).orderBy(desc(expenses.createdAt));
   }
 
   async getExpense(id: string): Promise<Expense | undefined> {
@@ -443,6 +448,14 @@ export class DatabaseStorage implements IStorage {
       
       if (filters?.contractNumber) {
         conditions.push(eq(billing.contractNumber, filters.contractNumber));
+      }
+      
+      if (filters?.userId) {
+        conditions.push(eq(billing.userId, filters.userId));
+      } else if (filters?.userIds && filters.userIds.length > 0) {
+        // Criar condições OR para múltiplos userIds no billing
+        const userConditions = filters.userIds.map((id: number) => eq(billing.userId, id));
+        conditions.push(or(...userConditions));
       }
       
       if (conditions.length > 0) {
