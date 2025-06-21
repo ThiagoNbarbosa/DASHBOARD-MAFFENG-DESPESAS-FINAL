@@ -478,6 +478,25 @@ function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
     status: "pendente" as const
   });
 
+  // Função para formatar moeda
+  const formatCurrency = (value: string) => {
+    const numericValue = value.replace(/\D/g, '');
+    const formattedValue = (parseInt(numericValue) / 100).toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      minimumFractionDigits: 2,
+    });
+    return formattedValue;
+  };
+
+  // Handler para mudança no valor
+  const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+    const numericValue = inputValue.replace(/\D/g, '');
+    const decimalValue = (parseInt(numericValue) / 100).toFixed(2);
+    setFormData(prev => ({ ...prev, value: decimalValue }));
+  };
+
   const createPaymentMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       const response = await fetch('/api/billing', {
@@ -578,10 +597,10 @@ function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
               Valor
             </label>
             <Input
-              type="number"
-              step="0.01"
-              value={formData.value}
-              onChange={(e) => setFormData(prev => ({ ...prev, value: e.target.value }))}
+              type="text"
+              value={formData.value ? formatCurrency((parseFloat(formData.value) * 100).toString()) : ""}
+              onChange={handleValueChange}
+              placeholder="R$ 0,00"
               required
             />
           </div>
