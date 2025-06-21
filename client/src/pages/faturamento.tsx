@@ -34,10 +34,32 @@ export default function Faturamento() {
   const queryClient = useQueryClient();
 
   // Buscar dados do usuário atual
-  const { data: user } = useQuery({
+  const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['/api/auth/me'],
     queryFn: authApi.getCurrentUser,
   });
+
+  // Verificar se usuário é admin antes de carregar a página
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-lg">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || user.role !== 'admin') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-red-600 mb-2">Acesso Negado</h2>
+          <p className="text-gray-600">Apenas administradores podem acessar esta página.</p>
+        </div>
+      </div>
+    );
+  }
 
   // Mutations para cancelar e deletar faturamento (apenas admin)
   const cancelBillingMutation = useMutation({
