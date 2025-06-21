@@ -66,7 +66,19 @@ export default function ExpenseModal() {
           console.log('Upload concluído, URL:', imageUrl);
         } catch (error) {
           console.error("Erro no upload da imagem:", error);
-          throw new Error("Falha no upload da imagem");
+          console.error("Detalhes do erro:", JSON.stringify(error, null, 2));
+          
+          // Tentar identificar o tipo específico de erro
+          if (error && typeof error === 'object' && 'message' in error) {
+            const errorMessage = (error as any).message;
+            if (errorMessage.includes('401') || errorMessage.includes('Authentication required')) {
+              throw new Error("Erro de autenticação no upload. Tente fazer login novamente.");
+            } else if (errorMessage.includes('403')) {
+              throw new Error("Sem permissão para upload de imagens.");
+            }
+          }
+          
+          throw new Error("Falha no upload da imagem. Verifique sua conexão e tente novamente.");
         }
       } else {
         console.error('Nenhum arquivo de imagem selecionado');

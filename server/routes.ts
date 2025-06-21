@@ -23,24 +23,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === "production",
+      secure: false, // Always false to work in dev and production
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: 'lax',
     },
   }));
 
   // Authentication middleware
   const requireAuth = (req: any, res: any, next: any) => {
+    console.log('🔐 Verificando autenticação:', {
+      sessionId: req.sessionID,
+      userId: req.session.userId,
+      userRole: req.session.userRole,
+      method: req.method,
+      url: req.url
+    });
+    
     if (!req.session.userId) {
+      console.log('❌ Autenticação falhou - sem userId na sessão');
       return res.status(401).json({ message: "Authentication required" });
     }
+    
+    console.log('✅ Autenticação confirmada para usuário:', req.session.userId);
     next();
   };
 
   const requireAdmin = (req: any, res: any, next: any) => {
+    console.log('🔐 Verificando acesso admin:', {
+      userId: req.session.userId,
+      userRole: req.session.userRole
+    });
+    
     if (!req.session.userId || req.session.userRole !== "admin") {
+      console.log('❌ Acesso admin negado');
       return res.status(403).json({ message: "Admin access required" });
     }
+    
+    console.log('✅ Acesso admin confirmado');
     next();
   };
 
@@ -462,11 +482,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Billing routes (Admin only)
-  app.get("/api/billing", requireAdmin, async (req, res) => {
+  // Billing routes (Auth required, admin for some operations)
+  app.get("/api/billing", requireAuth, async (req, res) => {
     try {
       const { year, month, status, contractNumber } = req.query;
       const filters: any = {};
+
+      // Regular users can only see their own billing
+      if (req.session.userRole !== "admin") {
+        filters.userId = req.session.userId;
+      }
 
       if (year) filters.year = year as string;
       if (month && month !== "all") filters.month = month as string;
@@ -481,13 +506,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/billing", requireAdmin, async (req, res) => {
+  app.post("/api/billing", requireAuth, async (req, res) => {
     try {
+      console.log('Criando faturamento para usuário:', req.session.userId);
+      console.log('Dados recebidos:', req.body);
+      
       const billingData = req.body;
       const newBilling = await billingStorage.createBilling({
         ...billingData,
         userId: req.session.userId!,
       });
+      
+      console.log('Faturamento criado com sucesso:', newBilling);
       res.status(201).json(newBilling);
     } catch (error) {
       console.error("Error creating billing:", error);
