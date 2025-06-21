@@ -155,19 +155,19 @@ export default function Faturamento() {
 
   // Cálculos de resumo
   const totalPendente = faturamentos
-    .filter(f => f.status === "pendente")
-    .reduce((sum, f) => sum + f.value, 0);
+    .filter((f: any) => f.status === "pendente")
+    .reduce((sum: number, f: any) => sum + parseFloat(f.value), 0);
 
   const totalPago = faturamentos
-    .filter(f => f.status === "pago")
-    .reduce((sum, f) => sum + f.value, 0);
+    .filter((f: any) => f.status === "pago")
+    .reduce((sum: number, f: any) => sum + parseFloat(f.value), 0);
 
   const totalVencido = faturamentos
-    .filter(f => f.status === "vencido")
-    .reduce((sum, f) => sum + f.value, 0);
+    .filter((f: any) => f.status === "vencido")
+    .reduce((sum: number, f: any) => sum + parseFloat(f.value), 0);
 
   // Filtrar dados
-  const filteredFaturamentos = faturamentos.filter(faturamento => {
+  const filteredFaturamentos = faturamentos.filter((faturamento: any) => {
     const fatDate = new Date(faturamento.issueDate);
     const fatMonth = (fatDate.getMonth() + 1).toString().padStart(2, '0');
     const fatYear = fatDate.getFullYear().toString();
@@ -393,7 +393,7 @@ export default function Faturamento() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredFaturamentos.map((faturamento) => (
+                      {filteredFaturamentos.map((faturamento: any) => (
                         <TableRow key={faturamento.id}>
                           <TableCell className="font-medium">
                             {faturamento.id}
