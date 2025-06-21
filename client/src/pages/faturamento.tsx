@@ -144,10 +144,11 @@ export default function Faturamento() {
         contractNumber: item.contractNumber,
         clientName: item.clientName,
         description: item.description,
-        value: parseFloat(item.value),
+        value: item.value,
         dueDate: item.dueDate,
         status: item.status,
-        issueDate: item.issueDate
+        issueDate: item.issueDate,
+        createdAt: item.createdAt
       }));
     },
     staleTime: 5 * 60 * 1000, // 5 minutos
@@ -184,18 +185,27 @@ export default function Faturamento() {
     }
   };
 
+  // Função para formatar valores monetários
+  const formatCurrency = (value: string | number) => {
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(numValue);
+  };
+
   // Cálculos de resumo
   const totalPendente = faturamentos
     .filter((f: any) => f.status === "pendente")
-    .reduce((sum: number, f: any) => sum + parseFloat(f.value), 0);
+    .reduce((sum: number, f: any) => sum + parseFloat(f.value || "0"), 0);
 
   const totalPago = faturamentos
     .filter((f: any) => f.status === "pago")
-    .reduce((sum: number, f: any) => sum + parseFloat(f.value), 0);
+    .reduce((sum: number, f: any) => sum + parseFloat(f.value || "0"), 0);
 
   const totalVencido = faturamentos
     .filter((f: any) => f.status === "vencido")
-    .reduce((sum: number, f: any) => sum + parseFloat(f.value), 0);
+    .reduce((sum: number, f: any) => sum + parseFloat(f.value || "0"), 0);
 
   // Filtrar dados
   const filteredFaturamentos = faturamentos.filter((faturamento: any) => {

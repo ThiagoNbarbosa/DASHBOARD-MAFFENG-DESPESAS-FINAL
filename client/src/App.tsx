@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { authApi } from "./lib/auth";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
+import Despesas from "@/pages/despesas";
 import Results from "@/pages/results";
 import Faturamento from "@/pages/faturamento";
 import Final from "@/pages/final";
@@ -38,6 +39,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Dashboard} />
+      <Route path="/despesas" component={Despesas} />
       <Route path="/faturamento" component={Faturamento} />
       <Route path="/results" component={Results} />
       <Route path="/final" component={Final} />

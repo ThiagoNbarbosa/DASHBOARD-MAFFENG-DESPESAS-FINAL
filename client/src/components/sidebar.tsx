@@ -41,9 +41,9 @@ export default function Sidebar() {
     },
     {
       name: "Despesas",
-      href: "/",
+      href: "/despesas",
       icon: FileText,
-      current: location === "/",
+      current: location === "/despesas",
       description: "Gestão de gastos"
     },
     {
