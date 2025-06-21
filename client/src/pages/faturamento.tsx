@@ -498,6 +498,7 @@ export default function Faturamento() {
 // Modal de Adicionar Pagamento
 function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     clientName: "",
     contractNumber: "",
@@ -547,6 +548,16 @@ function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/billing'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/billing/stats'] });
+      
+      // Use setTimeout to ensure DOM is stable before showing toast
+      setTimeout(() => {
+        toast({
+          title: "Faturamento criado",
+          description: "O faturamento foi criado com sucesso.",
+        });
+      }, 100);
+      
       onOpenChange(false);
       // Reset form
       setFormData({
@@ -558,6 +569,18 @@ function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
         issueDate: new Date().toISOString().split('T')[0],
         status: "pendente"
       });
+    },
+    onError: (error: any) => {
+      console.error("Erro ao criar faturamento:", error);
+      
+      // Use setTimeout to ensure DOM is stable before showing toast
+      setTimeout(() => {
+        toast({
+          title: "Erro ao criar faturamento",
+          description: error.message || "Não foi possível criar o faturamento.",
+          variant: "destructive",
+        });
+      }, 100);
     },
   });
 
