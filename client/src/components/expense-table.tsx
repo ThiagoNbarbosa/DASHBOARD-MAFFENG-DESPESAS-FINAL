@@ -114,6 +114,12 @@ export default function ExpenseTable() {
     }
   };
 
+  const handleDelete = (id: string) => {
+    if (confirm("Tem certeza que deseja excluir esta despesa? Esta ação não pode ser desfeita.")) {
+      deleteMutation.mutate(id);
+    }
+  };
+
   const isCancelled = (category: string) => {
     return category.startsWith('[CANCELADA]');
   };
@@ -445,26 +451,26 @@ export default function ExpenseTable() {
                         <TableCell>
                           <div className="flex gap-2">
                             {!isCancelled(expense.category) && (
-                              <Button 
-                                variant="outline" 
+                              <Button
                                 size="sm"
+                                variant="outline"
+                                className="text-orange-600 border-orange-600 hover:bg-orange-50"
                                 onClick={() => handleCancel(expense.id)}
                                 disabled={cancelMutation.isPending}
-                                title="Cancelar despesa"
-                                className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
                               >
                                 <Ban className="h-4 w-4" />
+                                <span className="ml-2 hidden sm:inline">Cancelar</span>
                               </Button>
                             )}
-                            <Button 
-                              variant="outline" 
+                            <Button
                               size="sm"
+                              variant="outline"
+                              className="text-red-600 border-red-600 hover:bg-red-50"
                               onClick={() => handleDelete(expense.id)}
                               disabled={deleteMutation.isPending}
-                              title="Excluir despesa"
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
                             >
                               <Trash2 className="h-4 w-4" />
+                              <span className="ml-2 hidden sm:inline">Excluir</span>
                             </Button>
                           </div>
                         </TableCell>
