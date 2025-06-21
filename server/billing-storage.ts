@@ -146,14 +146,16 @@ export class BillingStorage {
 
       if (filters?.year) {
         filteredData = filteredData.filter(item => {
-          const year = item.issueDate.getFullYear().toString();
+          const date = new Date(item.issueDate);
+          const year = date.getFullYear().toString();
           return year === filters.year;
         });
       }
 
       if (filters?.month) {
         filteredData = filteredData.filter(item => {
-          const month = (item.issueDate.getMonth() + 1).toString().padStart(2, '0');
+          const date = new Date(item.issueDate);
+          const month = (date.getMonth() + 1).toString().padStart(2, '0');
           return month === filters.month;
         });
       }
