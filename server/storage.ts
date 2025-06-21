@@ -1,5 +1,5 @@
 import { users, expenses, billing, type User, type InsertUser, type Expense, type InsertExpense, type Billing, type InsertBilling } from "@shared/schema";
-import { eq, and, like, gte, lte, desc } from "drizzle-orm";
+import { eq, and, like, gte, lte, desc, sql, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 
@@ -9,8 +9,8 @@ if (!databaseUrl) {
   console.error('DATABASE_URL não está configurada');
 }
 
-const sql = neon(databaseUrl!);
-const db = drizzle(sql);
+const neonSql = neon(databaseUrl!);
+const db = drizzle(neonSql);
 
 export interface IStorage {
   // User methods
@@ -127,7 +127,9 @@ export class DatabaseStorage implements IStorage {
     if (filters?.userId) {
       conditions.push(eq(expenses.userId, filters.userId));
     } else if (filters?.userIds && filters.userIds.length > 0) {
-      conditions.push(inArray(expenses.userId, filters.userIds));
+      // Criar condições OR para múltiplos userIds
+      const userConditions = filters.userIds.map(id => eq(expenses.userId, id));
+      conditions.push(or(...userConditions));
     }
     
     if (filters?.month) {
@@ -146,10 +148,10 @@ export class DatabaseStorage implements IStorage {
     }
     
     if (conditions.length > 0) {
-      query = query.where(and(...conditions));
+      query = query.where(and(...conditions)) as any;
     }
     
-    return await query.orderBy(desc(expenses.createdAt));
+    return await (query as any).orderBy(desc(expenses.createdAt));
   }
 
   async getExpense(id: string): Promise<Expense | undefined> {
