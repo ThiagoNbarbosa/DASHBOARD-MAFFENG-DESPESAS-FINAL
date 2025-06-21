@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Receipt, FileText, Calendar, DollarSign, Filter, Plus, X, Trash2 } from "lucide-react";
+import { Receipt, FileText, Calendar, DollarSign, Filter, Plus, X, Trash2, XCircle } from "lucide-react";
 
 // Interface para dados de faturamento
 interface FaturamentoItem {
@@ -18,7 +18,7 @@ interface FaturamentoItem {
   description: string;
   value: number;
   dueDate: string;
-  status: "pendente" | "pago" | "vencido";
+  status: "pendente" | "pago" | "vencido" | "cancelado";
   issueDate: string;
 }
 
@@ -32,6 +32,45 @@ export default function Faturamento() {
   
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const queryClient = useQueryClient();
+
+  // Mutation para cancelar pagamento
+  const cancelPaymentMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/billing/${id}/cancel`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao cancelar pagamento');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/billing'] });
+    },
+  });
+
+  // Mutation para excluir pagamento
+  const deletePaymentMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/billing/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao excluir pagamento');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/billing'] });
+    },
+  });
 
   // Buscar dados do usuário atual
   const { data: user, isLoading: userLoading } = useQuery({
@@ -423,22 +462,28 @@ export default function Faturamento() {
                           {user?.role === 'admin' && (
                             <TableCell>
                               <div className="flex gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="text-orange-600 border-orange-600 hover:bg-orange-50"
-                                  onClick={() => cancelBillingMutation.mutate(faturamento.id)}
-                                  disabled={cancelBillingMutation.isPending}
-                                >
-                                  <X className="h-4 w-4" />
-                                  Cancelar
-                                </Button>
+                                {faturamento.status !== 'cancelado' && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-orange-600 border-orange-600 hover:bg-orange-50"
+                                    onClick={() => cancelPaymentMutation.mutate(faturamento.id)}
+                                    disabled={cancelPaymentMutation.isPending}
+                                  >
+                                    <XCircle className="h-4 w-4" />
+                                    Cancelar
+                                  </Button>
+                                )}
                                 <Button
                                   size="sm"
                                   variant="outline"
                                   className="text-red-600 border-red-600 hover:bg-red-50"
-                                  onClick={() => deleteBillingMutation.mutate(faturamento.id)}
-                                  disabled={deleteBillingMutation.isPending}
+                                  onClick={() => {
+                                    if (confirm('Tem certeza que deseja excluir este pagamento?')) {
+                                      deletePaymentMutation.mutate(faturamento.id);
+                                    }
+                                  }}
+                                  disabled={deletePaymentMutation.isPending}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                   Excluir
