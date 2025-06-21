@@ -39,7 +39,7 @@ export class BillingStorage {
         console.log('✓ Tabela billing criada e dados inseridos');
       }
     } catch (error) {
-      console.log('! Usando dados locais devido a erro de conexão:', error.message);
+      console.log('! Usando dados locais devido a erro de conexão:', error instanceof Error ? error.message : 'Erro desconhecido');
     }
   }
 
@@ -116,8 +116,8 @@ export class BillingStorage {
   async createBilling(data: InsertBilling & { userId: number }): Promise<Billing> {
     try {
       const result = await sql`
-        INSERT INTO billing ("contractNumber", "clientName", description, value, "dueDate", "issueDate", status, "userId")
-        VALUES (${data.contractNumber}, ${data.clientName}, ${data.description}, ${data.value}, ${data.dueDate}, ${data.issueDate}, ${data.status || 'pendente'}, ${data.userId})
+        INSERT INTO billing ("contractNumber", "clientName", description, value, "dueDate", "paymentDate", "issueDate", status, "userId")
+        VALUES (${data.contractNumber}, ${data.clientName}, ${data.description}, ${data.value}, ${data.dueDate}, ${data.paymentDate || null}, ${data.issueDate}, ${data.status || 'pendente'}, ${data.userId})
         RETURNING *
       `;
       return result[0] as Billing;
@@ -132,6 +132,7 @@ export class BillingStorage {
         description: data.description,
         value: data.value,
         dueDate: data.dueDate,
+        paymentDate: data.paymentDate || null,
         issueDate: data.issueDate,
         status: data.status || 'pendente',
         userId: data.userId,
