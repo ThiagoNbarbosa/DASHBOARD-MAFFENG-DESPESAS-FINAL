@@ -60,16 +60,28 @@ export default function Final() {
     }).format(value);
   };
 
-  // Calcular totais
-  const totalReceitas = faturamentos
+  // Calcular totais incluindo dados de faturamento
+  const totalFaturamentoPago = faturamentos
     .filter((f: any) => f.status === "pago")
     .reduce((sum: number, f: any) => sum + parseFloat(f.value || "0"), 0);
+
+  const totalFaturamentoPendente = faturamentos
+    .filter((f: any) => f.status === "pendente")
+    .reduce((sum: number, f: any) => sum + parseFloat(f.value || "0"), 0);
+
+  const totalFaturamentoVencido = faturamentos
+    .filter((f: any) => f.status === "vencido")
+    .reduce((sum: number, f: any) => sum + parseFloat(f.value || "0"), 0);
+
+  const totalReceitas = totalFaturamentoPago;
+  const totalReceitasPrevistas = totalFaturamentoPago + totalFaturamentoPendente;
 
   const totalDespesas = expenses
     .filter((e: any) => !e.category?.startsWith('[CANCELADA]'))
     .reduce((sum: number, e: any) => sum + parseFloat(e.totalValue || "0"), 0);
 
   const lucroLiquido = totalReceitas - totalDespesas;
+  const lucroProjetado = totalReceitasPrevistas - totalDespesas;
   const margemLucro = totalReceitas > 0 ? (lucroLiquido / totalReceitas) * 100 : 0;
 
   const financialData: FinancialData = {
