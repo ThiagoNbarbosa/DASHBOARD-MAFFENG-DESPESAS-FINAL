@@ -4,68 +4,7 @@ import type { Billing, InsertBilling } from "@shared/schema";
 const sql = neon(process.env.DATABASE_URL!);
 
 export class BillingStorage {
-  private mockData: Billing[] = [
-    {
-      id: 'bill-1',
-      contractNumber: '0001',
-      clientName: 'Cliente Exemplo A',
-      description: 'Serviços de consultoria - Janeiro 2025',
-      value: '15000.00',
-      dueDate: new Date('2025-01-31'),
-      issueDate: new Date('2025-01-01'),
-      status: 'pago',
-      userId: 1,
-      createdAt: new Date('2025-01-01')
-    },
-    {
-      id: 'bill-2',
-      contractNumber: '0002',
-      clientName: 'Cliente Exemplo B',
-      description: 'Manutenção sistema - Janeiro 2025',
-      value: '8500.00',
-      dueDate: new Date('2025-02-15'),
-      issueDate: new Date('2025-01-15'),
-      status: 'pago',
-      userId: 1,
-      createdAt: new Date('2025-01-15')
-    },
-    {
-      id: 'bill-3',
-      contractNumber: '0003',
-      clientName: 'Cliente Exemplo C',
-      description: 'Desenvolvimento - Janeiro 2025',
-      value: '12000.00',
-      dueDate: new Date('2025-02-28'),
-      issueDate: new Date('2025-01-20'),
-      status: 'pago',
-      userId: 1,
-      createdAt: new Date('2025-01-20')
-    },
-    {
-      id: 'bill-4',
-      contractNumber: '0004',
-      clientName: 'Cliente Exemplo D',
-      description: 'Consultoria pendente - Junho 2025',
-      value: '5000.00',
-      dueDate: new Date('2025-06-30'),
-      issueDate: new Date('2025-06-01'),
-      status: 'pendente',
-      userId: 1,
-      createdAt: new Date('2025-06-01')
-    },
-    {
-      id: 'bill-5',
-      contractNumber: '0005',
-      clientName: 'Cliente Exemplo E',
-      description: 'Projeto vencido - Maio 2025',
-      value: '2800.00',
-      dueDate: new Date('2025-05-15'),
-      issueDate: new Date('2025-05-01'),
-      status: 'vencido',
-      userId: 1,
-      createdAt: new Date('2025-05-01')
-    }
-  ];
+  private mockData: Billing[] = [];
 
   async initTable() {
     try {

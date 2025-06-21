@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Receipt, FileText, Calendar, DollarSign, Filter, Plus, X, Trash2, XCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 // Interface para dados de faturamento
 interface FaturamentoItem {
@@ -32,45 +34,62 @@ export default function Faturamento() {
   
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   // Mutation para cancelar pagamento
   const cancelPaymentMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`/api/billing/${id}/cancel`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Erro ao cancelar pagamento');
-      }
-
-      return response.json();
+      return apiRequest(`/api/billing/${id}/cancel`, "PATCH");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/billing'] });
+      toast({
+        title: "Pagamento cancelado",
+        description: "O pagamento foi cancelado com sucesso.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro ao cancelar",
+        description: "Não foi possível cancelar o pagamento.",
+        variant: "destructive",
+      });
     },
   });
 
   // Mutation para excluir pagamento
   const deletePaymentMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`/api/billing/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Erro ao excluir pagamento');
-      }
-
-      return response.json();
+      return apiRequest(`/api/billing/${id}`, "DELETE");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/billing'] });
+      toast({
+        title: "Pagamento excluído",
+        description: "O pagamento foi excluído com sucesso.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro ao excluir",
+        description: "Não foi possível excluir o pagamento.",
+        variant: "destructive",
+      });
     },
   });
+
+  // Funções para lidar com as ações
+  const handleCancel = (id: string) => {
+    if (confirm("Tem certeza que deseja cancelar este pagamento?")) {
+      cancelPaymentMutation.mutate(id);
+    }
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm("Tem certeza que deseja excluir este pagamento? Esta ação não pode ser desfeita.")) {
+      deletePaymentMutation.mutate(id);
+    }
+  };
 
   // Buscar dados do usuário atual
   const { data: user, isLoading: userLoading } = useQuery({
@@ -471,11 +490,7 @@ export default function Faturamento() {
                                     size="sm"
                                     variant="outline"
                                     className="text-orange-600 border-orange-600 hover:bg-orange-50"
-                                    onClick={() => {
-                                      if (confirm('Tem certeza que deseja cancelar este pagamento?')) {
-                                        cancelPaymentMutation.mutate(faturamento.id);
-                                      }
-                                    }}
+                                    onClick={() => handleCancel(faturamento.id)}
                                     disabled={cancelPaymentMutation.isPending}
                                   >
                                     <XCircle className="h-4 w-4" />
@@ -486,11 +501,7 @@ export default function Faturamento() {
                                   size="sm"
                                   variant="outline"
                                   className="text-red-600 border-red-600 hover:bg-red-50"
-                                  onClick={() => {
-                                    if (confirm('Tem certeza que deseja excluir este pagamento? Esta ação não pode ser desfeita.')) {
-                                      deletePaymentMutation.mutate(faturamento.id);
-                                    }
-                                  }}
+                                  onClick={() => handleDelete(faturamento.id)}
                                   disabled={deletePaymentMutation.isPending}
                                 >
                                   <Trash2 className="h-4 w-4" />
