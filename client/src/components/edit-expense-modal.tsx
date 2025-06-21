@@ -62,11 +62,7 @@ export default function EditExpenseModal({ expense, open, onOpenChange }: EditEx
         paymentDate: new Date(data.paymentDate).toISOString(),
       };
 
-      const response = await apiRequest('PUT', `/api/expenses/${expense.id}`, expenseData);
-      if (!response.ok) {
-        throw new Error("Erro ao atualizar despesa");
-      }
-      return response.json();
+      return await apiRequest(`/api/expenses/${expense.id}`, 'PUT', expenseData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/expenses'] });

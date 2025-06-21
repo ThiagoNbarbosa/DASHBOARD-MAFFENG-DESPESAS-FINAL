@@ -62,8 +62,7 @@ export default function ExpenseTable() {
   const { data: recentExpenses = [], isLoading: isLoadingRecent } = useQuery<Expense[]>({
     queryKey: ['/api/expenses', 'recent'],
     queryFn: async () => {
-      const response = await apiRequest('GET', '/api/expenses');
-      return response.json();
+      return await apiRequest('/api/expenses', 'GET');
     },
   });
 
