@@ -482,19 +482,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (status && status !== "all") filters.status = status as string;
       if (contractNumber) filters.contractNumber = contractNumber as string;
 
-      const billing = await storage.getBilling(filters);
+      const billing = await billingStorage.getBilling(filters);
       res.json(billing);
     } catch (error) {
       console.error("Error fetching billing:", error);
-      console.log("Usando dados locais para billing devido a erro de conexão");
-      res.json([]);
+      res.status(500).json({ message: "Erro ao carregar faturamento" });
     }
   });
 
   app.post("/api/billing", requireAuth, async (req, res) => {
     try {
       const billingData = req.body;
-      const newBilling = await storage.createBilling({
+      const newBilling = await billingStorage.createBilling({
         ...billingData,
         userId: req.session.userId!,
       });
