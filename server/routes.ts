@@ -293,14 +293,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Usuários com mesma função podem ver dados uns dos outros
       // Apenas admins veem todos os dados
       if (req.session.userRole !== "admin") {
-        // Para usuários não-admin, mostrar dados de usuários com mesma função
-        const currentUser = await storage.getUser(req.session.userId!);
-        if (currentUser) {
-          // Buscar todos os usuários com a mesma função
-          const usersWithSameRole = await storage.getUsersByRole(currentUser.role);
-          const userIds = usersWithSameRole.map(u => u.id);
-          filters.userIds = userIds;
-        } else {
+        try {
+          // Para usuários não-admin, mostrar dados de usuários com mesma função
+          const currentUser = await storage.getUser(req.session.userId!);
+          if (currentUser) {
+            console.log('Buscando usuários com função:', currentUser.role);
+            // Buscar todos os usuários com a mesma função
+            const usersWithSameRole = await storage.getUsersByRole(currentUser.role);
+            console.log('Usuários encontrados:', usersWithSameRole.length);
+            const userIds = usersWithSameRole.map((u: any) => u.id);
+            filters.userIds = userIds;
+          } else {
+            filters.userId = req.session.userId;
+          }
+        } catch (error) {
+          console.error('Erro ao buscar usuários por função:', error);
           filters.userId = req.session.userId;
         }
       }
