@@ -107,6 +107,7 @@ The database includes two main tables:
 - June 19, 2025: Major filter improvements implemented - Added comprehensive filtering system with year, category, payment method filters for all users; Implemented separate "Filtered Expenses" section above recent expenses; Fixed filter logic to properly respect year selection; Updated sidebar menu item to "Despesas Recentes"
 - June 19, 2025: Expense cancellation system implemented - Despesas canceladas mantêm-se visíveis com estilização vermelha clara; Cancelamento marca categoria com prefixo [CANCELADA]; Apenas admins podem cancelar despesas; Interface mostra botão de cancelamento laranja e exclusão vermelha; Despesas canceladas não podem ser canceladas novamente
 - June 20, 2025: New features implemented - Added "Faturamento" page with comprehensive billing management including status tracking, filtering, and financial summaries; Implemented "Despesas por Contrato" component in Results page showing contract-based expense analysis with charts and detailed breakdowns; Added new menu items and routing for enhanced financial management capabilities
+- June 20, 2025: Admin-only access controls implemented - Faturamento page restricted to ADMIN users only with proper role validation; Cancel and delete functionality exclusive to ADMIN users in billing management; Added real database integration for billing operations with proper error handling and fallback mechanisms
 
 ## User Preferences
 Preferred communication style: Portuguese (Brazil), simple everyday language.
