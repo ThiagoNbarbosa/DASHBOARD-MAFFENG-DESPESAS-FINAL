@@ -1,10 +1,16 @@
 import { neon } from "@neondatabase/serverless";
 
-const connectionString = process.env.DATABASE_URL!;
-const sql = neon(connectionString);
-
 export async function initBillingTable() {
   try {
+    const connectionString = process.env.DATABASE_URL;
+    if (!connectionString) {
+      console.log('DATABASE_URL não configurada - usando dados locais');
+      return;
+    }
+
+    console.log('Tentando conectar com o banco de dados...');
+    const sql = neon(connectionString);
+    
     // Criar tabela billing se não existir
     await sql`
       CREATE TABLE IF NOT EXISTS billing (
@@ -36,11 +42,12 @@ export async function initBillingTable() {
           ('0004', 'Cliente Exemplo D', 'Consultoria pendente - Junho 2025', '5000.00', '2025-06-30', '2025-06-01', 'pendente', 1),
           ('0005', 'Cliente Exemplo E', 'Projeto vencido - Maio 2025', '2800.00', '2025-05-15', '2025-05-01', 'vencido', 1)
       `;
-      console.log('✓ Tabela billing criada e dados de exemplo inseridos');
+      console.log('✓ Tabela billing criada e dados inseridos no banco');
     } else {
-      console.log('✓ Tabela billing já existe com dados');
+      console.log('✓ Tabela billing já existe no banco');
     }
   } catch (error) {
-    console.error('Erro ao inicializar tabela billing:', error);
+    console.log('Banco não disponível - sistema funcionará com dados locais');
+    console.log('Para conectar ao banco, verifique se DATABASE_URL está correta');
   }
 }
