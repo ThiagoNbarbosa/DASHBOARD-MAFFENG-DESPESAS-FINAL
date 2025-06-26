@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 // Progress component inline implementation
@@ -50,6 +51,18 @@ interface ExpensesByContractProps {
 }
 
 export default function ExpensesByContract({ filters }: ExpensesByContractProps) {
+  const chartRef = useRef<any>(null);
+
+  // Cleanup do Chart.js na desmontagem do componente
+  useEffect(() => {
+    return () => {
+      if (chartRef.current) {
+        chartRef.current.destroy();
+        chartRef.current = null;
+      }
+    };
+  }, []);
+
   // Query para buscar despesas agrupadas por contrato com dados reais
   const { data: contractExpenses = [], isLoading } = useQuery({
     queryKey: ['/api/expenses/by-contract', filters],
@@ -284,7 +297,11 @@ export default function ExpensesByContract({ filters }: ExpensesByContractProps)
         </CardHeader>
         <CardContent>
           <div className="h-80">
-            <Bar data={chartData} options={chartOptions} />
+            <Bar 
+              ref={chartRef}
+              data={chartData} 
+              options={chartOptions} 
+            />
           </div>
         </CardContent>
       </Card>
