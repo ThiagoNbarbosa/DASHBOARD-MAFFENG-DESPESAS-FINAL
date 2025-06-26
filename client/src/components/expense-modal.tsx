@@ -342,6 +342,7 @@ export default function ExpenseModal() {
                         <label htmlFor="image" className="relative cursor-pointer bg-white rounded-md font-medium text-primary hover:text-primary/80">
                           <span>Enviar um arquivo</span>
                           <input
+                            ref={fileInputRef}
                             id="image"
                             type="file"
                             accept="image/*"
