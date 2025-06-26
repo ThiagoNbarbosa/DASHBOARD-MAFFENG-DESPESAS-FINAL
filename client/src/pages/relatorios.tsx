@@ -85,6 +85,32 @@ export default function Relatorios() {
     );
   }
 
+  // Função segura para downloads
+  const safeDownload = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    
+    try {
+      link.setAttribute('href', url);
+      link.setAttribute('download', filename);
+      link.style.visibility = 'hidden';
+      
+      // Verificação segura antes de appendChild
+      if (document.body) {
+        document.body.appendChild(link);
+        link.click();
+        
+        // Verificação segura antes de removeChild
+        if (link.parentNode === document.body) {
+          document.body.removeChild(link);
+        }
+      }
+    } finally {
+      // Sempre limpar a URL para evitar memory leaks
+      URL.revokeObjectURL(url);
+    }
+  };
+
   // Função para gerar e baixar CSV
   const generateCSV = (data: any[], type: string) => {
     if (!data || data.length === 0) {
@@ -136,16 +162,10 @@ export default function Relatorios() {
       });
     }
 
-    // Criar e baixar arquivo
+    // Usar função segura para download
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `relatorio_${type}_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const filename = `relatorio_${type}_${new Date().toISOString().split('T')[0]}.csv`;
+    safeDownload(blob, filename);
 
     toast({
       title: "Download realizado",
@@ -172,14 +192,8 @@ export default function Relatorios() {
 
       const jsonContent = JSON.stringify(combinedData, null, 2);
       const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `relatorio_completo_${new Date().toISOString().split('T')[0]}.json`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const filename = `relatorio_completo_${new Date().toISOString().split('T')[0]}.json`;
+      safeDownload(blob, filename);
 
       toast({
         title: "Download realizado",

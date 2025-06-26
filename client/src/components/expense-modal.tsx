@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,7 @@ export default function ExpenseModal() {
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -321,9 +322,10 @@ export default function ExpenseModal() {
                           onClick={() => {
                             setImageFile(null);
                             setImagePreview("");
-                            // Reset the file input
-                            const fileInput = document.getElementById('image') as HTMLInputElement;
-                            if (fileInput) fileInput.value = '';
+                            // Reset the file input using ref
+                            if (fileInputRef.current) {
+                              fileInputRef.current.value = '';
+                            }
                           }}
                           className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm transition-colors"
                           title="Remover imagem"
