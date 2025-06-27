@@ -42,6 +42,20 @@ export default function ExpenseTable() {
     queryFn: authApi.getCurrentUser,
   });
 
+  // Query para buscar dados do usuário da despesa selecionada
+  const { data: expenseUser } = useQuery({
+    queryKey: ['/api/users', selectedExpense?.userId],
+    queryFn: async () => {
+      if (!selectedExpense?.userId) return null;
+      try {
+        return await apiRequest(`/api/users/${selectedExpense.userId}`, 'GET');
+      } catch (error) {
+        return { name: 'Usuário não encontrado' };
+      }
+    },
+    enabled: !!selectedExpense?.userId,
+  });
+
   // Função para abrir modal de detalhes
   const handleViewDetails = (expense: Expense) => {
     setSelectedExpense(expense);
@@ -466,34 +480,45 @@ export default function ExpenseTable() {
                       <TableCell className={isCancelled(expense.category) ? "text-red-600" : ""}>
                         {new Date(expense.paymentDate).toLocaleDateString('pt-BR')}
                       </TableCell>
-                      {user?.role === "admin" && (
-                        <TableCell>
-                          <div className="flex gap-2">
-                            {!isCancelled(expense.category) && (
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                            onClick={() => handleViewDetails(expense)}
+                          >
+                            <Eye className="h-4 w-4" />
+                            <span className="ml-2 hidden sm:inline">Ver</span>
+                          </Button>
+                          {user?.role === "admin" && (
+                            <>
+                              {!isCancelled(expense.category) && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-orange-600 border-orange-600 hover:bg-orange-50"
+                                  onClick={() => handleCancel(expense.id)}
+                                  disabled={cancelMutation.isPending}
+                                >
+                                  <Ban className="h-4 w-4" />
+                                  <span className="ml-2 hidden sm:inline">Cancelar</span>
+                                </Button>
+                              )}
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="text-orange-600 border-orange-600 hover:bg-orange-50"
-                                onClick={() => handleCancel(expense.id)}
-                                disabled={cancelMutation.isPending}
+                                className="text-red-600 border-red-600 hover:bg-red-50"
+                                onClick={() => handleDelete(expense.id)}
+                                disabled={deleteMutation.isPending}
                               >
-                                <Ban className="h-4 w-4" />
-                                <span className="ml-2 hidden sm:inline">Cancelar</span>
+                                <Trash2 className="h-4 w-4" />
+                                <span className="ml-2 hidden sm:inline">Excluir</span>
                               </Button>
-                            )}
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-red-600 border-red-600 hover:bg-red-50"
-                              onClick={() => handleDelete(expense.id)}
-                              disabled={deleteMutation.isPending}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              <span className="ml-2 hidden sm:inline">Excluir</span>
-                            </Button>
-                          </div>
-                        </TableCell>
-                      )}
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -503,6 +528,82 @@ export default function ExpenseTable() {
         </CardContent>
       </Card>
 
+      {/* Modal de Detalhes da Despesa */}
+      <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
+        <DialogContent className="max-w-md mx-auto">
+          <DialogHeader>
+            <DialogTitle>Detalhes da Despesa</DialogTitle>
+          </DialogHeader>
+          
+          {selectedExpense && (
+            <div className="space-y-4">
+              {/* Nome do usuário responsável */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Responsável
+                </label>
+                <p className="text-gray-900">
+                  {expenseUser?.name || `Usuário ID: ${selectedExpense.userId}`}
+                </p>
+              </div>
+
+              {/* Descrição da despesa */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Descrição
+                </label>
+                <p className="text-gray-900">{selectedExpense.item}</p>
+              </div>
+
+              {/* Miniatura da imagem */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Comprovante
+                </label>
+                <div className="flex justify-center">
+                  {selectedExpense.imageUrl ? (
+                    <img
+                      src={selectedExpense.imageUrl}
+                      alt="Comprovante da despesa"
+                      className="w-[150px] h-[150px] object-cover rounded-lg border border-gray-200"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                  ) : null}
+                  <div className="hidden w-[150px] h-[150px] bg-red-50 border border-red-200 rounded-lg flex items-center justify-center">
+                    <p className="text-red-600 text-sm text-center px-2">
+                      Erro ao carregar imagem
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Informações adicionais */}
+              <div className="grid grid-cols-2 gap-4 pt-2 border-t">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Valor
+                  </label>
+                  <p className="text-gray-900 font-semibold">
+                    {new Intl.NumberFormat('pt-BR', {
+                      style: 'currency',
+                      currency: 'BRL'
+                    }).format(parseFloat(selectedExpense.value))}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Contrato
+                  </label>
+                  <p className="text-gray-900">{selectedExpense.contractNumber}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
       
     </div>
   );
