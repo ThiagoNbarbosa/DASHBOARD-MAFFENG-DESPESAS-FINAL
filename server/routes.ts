@@ -201,6 +201,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user by ID route
+  app.get("/api/users/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "ID de usuário inválido" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "Usuário não encontrado" });
+      }
+
+      // Retornar apenas dados necessários (sem senha)
+      res.json({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      });
+    } catch (error) {
+      console.error("Erro ao buscar usuário:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   // Image upload route - Supabase Storage
   app.post("/api/upload", requireAuth, async (req, res) => {
     try {
