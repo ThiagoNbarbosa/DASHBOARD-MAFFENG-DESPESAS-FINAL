@@ -156,8 +156,139 @@ export default function Results() {
         </header>
 
         <main className="p-4 sm:p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Gráfico de Evolução Mensal - Destaque Principal */}
+          <Card className="shadow-sm mb-8">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                📈 Evolução Mensal
+              </CardTitle>
+              <p className="text-sm text-gray-600">Tendência de gastos ao longo dos meses</p>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="overflow-x-auto">
+                <div style={{ height: '450px', minWidth: '800px' }}>
+                  <Line
+                    data={monthlyChartData}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          display: true,
+                          position: 'top' as const,
+                          labels: {
+                            padding: 20,
+                            usePointStyle: true,
+                            font: {
+                              size: 14
+                            }
+                          }
+                        },
+                        tooltip: {
+                          mode: 'index',
+                          intersect: false,
+                          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                          titleColor: 'white',
+                          bodyColor: 'white',
+                          borderColor: '#3B82F6',
+                          borderWidth: 1,
+                          callbacks: {
+                            label: function(context) {
+                              return `Despesas: ${new Intl.NumberFormat('pt-BR', {
+                                style: 'currency',
+                                currency: 'BRL'
+                              }).format(context.parsed.y)}`;
+                            }
+                          }
+                        }
+                      },
+                      interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                      },
+                      scales: {
+                        x: {
+                          display: true,
+                          title: {
+                            display: true,
+                            text: 'Período',
+                            font: {
+                              size: 14,
+                              weight: 'bold'
+                            }
+                          },
+                          grid: {
+                            display: true,
+                            color: 'rgba(0, 0, 0, 0.1)'
+                          }
+                        },
+                        y: {
+                          display: true,
+                          beginAtZero: true,
+                          title: {
+                            display: true,
+                            text: 'Valor (R$)',
+                            font: {
+                              size: 14,
+                              weight: 'bold'
+                            }
+                          },
+                          grid: {
+                            display: true,
+                            color: 'rgba(0, 0, 0, 0.1)'
+                          },
+                          ticks: {
+                            callback: function (value) {
+                              return new Intl.NumberFormat('pt-BR', {
+                                style: 'currency',
+                                currency: 'BRL',
+                                notation: 'compact',
+                                maximumFractionDigits: 1
+                              }).format(value as number);
+                            },
+                            font: {
+                              size: 12
+                            }
+                          }
+                        }
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+              
+              {/* Estatísticas Resumidas */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 pt-6 border-t">
+                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                  <p className="text-sm font-medium text-blue-600">Total Acumulado</p>
+                  <p className="text-xl font-bold text-blue-900">
+                    {new Intl.NumberFormat('pt-BR', {
+                      style: 'currency',
+                      currency: 'BRL'
+                    }).format(monthlyStats.reduce((acc: number, stat: any) => acc + stat.total, 0))}
+                  </p>
+                </div>
+                <div className="text-center p-4 bg-green-50 rounded-lg">
+                  <p className="text-sm font-medium text-green-600">Média Mensal</p>
+                  <p className="text-xl font-bold text-green-900">
+                    {monthlyStats.length > 0 ? new Intl.NumberFormat('pt-BR', {
+                      style: 'currency',
+                      currency: 'BRL'
+                    }).format(monthlyStats.reduce((acc: number, stat: any) => acc + stat.total, 0) / monthlyStats.length) : 'R$ 0,00'}
+                  </p>
+                </div>
+                <div className="text-center p-4 bg-orange-50 rounded-lg">
+                  <p className="text-sm font-medium text-orange-600">Períodos</p>
+                  <p className="text-xl font-bold text-orange-900">
+                    {monthlyStats.length} meses
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <Card className="shadow-sm">
               <CardHeader>
                 <CardTitle className="text-base font-semibold">Despesas por Categoria</CardTitle>
@@ -201,43 +332,6 @@ export default function Results() {
                         scales: {
                           y: {
                             beginAtZero: true
-                          }
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-base font-semibold">Evolução Mensal</CardTitle>
-              </CardHeader>
-              <CardContent className="p-4">
-                <div className="overflow-x-auto">
-                  <div style={{ height: '400px', minWidth: '600px' }}>
-                    <Line
-                      data={monthlyChartData}
-                      options={{
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                          legend: {
-                            display: false
-                          }
-                        },
-                        scales: {
-                          y: {
-                            beginAtZero: true,
-                            ticks: {
-                              callback: function (value) {
-                                return new Intl.NumberFormat('pt-BR', {
-                                  style: 'currency',
-                                  currency: 'BRL'
-                                }).format(value as number);
-                              }
-                            }
                           }
                         }
                       }}
