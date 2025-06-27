@@ -373,7 +373,6 @@ export default function ExpenseTable() {
                               onClick={() => handleViewDetails(expense)}
                             >
                               <Eye className="h-4 w-4" />
-                              <span className="ml-2 hidden sm:inline">Ver</span>
                             </Button>
                             {user?.role === "admin" && (
                               <>
@@ -386,7 +385,6 @@ export default function ExpenseTable() {
                                     disabled={cancelMutation.isPending}
                                   >
                                     <Ban className="h-4 w-4" />
-                                    <span className="ml-2 hidden sm:inline">Cancelar</span>
                                   </Button>
                                 )}
                                 <Button
@@ -401,7 +399,6 @@ export default function ExpenseTable() {
                                   disabled={deleteMutation.isPending}
                                 >
                                   <Trash2 className="h-4 w-4" />
-                                  <span className="ml-2 hidden sm:inline">Excluir</span>
                                 </Button>
                               </>
                             )}
@@ -489,7 +486,6 @@ export default function ExpenseTable() {
                             onClick={() => handleViewDetails(expense)}
                           >
                             <Eye className="h-4 w-4" />
-                            <span className="ml-2 hidden sm:inline">Ver</span>
                           </Button>
                           {user?.role === "admin" && (
                             <>
@@ -502,7 +498,6 @@ export default function ExpenseTable() {
                                   disabled={cancelMutation.isPending}
                                 >
                                   <Ban className="h-4 w-4" />
-                                  <span className="ml-2 hidden sm:inline">Cancelar</span>
                                 </Button>
                               )}
                               <Button
@@ -513,7 +508,6 @@ export default function ExpenseTable() {
                                 disabled={deleteMutation.isPending}
                               >
                                 <Trash2 className="h-4 w-4" />
-                                <span className="ml-2 hidden sm:inline">Excluir</span>
                               </Button>
                             </>
                           )}

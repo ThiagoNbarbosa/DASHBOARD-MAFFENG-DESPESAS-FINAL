@@ -617,9 +617,9 @@ function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-        <div className="flex justify-between items-center mb-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg w-full max-w-sm mx-auto max-h-[90vh] flex flex-col">
+        <div className="flex justify-between items-center p-4 border-b">
           <h2 className="text-lg font-semibold">Adicionar Pagamento</h2>
           <Button 
             variant="ghost" 
@@ -630,7 +630,8 @@ function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
           </Button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="flex-1 overflow-y-auto">
+          <form onSubmit={handleSubmit} className="p-4 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Nome do Cliente
@@ -679,24 +680,13 @@ function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Data de Vencimento
-            </label>
-            <Input
-              type="date"
-              value={formData.dueDate}
-              onChange={(e) => setFormData(prev => ({ ...prev, dueDate: e.target.value }))}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Data de Pagamento <span className="text-sm text-gray-500">(opcional)</span>
+              Data de Pagamento
             </label>
             <Input
               type="date"
               value={formData.paymentDate}
               onChange={(e) => setFormData(prev => ({ ...prev, paymentDate: e.target.value }))}
+              required
             />
           </div>
 
@@ -736,7 +726,8 @@ function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
               {createPaymentMutation.isPending ? "Adicionando..." : "Adicionar Pagamento"}
             </Button>
           </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );
