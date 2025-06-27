@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Receipt, FileText, Calendar, DollarSign, Filter, Plus, X, Trash2, XCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Receipt, FileText, Calendar, DollarSign, Filter, Plus, X, Trash2, XCircle, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -34,6 +35,8 @@ export default function Faturamento() {
   });
   
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState<FaturamentoItem | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -90,6 +93,11 @@ export default function Faturamento() {
     if (confirm("Tem certeza que deseja excluir este pagamento? Esta ação não pode ser desfeita.")) {
       deletePaymentMutation.mutate(id);
     }
+  };
+
+  const handleViewDetails = (payment: FaturamentoItem) => {
+    setSelectedPayment(payment);
+    setIsDetailsModalOpen(true);
   };
 
   // Buscar dados do usuário atual
@@ -430,7 +438,7 @@ export default function Faturamento() {
                         <TableHead>Vencimento</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Emissão</TableHead>
-                        {user?.role === 'admin' && <TableHead>Ações</TableHead>}
+                        <TableHead>Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -461,34 +469,42 @@ export default function Faturamento() {
                           <TableCell>
                             {new Date(faturamento.issueDate).toLocaleDateString('pt-BR')}
                           </TableCell>
-                          {user?.role === 'admin' && (
-                            <TableCell>
-                              <div className="flex gap-2">
-                                {faturamento.status !== 'cancelado' && (
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                                onClick={() => handleViewDetails(faturamento)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              {user?.role === 'admin' && (
+                                <>
+                                  {faturamento.status !== 'cancelado' && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="text-orange-600 border-orange-600 hover:bg-orange-50"
+                                      onClick={() => handleCancel(faturamento.id)}
+                                      disabled={cancelPaymentMutation.isPending}
+                                    >
+                                      <XCircle className="h-4 w-4" />
+                                    </Button>
+                                  )}
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    className="text-orange-600 border-orange-600 hover:bg-orange-50"
-                                    onClick={() => handleCancel(faturamento.id)}
-                                    disabled={cancelPaymentMutation.isPending}
+                                    className="text-red-600 border-red-600 hover:bg-red-50"
+                                    onClick={() => handleDelete(faturamento.id)}
+                                    disabled={deletePaymentMutation.isPending}
                                   >
-                                    <XCircle className="h-4 w-4" />
-                                    <span className="ml-2 hidden sm:inline">Cancelar</span>
+                                    <Trash2 className="h-4 w-4" />
                                   </Button>
-                                )}
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="text-red-600 border-red-600 hover:bg-red-50"
-                                  onClick={() => handleDelete(faturamento.id)}
-                                  disabled={deletePaymentMutation.isPending}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                  <span className="ml-2 hidden sm:inline">Excluir</span>
-                                </Button>
-                              </div>
-                            </TableCell>
-                          )}
+                                </>
+                              )}
+                            </div>
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -503,6 +519,94 @@ export default function Faturamento() {
             open={showPaymentModal} 
             onOpenChange={setShowPaymentModal} 
           />
+
+          {/* Modal de Detalhes do Pagamento */}
+          <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
+            <DialogContent className="max-w-md mx-auto">
+              <DialogHeader>
+                <DialogTitle>Detalhes do Pagamento</DialogTitle>
+              </DialogHeader>
+              
+              {selectedPayment && (
+                <div className="space-y-4">
+                  {/* ID do Pagamento */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      ID do Pagamento
+                    </label>
+                    <p className="text-gray-900 font-mono text-sm">{selectedPayment.id}</p>
+                  </div>
+
+                  {/* Nome do Cliente */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Cliente
+                    </label>
+                    <p className="text-gray-900">{selectedPayment.clientName}</p>
+                  </div>
+
+                  {/* Descrição */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Descrição
+                    </label>
+                    <p className="text-gray-900">{selectedPayment.description}</p>
+                  </div>
+
+                  {/* Informações financeiras */}
+                  <div className="grid grid-cols-2 gap-4 pt-2 border-t">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Valor
+                      </label>
+                      <p className="text-gray-900 font-semibold">
+                        {new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL'
+                        }).format(parseFloat(selectedPayment.value))}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Contrato
+                      </label>
+                      <p className="text-gray-900">{selectedPayment.contractNumber}</p>
+                    </div>
+                  </div>
+
+                  {/* Datas */}
+                  <div className="grid grid-cols-2 gap-4 pt-2 border-t">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Data de Vencimento
+                      </label>
+                      <p className="text-gray-900">
+                        {new Date(selectedPayment.dueDate).toLocaleDateString('pt-BR')}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Data de Emissão
+                      </label>
+                      <p className="text-gray-900">
+                        {new Date(selectedPayment.issueDate).toLocaleDateString('pt-BR')}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Status */}
+                  <div className="pt-2 border-t">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Status
+                    </label>
+                    <Badge className={getStatusColor(selectedPayment.status)}>
+                      {getStatusText(selectedPayment.status)}
+                    </Badge>
+                  </div>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
         </main>
       </div>
     </div>
@@ -518,7 +622,7 @@ function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
     contractNumber: "",
     description: "",
     value: "",
-    dueDate: "",
+    dueDate: new Date().toISOString().split('T')[0], // Define automaticamente como hoje
     paymentDate: "",
     issueDate: new Date().toISOString().split('T')[0],
     status: "pendente" as const
