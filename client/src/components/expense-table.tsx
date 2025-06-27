@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Filter, X, Ban } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Trash2, Filter, X, Ban, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { authApi } from "@/lib/auth";
@@ -30,6 +31,8 @@ export default function ExpenseTable() {
     contractNumber: "",
     paymentMethod: "all",
   });
+  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -38,6 +41,12 @@ export default function ExpenseTable() {
     queryKey: ['/api/auth/me'],
     queryFn: authApi.getCurrentUser,
   });
+
+  // Função para abrir modal de detalhes
+  const handleViewDetails = (expense: Expense) => {
+    setSelectedExpense(expense);
+    setIsDetailsModalOpen(true);
+  };
 
   // Query unificada para despesas (reduz consultas duplicadas)
   const hasActiveFilters = filters.year !== "all" || filters.month !== "all" || filters.category !== "all" || filters.contractNumber !== "" || filters.paymentMethod !== "all";
@@ -341,38 +350,49 @@ export default function ExpenseTable() {
                         <TableCell className={isCancelled(expense.category) ? "text-red-600" : ""}>
                           {new Date(expense.paymentDate).toLocaleDateString('pt-BR')}
                         </TableCell>
-                        {user?.role === "admin" && (
-                          <TableCell>
-                            <div className="flex gap-2">
-                              {!isCancelled(expense.category) && (
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                              onClick={() => handleViewDetails(expense)}
+                            >
+                              <Eye className="h-4 w-4" />
+                              <span className="ml-2 hidden sm:inline">Ver</span>
+                            </Button>
+                            {user?.role === "admin" && (
+                              <>
+                                {!isCancelled(expense.category) && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-orange-600 border-orange-600 hover:bg-orange-50"
+                                    onClick={() => handleCancel(expense.id)}
+                                    disabled={cancelMutation.isPending}
+                                  >
+                                    <Ban className="h-4 w-4" />
+                                    <span className="ml-2 hidden sm:inline">Cancelar</span>
+                                  </Button>
+                                )}
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  className="text-orange-600 border-orange-600 hover:bg-orange-50"
-                                  onClick={() => handleCancel(expense.id)}
-                                  disabled={cancelMutation.isPending}
+                                  className="text-red-600 border-red-600 hover:bg-red-50"
+                                  onClick={() => {
+                                    if (confirm('Tem certeza que deseja excluir esta despesa?')) {
+                                      handleDelete(expense.id);
+                                    }
+                                  }}
+                                  disabled={deleteMutation.isPending}
                                 >
-                                  <Ban className="h-4 w-4" />
-                                  <span className="ml-2 hidden sm:inline">Cancelar</span>
+                                  <Trash2 className="h-4 w-4" />
+                                  <span className="ml-2 hidden sm:inline">Excluir</span>
                                 </Button>
-                              )}
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-red-600 border-red-600 hover:bg-red-50"
-                                onClick={() => {
-                                  if (confirm('Tem certeza que deseja excluir esta despesa?')) {
-                                    handleDelete(expense.id);
-                                  }
-                                }}
-                                disabled={deleteMutation.isPending}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                                <span className="ml-2 hidden sm:inline">Excluir</span>
-                              </Button>
-                            </div>
-                          </TableCell>
-                        )}
+                              </>
+                            )}
+                          </div>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
