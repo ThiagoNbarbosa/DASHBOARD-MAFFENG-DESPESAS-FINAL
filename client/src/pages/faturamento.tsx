@@ -625,7 +625,7 @@ function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
     dueDate: new Date().toISOString().split('T')[0], // Define automaticamente como hoje
     paymentDate: "",
     issueDate: new Date().toISOString().split('T')[0],
-    status: "pendente" as const
+    status: "pago" as const
   });
 
   // Função para formatar moeda
@@ -655,22 +655,14 @@ function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
 
   const createPaymentMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      // Validar datas
-      const issueDate = new Date(data.issueDate);
-      const dueDate = new Date(data.dueDate);
-      
-      if (dueDate <= issueDate) {
-        throw new Error('Data de vencimento deve ser posterior à data de emissão');
-      }
-      
       return await apiRequest('/api/billing', 'POST', {
         clientName: data.clientName,
         contractNumber: data.contractNumber,
         description: data.description,
         value: parseFloat(data.value),
-        dueDate: dueDate.toISOString(),
+        dueDate: new Date(data.dueDate).toISOString(),
         paymentDate: data.paymentDate ? new Date(data.paymentDate).toISOString() : null,
-        issueDate: issueDate.toISOString(),
+        issueDate: new Date(data.issueDate).toISOString(),
         status: data.status,
       });
     },
@@ -696,7 +688,7 @@ function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
         dueDate: "",
         paymentDate: "",
         issueDate: new Date().toISOString().split('T')[0],
-        status: "pendente"
+        status: "pago"
       });
     },
     onError: (error: any) => {
@@ -803,11 +795,11 @@ function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
               onValueChange={(value) => setFormData(prev => ({ ...prev, status: value as any }))}
             >
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="Pago" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="pendente">Pendente</SelectItem>
                 <SelectItem value="pago">Pago</SelectItem>
+                <SelectItem value="pendente">Pendente</SelectItem>
                 <SelectItem value="vencido">Vencido</SelectItem>
               </SelectContent>
             </Select>
