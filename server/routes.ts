@@ -255,7 +255,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Usuário ID:', req.session.userId);
       console.log('Função do usuário:', req.session.userRole);
       console.log('Body recebido:', req.body ? 'Presente' : 'Ausente');
-      
+
       if (!req.body || !req.body.file || !req.body.filename) {
         console.log('Erro: Dados faltando no body');
         return res.status(400).json({ message: "Arquivo e nome do arquivo são obrigatórios" });
@@ -299,7 +299,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Erro: Usuário não encontrado');
         return res.status(400).json({ message: "Usuário não encontrado" });
       }
-      
+
       // Log para debug - não bloquear upload se authUid não existir
       if (!currentUser.authUid) {
         console.log('Aviso: Usuário não tem authUid - upload pode falhar por políticas RLS');
@@ -333,7 +333,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { data: { publicUrl } } = supabase.storage
         .from('receipts')
         .getPublicUrl(filePath);
-      
+
       res.json({ url: publicUrl });
     } catch (error: any) {
       console.error("Erro no upload:", error);
@@ -398,7 +398,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Função para normalizar categorias com inteligência
   function normalizeCategory(rawCategory: string, existingCategories: string[]): string {
     const category = String(rawCategory).trim().toLowerCase();
-    
+
     // Mapeamento inteligente de categorias comuns
     const categoryMappings: { [key: string]: string } = {
       'alimentacao': 'Alimentação',
@@ -408,7 +408,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       'refeição': 'Alimentação',
       'restaurante': 'Alimentação',
       'lanche': 'Alimentação',
-      
+
       'transporte': 'Transporte',
       'combustivel': 'Transporte',
       'combustível': 'Transporte',
@@ -417,29 +417,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       'taxi': 'Transporte',
       'onibus': 'Transporte',
       'ônibus': 'Transporte',
-      
+
       'material': 'Material',
       'materiais': 'Material',
       'suprimentos': 'Material',
       'escritorio': 'Material',
       'escritório': 'Material',
-      
+
       'servicos': 'Serviços',
       'serviços': 'Serviços',
       'manutencao': 'Serviços',
       'manutenção': 'Serviços',
       'reparo': 'Serviços',
-      
+
       'tecnologia': 'Tecnologia',
       'software': 'Tecnologia',
       'hardware': 'Tecnologia',
       'computador': 'Tecnologia',
       'internet': 'Tecnologia',
-      
+
       'marketing': 'Marketing',
       'publicidade': 'Marketing',
       'propaganda': 'Marketing',
-      
+
       'outros': 'Outros',
       'diversos': 'Outros',
       'geral': 'Outros'
@@ -464,13 +464,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Função para normalizar métodos de pagamento
   function normalizePaymentMethod(rawMethod: string): string {
     const method = String(rawMethod).trim().toLowerCase();
-    
+
     const methodMappings: { [key: string]: string } = {
       'dinheiro': 'Dinheiro',
       'cash': 'Dinheiro',
       'especie': 'Dinheiro',
       'espécie': 'Dinheiro',
-      
+
       'cartao': 'Cartão',
       'cartão': 'Cartão',
       'card': 'Cartão',
@@ -478,15 +478,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       'crédito': 'Cartão',
       'debito': 'Cartão',
       'débito': 'Cartão',
-      
+
       'pix': 'PIX',
       'transferencia': 'PIX',
       'transferência': 'PIX',
-      
+
       'boleto': 'Boleto',
       'bancario': 'Boleto',
       'bancário': 'Boleto',
-      
+
       'cheque': 'Cheque'
     };
 
@@ -507,17 +507,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Função para validar e corrigir números de contrato
   function normalizeContractNumber(rawContract: string): string {
     const contract = String(rawContract).trim();
-    
+
     // Se for um número, adicionar prefixo padrão
     if (/^\d+$/.test(contract)) {
       return `CONT-${contract.padStart(4, '0')}`;
     }
-    
+
     // Se já tem formato de contrato, manter
     if (/^(CONT|CONTRACT|CTR)-\d+/.test(contract.toUpperCase())) {
       return contract.toUpperCase();
     }
-    
+
     return contract.toUpperCase();
   }
 
@@ -536,7 +536,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const methodSet = new Set(existingExpenses.map(e => e.paymentMethod));
       const existingCategories: string[] = [];
       const existingPaymentMethods: string[] = [];
-      
+
       categorySet.forEach(cat => existingCategories.push(cat));
       methodSet.forEach(method => existingPaymentMethods.push(method));
 
@@ -544,10 +544,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
-      
+
       // Converter para JSON
       const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
-      
+
       if (data.length < 2) {
         return res.status(400).json({ message: "Arquivo deve conter pelo menos uma linha de cabeçalho e uma linha de dados" });
       }
@@ -602,7 +602,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
-        
+
         if (!row || row.length < 3) {
           errors.push(`Linha ${i + 2}: dados insuficientes`);
           continue;
@@ -616,7 +616,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const rawCategory = row[columnMapping.category];
           const rawContract = row[columnMapping.contractNumber];
           const rawDate = row[columnMapping.paymentDate];
-          
+
           if (!rawItem || !rawValue) {
             errors.push(`Linha ${i + 2}: item ou valor em branco`);
             continue;
@@ -661,7 +661,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             } else {
               paymentDate = new Date(dateStr);
             }
-            
+
             if (isNaN(paymentDate.getTime())) {
               paymentDate = new Date(); // Data atual como fallback
               insights.push(`Linha ${i + 2}: data inválida, usando data atual`);
@@ -674,10 +674,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Aplicar inteligência nos dados
           const intelligentCategory = rawCategory ? 
             normalizeCategory(rawCategory, existingCategories) : 'Outros';
-          
+
           const intelligentPaymentMethod = rawPaymentMethod ? 
             normalizePaymentMethod(rawPaymentMethod) : 'Não especificado';
-          
+
           const intelligentContract = rawContract ? 
             normalizeContractNumber(rawContract) : `AUTO-${Date.now().toString().slice(-6)}`;
 
@@ -760,7 +760,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/expenses/:id/cancel", requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
-      
+
       // Check if user has permission to cancel this expense
       const expense = await storage.getExpense(id);
       if (!expense) {
@@ -776,7 +776,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const cancelledCategory = expense.category.startsWith('[CANCELADA]') 
         ? expense.category 
         : `[CANCELADA] ${expense.category}`;
-      
+
       const updatedExpense = await storage.updateExpense(id, { 
         category: cancelledCategory 
       });
