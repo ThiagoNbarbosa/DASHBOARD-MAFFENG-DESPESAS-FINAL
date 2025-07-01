@@ -35,6 +35,7 @@ export default function Relatorios() {
 
   const [showImportModal, setShowImportModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Mutation para importar Excel
   const importExcelMutation = useMutation({
@@ -100,11 +101,24 @@ export default function Relatorios() {
     },
   });
 
+  const validateFile = (file: File) => {
+    const validTypes = [
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel',
+      'application/excel',
+      'text/csv'
+    ];
+    
+    const validExtensions = ['.xlsx', '.xls', '.csv'];
+    const fileExtension = file.name.toLowerCase().slice(file.name.lastIndexOf('.'));
+    
+    return validTypes.includes(file.type) || validExtensions.includes(fileExtension);
+  };
+
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
-          file.type === 'application/vnd.ms-excel') {
+      if (validateFile(file)) {
         setSelectedFile(file);
       } else {
         toast({
@@ -113,6 +127,69 @@ export default function Relatorios() {
           variant: "destructive",
         });
       }
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = e.dataTransfer.files;
+    if (files.length === 0) {
+      toast({
+        title: "Nenhum arquivo detectado",
+        description: "Tente arrastar um arquivo novamente.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (files.length > 1) {
+      toast({
+        title: "Múltiplos arquivos detectados",
+        description: "Por favor, arraste apenas um arquivo por vez.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const file = files[0];
+    
+    // Verificar tamanho do arquivo (máximo 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: "Arquivo muito grande",
+        description: "O arquivo deve ter no máximo 10MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (validateFile(file)) {
+      setSelectedFile(file);
+      toast({
+        title: "✅ Arquivo carregado com sucesso",
+        description: `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB) pronto para importação inteligente.`,
+      });
+    } else {
+      toast({
+        title: "Formato não suportado",
+        description: "Por favor, arraste um arquivo Excel (.xlsx, .xls) ou CSV.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -605,7 +682,16 @@ export default function Relatorios() {
               </p>
             </div>
 
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+            <div 
+              className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                isDragging 
+                  ? 'border-blue-400 bg-blue-50' 
+                  : 'border-gray-300 hover:border-gray-400'
+              }`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
               {selectedFile ? (
                 <div className="space-y-2">
                   <FileText className="h-8 w-8 text-green-600 mx-auto" />
@@ -626,23 +712,47 @@ export default function Relatorios() {
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  <Upload className="h-8 w-8 text-gray-400 mx-auto" />
+                <div className="space-y-3">
+                  {isDragging ? (
+                    <div className="animate-bounce">
+                      <Upload className="h-10 w-10 text-blue-500 mx-auto" />
+                    </div>
+                  ) : (
+                    <Upload className="h-8 w-8 text-gray-400 mx-auto" />
+                  )}
+                  
                   <div>
                     <label className="cursor-pointer">
                       <input
                         type="file"
-                        accept=".xlsx,.xls"
+                        accept=".xlsx,.xls,.csv"
                         onChange={handleFileSelect}
                         className="hidden"
                       />
                       <span className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                        Clique para selecionar
+                        Clique para selecionar arquivo
                       </span>
                     </label>
-                    <p className="text-xs text-gray-500 mt-1">
-                      ou arraste um arquivo Excel aqui
-                    </p>
+                    
+                    {isDragging ? (
+                      <div className="mt-2 p-2 bg-blue-100 rounded-lg">
+                        <p className="text-sm font-medium text-blue-700">
+                          📂 Solte o arquivo aqui!
+                        </p>
+                        <p className="text-xs text-blue-600">
+                          Excel (.xlsx, .xls) ou CSV aceitos
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="mt-2">
+                        <p className="text-xs text-gray-500">
+                          ou <span className="font-medium">arraste e solte</span> um arquivo Excel aqui
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          Máximo: 10MB • Formatos: .xlsx, .xls, .csv
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
