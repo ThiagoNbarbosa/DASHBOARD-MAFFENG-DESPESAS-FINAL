@@ -334,11 +334,8 @@ export default function ExpenseTable() {
                         className={isCancelled(expense.category) ? "bg-red-50" : ""}
                       >
                         <TableCell>
-                          <div>
-                            <div className={`font-medium ${isCancelled(expense.category) ? "text-red-600" : ""}`}>
-                              {expense.item}
-                            </div>
-                            <div className="text-sm text-gray-500">ID: #{expense.id.slice(0, 8)}</div>
+                          <div className={`font-medium ${isCancelled(expense.category) ? "text-red-600" : ""}`}>
+                            {expense.item}
                           </div>
                         </TableCell>
                         <TableCell>
@@ -447,11 +444,8 @@ export default function ExpenseTable() {
                       className={isCancelled(expense.category) ? "bg-red-50" : ""}
                     >
                       <TableCell>
-                        <div>
-                          <div className={`font-medium ${isCancelled(expense.category) ? "text-red-600" : ""}`}>
-                            {expense.item}
-                          </div>
-                          <div className="text-sm text-gray-500">ID: #{expense.id.slice(0, 8)}</div>
+                        <div className={`font-medium ${isCancelled(expense.category) ? "text-red-600" : ""}`}>
+                          {expense.item}
                         </div>
                       </TableCell>
                       <TableCell>
