@@ -60,10 +60,36 @@ export default function Relatorios() {
       queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
       setShowImportModal(false);
       setSelectedFile(null);
+      
+      // Mensagem inteligente com detalhes da importação
+      const message = data.enhanced > 0 
+        ? `${data.imported} despesas importadas. ${data.enhanced} foram melhoradas automaticamente!`
+        : `${data.imported} despesas importadas com sucesso.`;
+      
       toast({
-        title: "Importação concluída",
-        description: `${data.imported} despesas importadas com sucesso.`,
+        title: "🧠 Importação Inteligente Concluída",
+        description: message,
       });
+
+      // Mostrar insights se houver
+      if (data.insights && data.insights.length > 0) {
+        setTimeout(() => {
+          toast({
+            title: "💡 Insights da Importação",
+            description: data.insights.slice(0, 2).join('; '),
+          });
+        }, 1000);
+      }
+
+      // Mostrar informações sobre a inteligência aplicada
+      if (data.intelligence) {
+        setTimeout(() => {
+          toast({
+            title: "🤖 Inteligência Aplicada",
+            description: `${data.intelligence.columnsAutoMapped} colunas mapeadas automaticamente`,
+          });
+        }, 2000);
+      }
     },
     onError: (error) => {
       toast({
@@ -555,17 +581,27 @@ export default function Relatorios() {
           
           <div className="space-y-4">
             <div className="text-sm text-gray-600">
-              <p className="mb-2">Formato esperado da planilha:</p>
+              <div className="bg-blue-50 p-3 rounded-lg mb-3">
+                <h4 className="font-medium text-blue-800 mb-2 flex items-center gap-2">
+                  <span>🧠</span> Importação Inteligente
+                </h4>
+                <p className="text-xs text-blue-700">
+                  O sistema detecta automaticamente as colunas, normaliza categorias 
+                  e métodos de pagamento, e corrige formatos de dados!
+                </p>
+              </div>
+              
+              <p className="mb-2">Formatos aceitos (ordem flexível):</p>
               <ul className="list-disc list-inside space-y-1 text-xs">
-                <li><strong>Coluna A:</strong> Item/Descrição</li>
-                <li><strong>Coluna B:</strong> Valor (número)</li>
-                <li><strong>Coluna C:</strong> Método de Pagamento</li>
-                <li><strong>Coluna D:</strong> Categoria</li>
-                <li><strong>Coluna E:</strong> Número do Contrato</li>
-                <li><strong>Coluna F:</strong> Data de Pagamento (DD/MM/AAAA)</li>
+                <li><strong>Item/Descrição:</strong> Nome do produto/serviço</li>
+                <li><strong>Valor:</strong> R$ 100,00 ou 100.50 (múltiplos formatos)</li>
+                <li><strong>Pagamento:</strong> Cartão, PIX, Dinheiro, etc.</li>
+                <li><strong>Categoria:</strong> Alimentação, Transporte, etc.</li>
+                <li><strong>Contrato:</strong> Número ou código do contrato</li>
+                <li><strong>Data:</strong> DD/MM/AAAA ou outros formatos</li>
               </ul>
-              <p className="mt-2 text-xs text-orange-600">
-                * A primeira linha deve conter os cabeçalhos
+              <p className="mt-2 text-xs text-green-600">
+                ✅ Cabeçalhos são detectados automaticamente
               </p>
             </div>
 

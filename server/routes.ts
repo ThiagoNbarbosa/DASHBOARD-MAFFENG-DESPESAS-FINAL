@@ -395,12 +395,150 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Endpoint para importação de Excel
+  // Função para normalizar categorias com inteligência
+  function normalizeCategory(rawCategory: string, existingCategories: string[]): string {
+    const category = String(rawCategory).trim().toLowerCase();
+    
+    // Mapeamento inteligente de categorias comuns
+    const categoryMappings: { [key: string]: string } = {
+      'alimentacao': 'Alimentação',
+      'alimentação': 'Alimentação',
+      'comida': 'Alimentação',
+      'refeicao': 'Alimentação',
+      'refeição': 'Alimentação',
+      'restaurante': 'Alimentação',
+      'lanche': 'Alimentação',
+      
+      'transporte': 'Transporte',
+      'combustivel': 'Transporte',
+      'combustível': 'Transporte',
+      'gasolina': 'Transporte',
+      'uber': 'Transporte',
+      'taxi': 'Transporte',
+      'onibus': 'Transporte',
+      'ônibus': 'Transporte',
+      
+      'material': 'Material',
+      'materiais': 'Material',
+      'suprimentos': 'Material',
+      'escritorio': 'Material',
+      'escritório': 'Material',
+      
+      'servicos': 'Serviços',
+      'serviços': 'Serviços',
+      'manutencao': 'Serviços',
+      'manutenção': 'Serviços',
+      'reparo': 'Serviços',
+      
+      'tecnologia': 'Tecnologia',
+      'software': 'Tecnologia',
+      'hardware': 'Tecnologia',
+      'computador': 'Tecnologia',
+      'internet': 'Tecnologia',
+      
+      'marketing': 'Marketing',
+      'publicidade': 'Marketing',
+      'propaganda': 'Marketing',
+      
+      'outros': 'Outros',
+      'diversos': 'Outros',
+      'geral': 'Outros'
+    };
+
+    // Procurar correspondência direta
+    if (categoryMappings[category]) {
+      return categoryMappings[category];
+    }
+
+    // Procurar correspondência parcial
+    for (const [key, value] of Object.entries(categoryMappings)) {
+      if (category.includes(key) || key.includes(category)) {
+        return value;
+      }
+    }
+
+    // Se não encontrar, capitalizar a primeira letra
+    return rawCategory.charAt(0).toUpperCase() + rawCategory.slice(1).toLowerCase();
+  }
+
+  // Função para normalizar métodos de pagamento
+  function normalizePaymentMethod(rawMethod: string): string {
+    const method = String(rawMethod).trim().toLowerCase();
+    
+    const methodMappings: { [key: string]: string } = {
+      'dinheiro': 'Dinheiro',
+      'cash': 'Dinheiro',
+      'especie': 'Dinheiro',
+      'espécie': 'Dinheiro',
+      
+      'cartao': 'Cartão',
+      'cartão': 'Cartão',
+      'card': 'Cartão',
+      'credito': 'Cartão',
+      'crédito': 'Cartão',
+      'debito': 'Cartão',
+      'débito': 'Cartão',
+      
+      'pix': 'PIX',
+      'transferencia': 'PIX',
+      'transferência': 'PIX',
+      
+      'boleto': 'Boleto',
+      'bancario': 'Boleto',
+      'bancário': 'Boleto',
+      
+      'cheque': 'Cheque'
+    };
+
+    if (methodMappings[method]) {
+      return methodMappings[method];
+    }
+
+    // Procurar correspondência parcial
+    for (const [key, value] of Object.entries(methodMappings)) {
+      if (method.includes(key) || key.includes(method)) {
+        return value;
+      }
+    }
+
+    return rawMethod.charAt(0).toUpperCase() + rawMethod.slice(1).toLowerCase();
+  }
+
+  // Função para validar e corrigir números de contrato
+  function normalizeContractNumber(rawContract: string): string {
+    const contract = String(rawContract).trim();
+    
+    // Se for um número, adicionar prefixo padrão
+    if (/^\d+$/.test(contract)) {
+      return `CONT-${contract.padStart(4, '0')}`;
+    }
+    
+    // Se já tem formato de contrato, manter
+    if (/^(CONT|CONTRACT|CTR)-\d+/.test(contract.toUpperCase())) {
+      return contract.toUpperCase();
+    }
+    
+    return contract.toUpperCase();
+  }
+
+  // Endpoint para importação de Excel com inteligência
   app.post("/api/expenses/import-excel", requireAuth, upload.single('excel'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "Nenhum arquivo fornecido" });
       }
+
+      console.log('Iniciando importação inteligente de Excel...');
+
+      // Obter despesas existentes para análise de padrões
+      const existingExpenses = await storage.getExpenses({ userId: req.session.userId });
+      const categorySet = new Set(existingExpenses.map(e => e.category));
+      const methodSet = new Set(existingExpenses.map(e => e.paymentMethod));
+      const existingCategories: string[] = [];
+      const existingPaymentMethods: string[] = [];
+      
+      categorySet.forEach(cat => existingCategories.push(cat));
+      methodSet.forEach(method => existingPaymentMethods.push(method));
 
       // Ler arquivo Excel
       const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
@@ -414,70 +552,150 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Arquivo deve conter pelo menos uma linha de cabeçalho e uma linha de dados" });
       }
 
-      // Ignorar cabeçalho (primeira linha) e processar dados
+      // Analisar cabeçalho para detecção inteligente de colunas
+      const headers = data[0].map((h: any) => String(h).toLowerCase().trim());
+      console.log('Cabeçalhos detectados:', headers);
+
+      // Mapear colunas automaticamente
+      const columnMapping = {
+        item: -1,
+        value: -1,
+        paymentMethod: -1,
+        category: -1,
+        contractNumber: -1,
+        paymentDate: -1
+      };
+
+      // Detectar colunas por padrões inteligentes
+      headers.forEach((header, index) => {
+        if (header.includes('item') || header.includes('descri') || header.includes('produto')) {
+          columnMapping.item = index;
+        } else if (header.includes('valor') || header.includes('preco') || header.includes('price') || header.includes('amount')) {
+          columnMapping.value = index;
+        } else if (header.includes('pagamento') || header.includes('payment') || header.includes('método') || header.includes('metodo')) {
+          columnMapping.paymentMethod = index;
+        } else if (header.includes('categoria') || header.includes('category') || header.includes('tipo')) {
+          columnMapping.category = index;
+        } else if (header.includes('contrato') || header.includes('contract') || header.includes('numero')) {
+          columnMapping.contractNumber = index;
+        } else if (header.includes('data') || header.includes('date') || header.includes('quando')) {
+          columnMapping.paymentDate = index;
+        }
+      });
+
+      // Fallback para ordem padrão se não detectar
+      if (columnMapping.item === -1) columnMapping.item = 0;
+      if (columnMapping.value === -1) columnMapping.value = 1;
+      if (columnMapping.paymentMethod === -1) columnMapping.paymentMethod = 2;
+      if (columnMapping.category === -1) columnMapping.category = 3;
+      if (columnMapping.contractNumber === -1) columnMapping.contractNumber = 4;
+      if (columnMapping.paymentDate === -1) columnMapping.paymentDate = 5;
+
+      console.log('Mapeamento de colunas:', columnMapping);
+
+      // Processar dados
       const rows = data.slice(1);
       let imported = 0;
+      let enhanced = 0;
       const errors: string[] = [];
+      const insights: string[] = [];
 
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
         
-        // Verificar se a linha tem dados suficientes
-        if (!row || row.length < 6) {
+        if (!row || row.length < 3) {
           errors.push(`Linha ${i + 2}: dados insuficientes`);
           continue;
         }
 
         try {
-          // Mapear colunas conforme especificação
-          const [item, valueRaw, paymentMethod, category, contractNumber, paymentDateRaw] = row;
+          // Extrair dados usando mapeamento inteligente
+          const rawItem = row[columnMapping.item];
+          const rawValue = row[columnMapping.value];
+          const rawPaymentMethod = row[columnMapping.paymentMethod];
+          const rawCategory = row[columnMapping.category];
+          const rawContract = row[columnMapping.contractNumber];
+          const rawDate = row[columnMapping.paymentDate];
           
-          if (!item || !valueRaw || !paymentMethod || !category || !contractNumber || !paymentDateRaw) {
-            errors.push(`Linha ${i + 2}: campos obrigatórios em branco`);
+          if (!rawItem || !rawValue) {
+            errors.push(`Linha ${i + 2}: item ou valor em branco`);
             continue;
           }
 
-          // Processar valor
+          // Processar valor com múltiplos formatos
           let value: number;
-          if (typeof valueRaw === 'number') {
-            value = valueRaw;
+          if (typeof rawValue === 'number') {
+            value = rawValue;
           } else {
-            const cleanValue = String(valueRaw).replace(/[^\d,.-]/g, '').replace(',', '.');
+            const cleanValue = String(rawValue)
+              .replace(/[^\d,.-]/g, '')
+              .replace(',', '.');
             value = parseFloat(cleanValue);
             if (isNaN(value)) {
-              errors.push(`Linha ${i + 2}: valor inválido`);
+              errors.push(`Linha ${i + 2}: valor inválido (${rawValue})`);
               continue;
             }
           }
 
-          // Processar data
+          // Processar data com múltiplos formatos
           let paymentDate: Date;
-          if (typeof paymentDateRaw === 'number') {
+          if (typeof rawDate === 'number') {
             // Excel serializa datas como números
-            paymentDate = XLSX.SSF.parse_date_code ? new Date((paymentDateRaw - 25569) * 86400 * 1000) : new Date();
-          } else {
-            // Tentar parsear string de data
-            const dateStr = String(paymentDateRaw);
+            paymentDate = new Date((rawDate - 25569) * 86400 * 1000);
+          } else if (rawDate) {
+            const dateStr = String(rawDate);
             if (dateStr.includes('/')) {
-              const [day, month, year] = dateStr.split('/');
-              paymentDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+              const parts = dateStr.split('/');
+              if (parts.length === 3) {
+                // Tentar DD/MM/YYYY e MM/DD/YYYY
+                const [first, second, third] = parts.map(p => parseInt(p));
+                if (third > 31) {
+                  // Ano está no final
+                  paymentDate = new Date(third, second - 1, first);
+                } else {
+                  paymentDate = new Date(first, second - 1, third);
+                }
+              } else {
+                paymentDate = new Date(dateStr);
+              }
             } else {
               paymentDate = new Date(dateStr);
             }
             
             if (isNaN(paymentDate.getTime())) {
-              errors.push(`Linha ${i + 2}: data inválida`);
-              continue;
+              paymentDate = new Date(); // Data atual como fallback
+              insights.push(`Linha ${i + 2}: data inválida, usando data atual`);
             }
+          } else {
+            paymentDate = new Date(); // Data atual se não informada
+            insights.push(`Linha ${i + 2}: sem data, usando data atual`);
           }
 
-          // Criar despesa sem imagem (imageUrl será string vazia)
+          // Aplicar inteligência nos dados
+          const intelligentCategory = rawCategory ? 
+            normalizeCategory(rawCategory, existingCategories) : 'Outros';
+          
+          const intelligentPaymentMethod = rawPaymentMethod ? 
+            normalizePaymentMethod(rawPaymentMethod) : 'Não especificado';
+          
+          const intelligentContract = rawContract ? 
+            normalizeContractNumber(rawContract) : `AUTO-${Date.now().toString().slice(-6)}`;
+
+          // Verificar se houve melhorias nos dados
+          if (intelligentCategory !== rawCategory || 
+              intelligentPaymentMethod !== rawPaymentMethod ||
+              intelligentContract !== rawContract) {
+            enhanced++;
+          }
+
+          // Criar despesa com dados inteligentes
           const expenseData = {
-            item: String(item).trim(),
+            item: String(rawItem).trim(),
+            value: value.toString(),
             totalValue: value.toString(),
-            paymentMethod: String(paymentMethod).trim(),
-            category: String(category).trim(),
-            contractNumber: String(contractNumber).trim(),
+            paymentMethod: intelligentPaymentMethod,
+            category: intelligentCategory,
+            contractNumber: intelligentContract,
             paymentDate,
             imageUrl: '', // Imagem não obrigatória para importação
           };
@@ -493,10 +711,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      console.log(`Importação concluída: ${imported} importadas, ${enhanced} melhoradas`);
+
       res.json({
         imported,
+        enhanced,
         total: rows.length,
-        errors: errors.length > 0 ? errors.slice(0, 10) : [], // Limitar a 10 erros
+        insights: insights.slice(0, 5), // Primeiros 5 insights
+        errors: errors.length > 0 ? errors.slice(0, 10) : [], // Primeiros 10 erros
+        intelligence: {
+          categoriesDetected: existingCategories.length,
+          paymentMethodsDetected: existingPaymentMethods.length,
+          columnsAutoMapped: Object.values(columnMapping).filter(v => v !== -1).length
+        }
       });
 
     } catch (error) {
