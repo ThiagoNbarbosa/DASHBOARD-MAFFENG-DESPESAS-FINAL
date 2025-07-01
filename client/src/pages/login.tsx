@@ -47,9 +47,6 @@ export default function Login() {
           <div className="mx-auto h-48 w-64 flex items-center justify-center">
             <img src={logoPath} alt="MAFFENG Logo" className="h-full w-full object-contain" />
           </div>
-          <p className="mt-4 text-sm text-gray-500">
-            Sistema Financeiro · Acesso Restrito
-          </p>
         </div>
 
         <Card>
