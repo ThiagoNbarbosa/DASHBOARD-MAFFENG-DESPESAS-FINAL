@@ -840,7 +840,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Billing routes (Auth required, admin for some operations)
   app.get("/api/billing", requireAuth, async (req, res) => {
     try {
-      const { year, month, status, contractNumber } = req.query;
+      const { year, month, status, contractNumber, startDate, endDate } = req.query;
       const filters: any = {};
 
       // Usuários com mesma função podem ver dados uns dos outros
@@ -853,12 +853,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (month && month !== "all") filters.month = month as string;
       if (status && status !== "all") filters.status = status as string;
       if (contractNumber) filters.contractNumber = contractNumber as string;
+      if (startDate) filters.startDate = startDate as string;
+      if (endDate) filters.endDate = endDate as string;
 
       const billing = await billingStorage.getBilling(filters);
       res.json(billing);
     } catch (error) {
       console.error("Error fetching billing:", error);
-      res.status(500).json({ message: "Erro ao carregar faturamento" });
+      res.status(50).json({ message: "Erro ao carregar faturamento" });
     }
   });
 
