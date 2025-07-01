@@ -142,6 +142,18 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(expenses.paymentMethod, filters.paymentMethod));
     }
 
+    if (filters?.startDate) {
+      const startDate = new Date(filters.startDate);
+      conditions.push(gte(expenses.paymentDate, startDate));
+    }
+
+    if (filters?.endDate) {
+      const endDate = new Date(filters.endDate);
+      // Adicionar 23:59:59 para incluir todo o dia final
+      endDate.setHours(23, 59, 59, 999);
+      conditions.push(lte(expenses.paymentDate, endDate));
+    }
+
     if (conditions.length > 0) {
       query = query.where(and(...conditions));
     }
