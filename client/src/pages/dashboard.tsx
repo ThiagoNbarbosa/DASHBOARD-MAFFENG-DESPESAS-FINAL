@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import Sidebar from "@/components/sidebar";
 import DashboardStats from "@/components/dashboard-stats";
 import ExpenseTable from "@/components/expense-table";
-import ExpenseModal from "@/components/expense-modal";
 import { authApi } from "@/lib/auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { BarChart3, Calendar, User, Building2 } from "lucide-react";
@@ -32,7 +31,7 @@ export default function Dashboard() {
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex items-center space-x-3">
                 <div className="hidden sm:flex items-center space-x-2 text-sm text-gray-500">
                   <Calendar className="h-4 w-4" />
@@ -43,7 +42,6 @@ export default function Dashboard() {
                     day: 'numeric' 
                   })}</span>
                 </div>
-                <ExpenseModal />
               </div>
             </div>
           </div>
