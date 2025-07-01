@@ -854,9 +854,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (status && status !== "all") filters.status = status as string;
       if (contractNumber) filters.contractNumber = contractNumber as string;
       if (startDate) filters.startDate = startDate as string;
-      if (endDate) filters.endDate = endDate as string;
+      const endDate = req.query.endDate as string;
+    const clientName = req.query.clientName as string;
 
-      const billing = await billingStorage.getBilling(filters);
+    const billing = await billingStorage.getBilling({
+      ...filters,
+      contractNumber,
+      startDate,
+      endDate,
+      clientName,
+    });
       res.json(billing);
     } catch (error) {
       console.error("Error fetching billing:", error);

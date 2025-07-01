@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -28,14 +29,15 @@ interface FaturamentoItem {
 
 export default function Faturamento() {
   const [filters, setFilters] = useState({
-    month: "",
     year: new Date().getFullYear().toString(),
+    month: "",
     status: "",
     contractNumber: "",
     startDate: "",
     endDate: "",
+    clientName: "",
   });
-  
+
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<FaturamentoItem | null>(null);
@@ -144,12 +146,13 @@ export default function Faturamento() {
       if (filters.contractNumber) params.append('contractNumber', filters.contractNumber);
       if (filters.startDate) params.append('startDate', filters.startDate);
       if (filters.endDate) params.append('endDate', filters.endDate);
+      if (filters.clientName) params.append('clientName', filters.clientName);
 
       const response = await fetch(`/api/billing?${params}`);
       if (!response.ok) {
         throw new Error('Erro ao buscar faturamento');
       }
-      
+
       const data = await response.json();
       return data.map((item: any) => ({
         id: item.id,
@@ -215,6 +218,7 @@ export default function Faturamento() {
       contractNumber: "",
       startDate: "",
       endDate: "",
+      clientName: "",
     });
   };
 
@@ -248,7 +252,7 @@ export default function Faturamento() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Sidebar />
-      
+
       <div className="lg:pl-64">
         {/* Header */}
         <header className="bg-white shadow-sm border-b border-gray-200">
@@ -263,7 +267,7 @@ export default function Faturamento() {
                   Gerencie e acompanhe o faturamento dos contratos
                 </p>
               </div>
-              
+
               {/* Botão Adicionar Pagamento - Responsivo */}
               <Button 
                 onClick={() => setShowPaymentModal(true)}
@@ -348,6 +352,17 @@ export default function Faturamento() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Nome do Cliente
+                  </label>
+                  <Input
+                    placeholder="Nome do cliente"
+                    value={filters.clientName}
+                    onChange={(e) => setFilters(prev => ({ ...prev, clientName: e.target.value }))}
+                  />
+                </div>
+
                 <div>
                   <label className="text-sm font-medium text-gray-700 mb-2 block">
                     Ano
@@ -566,7 +581,7 @@ export default function Faturamento() {
               )}
             </CardContent>
           </Card>
-          
+
           {/* Modal de Adicionar Pagamento */}
           <PaymentModal 
             open={showPaymentModal} 
@@ -579,7 +594,7 @@ export default function Faturamento() {
               <DialogHeader>
                 <DialogTitle>Detalhes do Pagamento</DialogTitle>
               </DialogHeader>
-              
+
               {selectedPayment && (
                 <div className="space-y-4">
                   {/* ID do Pagamento */}
@@ -686,7 +701,7 @@ function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
     if (!value) return "";
     const numericValue = parseFloat(value);
     if (isNaN(numericValue)) return "";
-    
+
     return numericValue.toLocaleString('pt-BR', {
       style: 'currency',
       currency: 'BRL',
@@ -722,7 +737,7 @@ function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/billing'] });
       queryClient.invalidateQueries({ queryKey: ['/api/billing/stats'] });
-      
+
       // Use setTimeout to ensure DOM is stable before showing toast
       setTimeout(() => {
         toast({
@@ -730,7 +745,7 @@ function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
           description: "O faturamento foi criado com sucesso.",
         });
       }, 100);
-      
+
       onOpenChange(false);
       // Reset form
       setFormData({
@@ -746,7 +761,7 @@ function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
     },
     onError: (error: any) => {
       console.error("Erro ao criar faturamento:", error);
-      
+
       // Use setTimeout to ensure DOM is stable before showing toast
       setTimeout(() => {
         toast({
