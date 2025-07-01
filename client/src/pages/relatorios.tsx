@@ -545,6 +545,95 @@ export default function Relatorios() {
           </Card>
         </main>
       </div>
+
+      {/* Modal de Importação de Excel */}
+      <Dialog open={showImportModal} onOpenChange={setShowImportModal}>
+        <DialogContent className="max-w-md mx-auto">
+          <DialogHeader>
+            <DialogTitle>Importar Despesas do Excel</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="text-sm text-gray-600">
+              <p className="mb-2">Formato esperado da planilha:</p>
+              <ul className="list-disc list-inside space-y-1 text-xs">
+                <li><strong>Coluna A:</strong> Item/Descrição</li>
+                <li><strong>Coluna B:</strong> Valor (número)</li>
+                <li><strong>Coluna C:</strong> Método de Pagamento</li>
+                <li><strong>Coluna D:</strong> Categoria</li>
+                <li><strong>Coluna E:</strong> Número do Contrato</li>
+                <li><strong>Coluna F:</strong> Data de Pagamento (DD/MM/AAAA)</li>
+              </ul>
+              <p className="mt-2 text-xs text-orange-600">
+                * A primeira linha deve conter os cabeçalhos
+              </p>
+            </div>
+
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+              {selectedFile ? (
+                <div className="space-y-2">
+                  <FileText className="h-8 w-8 text-green-600 mx-auto" />
+                  <p className="text-sm font-medium text-green-600">
+                    {selectedFile.name}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setSelectedFile(null)}
+                    className="text-red-600 border-red-600 hover:bg-red-50"
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Remover
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Upload className="h-8 w-8 text-gray-400 mx-auto" />
+                  <div>
+                    <label className="cursor-pointer">
+                      <input
+                        type="file"
+                        accept=".xlsx,.xls"
+                        onChange={handleFileSelect}
+                        className="hidden"
+                      />
+                      <span className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                        Clique para selecionar
+                      </span>
+                    </label>
+                    <p className="text-xs text-gray-500 mt-1">
+                      ou arraste um arquivo Excel aqui
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowImportModal(false);
+                  setSelectedFile(null);
+                }}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleImportExcel}
+                disabled={!selectedFile || importExcelMutation.isPending}
+                className="flex-1 bg-green-600 hover:bg-green-700"
+              >
+                {importExcelMutation.isPending ? "Importando..." : "Importar"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

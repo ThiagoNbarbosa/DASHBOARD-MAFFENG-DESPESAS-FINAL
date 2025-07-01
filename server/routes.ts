@@ -8,6 +8,8 @@ import bcrypt from "bcrypt";
 import { supabase } from "./supabase";
 import session from "express-session";
 import { z } from "zod";
+import multer from "multer";
+import * as XLSX from "xlsx";
 
 declare module "express-session" {
   interface SessionData {
@@ -17,6 +19,25 @@ declare module "express-session" {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Configurar multer para upload de arquivos
+  const upload = multer({ 
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB
+    },
+    fileFilter: (req, file, cb) => {
+      const allowedTypes = [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-excel'
+      ];
+      if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Apenas arquivos Excel são permitidos'));
+      }
+    },
+  });
+
   // Session configuration
   app.use(session({
     secret: process.env.SESSION_SECRET || "your-secret-key",
@@ -371,6 +392,116 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       console.error('Erro no servidor:', error);
       res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  // Endpoint para importação de Excel
+  app.post("/api/expenses/import-excel", requireAuth, upload.single('excel'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "Nenhum arquivo fornecido" });
+      }
+
+      // Ler arquivo Excel
+      const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      
+      // Converter para JSON
+      const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+      
+      if (data.length < 2) {
+        return res.status(400).json({ message: "Arquivo deve conter pelo menos uma linha de cabeçalho e uma linha de dados" });
+      }
+
+      // Ignorar cabeçalho (primeira linha) e processar dados
+      const rows = data.slice(1);
+      let imported = 0;
+      const errors: string[] = [];
+
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        
+        // Verificar se a linha tem dados suficientes
+        if (!row || row.length < 6) {
+          errors.push(`Linha ${i + 2}: dados insuficientes`);
+          continue;
+        }
+
+        try {
+          // Mapear colunas conforme especificação
+          const [item, valueRaw, paymentMethod, category, contractNumber, paymentDateRaw] = row;
+          
+          if (!item || !valueRaw || !paymentMethod || !category || !contractNumber || !paymentDateRaw) {
+            errors.push(`Linha ${i + 2}: campos obrigatórios em branco`);
+            continue;
+          }
+
+          // Processar valor
+          let value: number;
+          if (typeof valueRaw === 'number') {
+            value = valueRaw;
+          } else {
+            const cleanValue = String(valueRaw).replace(/[^\d,.-]/g, '').replace(',', '.');
+            value = parseFloat(cleanValue);
+            if (isNaN(value)) {
+              errors.push(`Linha ${i + 2}: valor inválido`);
+              continue;
+            }
+          }
+
+          // Processar data
+          let paymentDate: Date;
+          if (typeof paymentDateRaw === 'number') {
+            // Excel serializa datas como números
+            paymentDate = XLSX.SSF.parse_date_code ? new Date((paymentDateRaw - 25569) * 86400 * 1000) : new Date();
+          } else {
+            // Tentar parsear string de data
+            const dateStr = String(paymentDateRaw);
+            if (dateStr.includes('/')) {
+              const [day, month, year] = dateStr.split('/');
+              paymentDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+            } else {
+              paymentDate = new Date(dateStr);
+            }
+            
+            if (isNaN(paymentDate.getTime())) {
+              errors.push(`Linha ${i + 2}: data inválida`);
+              continue;
+            }
+          }
+
+          // Criar despesa sem imagem (imageUrl será string vazia)
+          const expenseData = {
+            item: String(item).trim(),
+            totalValue: value.toString(),
+            paymentMethod: String(paymentMethod).trim(),
+            category: String(category).trim(),
+            contractNumber: String(contractNumber).trim(),
+            paymentDate,
+            imageUrl: '', // Imagem não obrigatória para importação
+          };
+
+          await storage.createExpense({
+            ...expenseData,
+            userId: req.session.userId!,
+          });
+
+          imported++;
+        } catch (error) {
+          errors.push(`Linha ${i + 2}: erro ao processar - ${error instanceof Error ? error.message : 'erro desconhecido'}`);
+        }
+      }
+
+      res.json({
+        imported,
+        total: rows.length,
+        errors: errors.length > 0 ? errors.slice(0, 10) : [], // Limitar a 10 erros
+      });
+
+    } catch (error) {
+      console.error('Erro na importação Excel:', error);
+      res.status(500).json({ message: "Erro interno do servidor" });
     }
   });
 
