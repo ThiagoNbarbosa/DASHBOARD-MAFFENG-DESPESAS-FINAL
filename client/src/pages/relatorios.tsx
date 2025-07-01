@@ -7,8 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, FileText, Calendar, Filter, BarChart3 } from "lucide-react";
+import { Download, FileText, Calendar, Filter, BarChart3, Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface ReportFilters {
   year: string;
@@ -21,6 +23,7 @@ interface ReportFilters {
 
 export default function Relatorios() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [filters, setFilters] = useState<ReportFilters>({
     year: new Date().getFullYear().toString(),
     month: "all",
@@ -29,6 +32,69 @@ export default function Relatorios() {
     paymentMethod: "",
     reportType: "completo"
   });
+
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  // Mutation para importar Excel
+  const importExcelMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('excel', file);
+
+      const response = await fetch('/api/expenses/import-excel', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Erro no upload: ${errorText}`);
+      }
+
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
+      setShowImportModal(false);
+      setSelectedFile(null);
+      toast({
+        title: "Importação concluída",
+        description: `${data.imported} despesas importadas com sucesso.`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro na importação",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
+          file.type === 'application/vnd.ms-excel') {
+        setSelectedFile(file);
+      } else {
+        toast({
+          title: "Formato inválido",
+          description: "Por favor, selecione um arquivo Excel (.xlsx ou .xls).",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleImportExcel = () => {
+    if (selectedFile) {
+      importExcelMutation.mutate(selectedFile);
+    }
+  };
 
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['/api/auth/me'],
@@ -234,14 +300,24 @@ export default function Relatorios() {
                 </div>
               </div>
               
-              <Button 
-                onClick={handleDownload}
-                disabled={isLoading}
-                className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
-              >
-                <Download className="h-4 w-4" />
-                Baixar Relatório
-              </Button>
+              <div className="flex gap-3">
+                <Button 
+                  onClick={() => setShowImportModal(true)}
+                  className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+                >
+                  <Upload className="h-4 w-4" />
+                  Importar Excel
+                </Button>
+                
+                <Button 
+                  onClick={handleDownload}
+                  disabled={isLoading}
+                  className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  Baixar Relatório
+                </Button>
+              </div>
             </div>
           </div>
         </header>
