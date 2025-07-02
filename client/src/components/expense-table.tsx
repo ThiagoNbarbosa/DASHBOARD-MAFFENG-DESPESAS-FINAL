@@ -21,8 +21,6 @@ interface ExpenseFilters {
   category: string;
   contractNumber: string;
   paymentMethod: string;
-  startDate: string;
-  endDate: string;
 }
 
 export default function ExpenseTable() {
@@ -32,8 +30,6 @@ export default function ExpenseTable() {
     category: "all",
     contractNumber: "",
     paymentMethod: "all",
-    startDate: "",
-    endDate: "",
   });
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
@@ -67,7 +63,7 @@ export default function ExpenseTable() {
   };
 
   // Query unificada para despesas (reduz consultas duplicadas)
-  const hasActiveFilters = filters.year !== "all" || filters.month !== "all" || filters.category !== "all" || filters.contractNumber !== "" || filters.paymentMethod !== "all" || filters.startDate !== "" || filters.endDate !== "";
+  const hasActiveFilters = filters.year !== "all" || filters.month !== "all" || filters.category !== "all" || filters.contractNumber !== "" || filters.paymentMethod !== "all";
   
   const { data: allExpenses = [], isLoading } = useQuery<Expense[]>({
     queryKey: ['/api/expenses', hasActiveFilters ? 'filtered' : 'recent', filters],
@@ -85,8 +81,6 @@ export default function ExpenseTable() {
       if (filters.category && filters.category !== "all") params.set('category', filters.category);
       if (filters.contractNumber) params.set('contractNumber', filters.contractNumber);
       if (filters.paymentMethod && filters.paymentMethod !== "all") params.set('paymentMethod', filters.paymentMethod);
-      if (filters.startDate) params.set('startDate', filters.startDate);
-      if (filters.endDate) params.set('endDate', filters.endDate);
       
       return await apiRequest(`/api/expenses?${params}`, 'GET');
     },
@@ -155,7 +149,7 @@ export default function ExpenseTable() {
   
 
   const clearFilters = () => {
-    setFilters({ year: "all", month: "all", category: "all", contractNumber: "", paymentMethod: "all", startDate: "", endDate: "" });
+    setFilters({ year: "all", month: "all", category: "all", contractNumber: "", paymentMethod: "all" });
   };
 
   const categories = [
@@ -213,7 +207,7 @@ export default function ExpenseTable() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 space-y-2 md:space-y-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 space-y-2 md:space-y-0">
             <div>
               <Label htmlFor="yearFilter">Ano</Label>
               <Select value={filters.year} onValueChange={(value) => setFilters({ ...filters, year: value })}>
@@ -294,26 +288,6 @@ export default function ExpenseTable() {
               </div>
             )}
 
-            <div>
-              <Label htmlFor="startDateFilter">Data Inicial</Label>
-              <Input
-                id="startDateFilter"
-                type="date"
-                value={filters.startDate}
-                onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="endDateFilter">Data Final</Label>
-              <Input
-                id="endDateFilter"
-                type="date"
-                value={filters.endDate}
-                onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-              />
-            </div>
-
             <div className="flex items-end">
               <Button variant="outline" onClick={clearFilters} className="w-full">
                 <X className="h-4 w-4 mr-2" />
@@ -325,7 +299,7 @@ export default function ExpenseTable() {
       </Card>
 
       {/* Filtered Expenses Section */}
-      {(filters.year !== "all" || filters.month !== "all" || filters.category !== "all" || filters.contractNumber !== "" || filters.paymentMethod !== "all" || filters.startDate !== "" || filters.endDate !== "") && (
+      {(filters.year !== "all" || filters.month !== "all" || filters.category !== "all" || filters.contractNumber !== "" || filters.paymentMethod !== "all") && (
         <Card className="shadow-sm border-blue-200">
           <CardHeader>
             <CardTitle className="text-base font-semibold flex items-center gap-2">
@@ -360,8 +334,11 @@ export default function ExpenseTable() {
                         className={isCancelled(expense.category) ? "bg-red-50" : ""}
                       >
                         <TableCell>
-                          <div className={`font-medium ${isCancelled(expense.category) ? "text-red-600" : ""}`}>
-                            {expense.item}
+                          <div>
+                            <div className={`font-medium ${isCancelled(expense.category) ? "text-red-600" : ""}`}>
+                              {expense.item}
+                            </div>
+                            <div className="text-sm text-gray-500">ID: #{expense.id.slice(0, 8)}</div>
                           </div>
                         </TableCell>
                         <TableCell>
@@ -470,8 +447,11 @@ export default function ExpenseTable() {
                       className={isCancelled(expense.category) ? "bg-red-50" : ""}
                     >
                       <TableCell>
-                        <div className={`font-medium ${isCancelled(expense.category) ? "text-red-600" : ""}`}>
-                          {expense.item}
+                        <div>
+                          <div className={`font-medium ${isCancelled(expense.category) ? "text-red-600" : ""}`}>
+                            {expense.item}
+                          </div>
+                          <div className="text-sm text-gray-500">ID: #{expense.id.slice(0, 8)}</div>
                         </div>
                       </TableCell>
                       <TableCell>
