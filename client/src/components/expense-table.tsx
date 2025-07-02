@@ -23,7 +23,6 @@ interface ExpenseFilters {
   paymentMethod: string;
   startDate: string;
   endDate: string;
-  item: string;
 }
 
 export default function ExpenseTable() {
@@ -35,7 +34,6 @@ export default function ExpenseTable() {
     paymentMethod: "all",
     startDate: "",
     endDate: "",
-    item: "",
   });
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
@@ -69,7 +67,7 @@ export default function ExpenseTable() {
   };
 
   // Query unificada para despesas (reduz consultas duplicadas)
-  const hasActiveFilters = filters.year !== "all" || filters.month !== "all" || filters.category !== "all" || filters.contractNumber !== "" || filters.paymentMethod !== "all" || filters.startDate !== "" || filters.endDate !== "" || filters.item !== "";
+  const hasActiveFilters = filters.year !== "all" || filters.month !== "all" || filters.category !== "all" || filters.contractNumber !== "" || filters.paymentMethod !== "all" || filters.startDate !== "" || filters.endDate !== "";
 
   const { data: allExpenses = [], isLoading } = useQuery<Expense[]>({
     queryKey: ['/api/expenses', hasActiveFilters ? 'filtered' : 'recent', filters],
@@ -89,7 +87,6 @@ export default function ExpenseTable() {
       if (filters.paymentMethod && filters.paymentMethod !== "all") params.set('paymentMethod', filters.paymentMethod);
       if (filters.startDate) params.set('startDate', filters.startDate);
       if (filters.endDate) params.set('endDate', filters.endDate);
-      if (filters.item) params.set('item', filters.item);
 
       return await apiRequest(`/api/expenses?${params}`, 'GET');
     },
@@ -158,7 +155,7 @@ export default function ExpenseTable() {
 
 
   const clearFilters = () => {
-    setFilters({ year: "all", month: "all", category: "all", contractNumber: "", paymentMethod: "all", startDate: "", endDate: "", item: "" });
+    setFilters({ year: "all", month: "all", category: "all", contractNumber: "", paymentMethod: "all", startDate: "", endDate: "" });
   };
 
   const categories = [
@@ -217,16 +214,6 @@ export default function ExpenseTable() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 space-y-2 md:space-y-0">
-            <div>
-              <Label htmlFor="itemFilter">Pesquisar Item</Label>
-              <Input
-                id="itemFilter"
-                placeholder="Digite o nome do item..."
-                value={filters.item}
-                onChange={(e) => setFilters({ ...filters, item: e.target.value })}
-              />
-            </div>
-
             <div>
               <Label htmlFor="yearFilter">Ano</Label>
               <Select value={filters.year} onValueChange={(value) => setFilters({ ...filters, year: value })}>
@@ -341,7 +328,7 @@ export default function ExpenseTable() {
       </Card>
 
       {/* Filtered Expenses Section */}
-      {(filters.year !== "all" || filters.month !== "all" || filters.category !== "all" || filters.contractNumber !== "" || filters.paymentMethod !== "all" || filters.startDate !== "" || filters.endDate !== "" || filters.item !== "") && (
+      {(filters.year !== "all" || filters.month !== "all" || filters.category !== "all" || filters.contractNumber !== "" || filters.paymentMethod !== "all" || filters.startDate !== "" || filters.endDate !== "") && (
         <Card className="shadow-sm border-blue-200">
           <CardHeader>
             <CardTitle className="text-base font-semibold flex items-center gap-2">
