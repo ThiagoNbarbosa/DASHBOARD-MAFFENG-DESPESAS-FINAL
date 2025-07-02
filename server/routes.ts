@@ -1,8 +1,7 @@
 import type { Express } from "express";
 import express from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage-pg";
-import { billingStorage } from "./billing-storage";
+import { storage } from "./storage";
 import { insertExpenseSchema, loginSchema, signUpSchema } from "@shared/schema";
 import bcrypt from "bcrypt";
 import { supabase } from "./supabase";
@@ -355,7 +354,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       // Para admins, não definimos userId no filtro, permitindo ver todas as despesas
 
-      if (year && year !== "all") filters.year = year as string;
+      if (year && year !== "all") filters.year = parseInt(year as string);
       if (month && month !== "all") filters.month = month as string;
       if (category && category !== "all") filters.category = category as string;
       if (contractNumber) filters.contractNumber = contractNumber as string;
@@ -840,7 +839,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Billing routes (Auth required, admin for some operations)
   app.get("/api/billing", requireAuth, async (req, res) => {
     try {
-      const { year, month, status, contractNumber } = req.query;
+      const { year, month, status, contractNumber, startDate, endDate } = req.query;
       const filters: any = {};
 
       // Usuários com mesma função podem ver dados uns dos outros
@@ -853,19 +852,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (month && month !== "all") filters.month = month as string;
       if (status && status !== "all") filters.status = status as string;
       if (contractNumber) filters.contractNumber = contractNumber as string;
+      if (startDate) filters.startDate = startDate as string;
+      if (endDate) filters.endDate = endDate as string;
+      
+      const clientName = req.query.clientName as string;
 
-      const billing = await billingStorage.getBilling(filters);
+    const billing = await storage.getBilling({
+      ...filters,
+      contractNumber,
+      startDate,
+      endDate,
+      clientName,
+    });
       res.json(billing);
     } catch (error) {
       console.error("Error fetching billing:", error);
-      res.status(500).json({ message: "Erro ao carregar faturamento" });
+      res.status(50).json({ message: "Erro ao carregar faturamento" });
     }
   });
 
   app.post("/api/billing", requireAuth, async (req, res) => {
     try {
       const billingData = req.body;
-      const newBilling = await billingStorage.createBilling({
+      const newBilling = await storage.createBilling({
         ...billingData,
         userId: req.session.userId!,
       });
@@ -880,7 +889,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const updates = req.body;
-      const updatedBilling = await billingStorage.updateBilling(id, updates);
+      const updatedBilling = await storage.updateBilling(id, updates);
       res.json(updatedBilling);
     } catch (error) {
       console.error("Error updating billing:", error);
@@ -891,7 +900,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/billing/:id/cancel", requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      const updatedBilling = await billingStorage.updateBilling(id, { status: 'cancelado' });
+      const updatedBilling = await storage.updateBilling(id, { status: 'cancelado' });
       res.json(updatedBilling);
     } catch (error) {
       console.error("Error cancelling billing:", error);
@@ -902,7 +911,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/billing/:id", requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      await billingStorage.deleteBilling(id);
+      await storage.deleteBilling(id);
       res.status(204).send();
     } catch (error) {
       console.error("Error deleting billing:", error);

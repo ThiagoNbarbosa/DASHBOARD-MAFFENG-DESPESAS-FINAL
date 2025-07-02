@@ -26,6 +26,8 @@ export interface IStorage {
     category?: string;
     contractNumber?: string;
     paymentMethod?: string;
+    startDate?: string;
+    endDate?: string;
   }): Promise<Expense[]>;
   getExpense(id: string): Promise<Expense | undefined>;
   createExpense(expense: InsertExpense & { userId: number }): Promise<Expense>;
@@ -51,6 +53,15 @@ export interface IStorage {
   }): Promise<Array<{ paymentMethod: string; count: number; }>>;
 
   getMonthlyTrends(): Promise<Array<{ month: string; total: number; }>>;
+
+    getBilling(filters?: {
+    year?: string;
+    month?: string;
+    status?: string;
+    contractNumber?: string;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<any[]> ;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -107,6 +118,8 @@ export class DatabaseStorage implements IStorage {
     category?: string;
     contractNumber?: string;
     paymentMethod?: string;
+    startDate?: string;
+    endDate?: string;
   }): Promise<Expense[]> {
     let query = db.select().from(expenses);
 
@@ -117,10 +130,10 @@ export class DatabaseStorage implements IStorage {
     }
 
     if (filters?.year) {
-      const startDate = new Date(`${filters.year}-01-01`);
-      const endDate = new Date(`${filters.year}-12-31`);
-      conditions.push(gte(expenses.paymentDate, startDate));
-      conditions.push(lte(expenses.paymentDate, endDate));
+       const startDate = new Date(`${filters.year}-01-01`);
+       const endDate = new Date(`${filters.year}-12-31`);
+       conditions.push(gte(expenses.paymentDate, startDate));
+       conditions.push(lte(expenses.paymentDate, endDate));
     }
 
     if (filters?.month) {
@@ -312,6 +325,65 @@ export class DatabaseStorage implements IStorage {
     return Array.from(monthlyMap.entries())
       .map(([month, total]) => ({ month, total }))
       .sort((a, b) => a.month.localeCompare(b.month));
+  }
+
+  async getBilling(filters?: {
+    year?: string;
+    month?: string;
+    status?: string;
+    contractNumber?: string;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<any[]> {
+    try {
+      let query = db.select().from(billing);
+
+      const conditions = [];
+
+      if (filters?.year) {
+        const startDate = new Date(`${filters.year}-01-01`);
+        const endDate = new Date(`${filters.year}-12-31`);
+        conditions.push(gte(billing.issueDate, startDate));
+        conditions.push(lte(billing.issueDate, endDate));
+      }
+
+      if (filters?.month) {
+        const [year, month] = filters.month.split('-');
+        const startDate = new Date(`${year}-${month}-01`);
+        const endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
+        conditions.push(gte(billing.issueDate, startDate));
+        conditions.push(lte(billing.issueDate, endDate));
+      }
+
+      if (filters?.status) {
+        conditions.push(eq(billing.status, filters.status));
+      }
+
+      if (filters?.contractNumber) {
+        conditions.push(like(billing.contractNumber, `%${filters.contractNumber}%`));
+      }
+
+      if (filters?.startDate) {
+        const startDate = new Date(filters.startDate);
+        conditions.push(gte(billing.issueDate, startDate));
+      }
+
+      if (filters?.endDate) {
+        const endDate = new Date(filters.endDate);
+        // Adicionar 23:59:59 para incluir todo o dia final
+        endDate.setHours(23, 59, 59, 999);
+        conditions.push(lte(billing.issueDate, endDate));
+      }
+
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions));
+      }
+
+      return await query;
+    } catch (error) {
+      console.error('Erro ao buscar billing:', error);
+      return [];
+    }
   }
 }
 

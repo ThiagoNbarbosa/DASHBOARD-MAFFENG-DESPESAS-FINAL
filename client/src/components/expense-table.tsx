@@ -23,6 +23,7 @@ interface ExpenseFilters {
   paymentMethod: string;
   startDate: string;
   endDate: string;
+  item: string;
 }
 
 export default function ExpenseTable() {
@@ -34,10 +35,11 @@ export default function ExpenseTable() {
     paymentMethod: "all",
     startDate: "",
     endDate: "",
+    item: "",
   });
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-  
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -67,15 +69,15 @@ export default function ExpenseTable() {
   };
 
   // Query unificada para despesas (reduz consultas duplicadas)
-  const hasActiveFilters = filters.year !== "all" || filters.month !== "all" || filters.category !== "all" || filters.contractNumber !== "" || filters.paymentMethod !== "all" || filters.startDate !== "" || filters.endDate !== "";
-  
+  const hasActiveFilters = filters.year !== "all" || filters.month !== "all" || filters.category !== "all" || filters.contractNumber !== "" || filters.paymentMethod !== "all" || filters.startDate !== "" || filters.endDate !== "" || filters.item !== "";
+
   const { data: allExpenses = [], isLoading } = useQuery<Expense[]>({
     queryKey: ['/api/expenses', hasActiveFilters ? 'filtered' : 'recent', filters],
     queryFn: async () => {
       if (!hasActiveFilters) {
         return await apiRequest('/api/expenses', 'GET');
       }
-      
+
       const params = new URLSearchParams();
       if (filters.year && filters.year !== "all") params.set('year', filters.year);
       if (filters.month && filters.month !== "all") {
@@ -87,7 +89,8 @@ export default function ExpenseTable() {
       if (filters.paymentMethod && filters.paymentMethod !== "all") params.set('paymentMethod', filters.paymentMethod);
       if (filters.startDate) params.set('startDate', filters.startDate);
       if (filters.endDate) params.set('endDate', filters.endDate);
-      
+      if (filters.item) params.set('item', filters.item);
+
       return await apiRequest(`/api/expenses?${params}`, 'GET');
     },
   });
@@ -134,7 +137,7 @@ export default function ExpenseTable() {
     },
   });
 
-  
+
 
   const handleCancel = (id: string) => {
     if (confirm("Tem certeza que deseja cancelar esta despesa?")) {
@@ -152,10 +155,10 @@ export default function ExpenseTable() {
     return category.startsWith('[CANCELADA]');
   };
 
-  
+
 
   const clearFilters = () => {
-    setFilters({ year: "all", month: "all", category: "all", contractNumber: "", paymentMethod: "all", startDate: "", endDate: "" });
+    setFilters({ year: "all", month: "all", category: "all", contractNumber: "", paymentMethod: "all", startDate: "", endDate: "", item: "" });
   };
 
   const categories = [
@@ -172,7 +175,7 @@ export default function ExpenseTable() {
     if (category.startsWith('[CANCELADA]')) {
       return "bg-red-50 text-red-600 border border-red-200";
     }
-    
+
     const colors: Record<string, string> = {
       "Material": "bg-blue-100 text-blue-800",
       "Pagamento funcionários": "bg-green-100 text-green-800",
@@ -181,7 +184,7 @@ export default function ExpenseTable() {
       "Aluguel de ferramentas": "bg-purple-100 text-purple-800",
       "Manutenção em veículo": "bg-orange-100 text-orange-800",
     };
-    
+
     // Remove the [CANCELADA] prefix for color matching
     const cleanCategory = category.replace('[CANCELADA] ', '');
     return colors[cleanCategory] || "bg-gray-100 text-gray-800";
@@ -215,15 +218,28 @@ export default function ExpenseTable() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 space-y-2 md:space-y-0">
             <div>
+              <Label htmlFor="itemFilter">Pesquisar Item</Label>
+              <Input
+                id="itemFilter"
+                placeholder="Digite o nome do item..."
+                value={filters.item}
+                onChange={(e) => setFilters({ ...filters, item: e.target.value })}
+              />
+            </div>
+
+            <div>
               <Label htmlFor="yearFilter">Ano</Label>
               <Select value={filters.year} onValueChange={(value) => setFilters({ ...filters, year: value })}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione o ano" />
+                  <SelectValue placeholder="Selecionar ano" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="2024">2024</SelectItem>
+                  <SelectItem value="all">Todos os anos</SelectItem>
                   <SelectItem value="2025">2025</SelectItem>
-                  <SelectItem value="2026">2026</SelectItem>
+                  <SelectItem value="2024">2024</SelectItem>
+                  <SelectItem value="2023">2023</SelectItem>
+                  <SelectItem value="2022">2022</SelectItem>
+                  <SelectItem value="2021">2021</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -325,7 +341,7 @@ export default function ExpenseTable() {
       </Card>
 
       {/* Filtered Expenses Section */}
-      {(filters.year !== "all" || filters.month !== "all" || filters.category !== "all" || filters.contractNumber !== "" || filters.paymentMethod !== "all" || filters.startDate !== "" || filters.endDate !== "") && (
+      {(filters.year !== "all" || filters.month !== "all" || filters.category !== "all" || filters.contractNumber !== "" || filters.paymentMethod !== "all" || filters.startDate !== "" || filters.endDate !== "" || filters.item !== "") && (
         <Card className="shadow-sm border-blue-200">
           <CardHeader>
             <CardTitle className="text-base font-semibold flex items-center gap-2">
@@ -548,7 +564,7 @@ export default function ExpenseTable() {
           <DialogHeader>
             <DialogTitle>Detalhes da Despesa</DialogTitle>
           </DialogHeader>
-          
+
           {selectedExpense && (
             <div className="space-y-4">
               {/* Nome do usuário responsável */}
@@ -618,7 +634,7 @@ export default function ExpenseTable() {
           )}
         </DialogContent>
       </Dialog>
-      
+
     </div>
   );
 }
