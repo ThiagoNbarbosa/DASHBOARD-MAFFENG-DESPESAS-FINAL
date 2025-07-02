@@ -11,6 +11,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { uploadImage } from "@/lib/supabase";
 import type { InsertExpense } from "@shared/schema";
+import { CATEGORIAS, CONTRATOS, BANCOS, FORMAS_PAGAMENTO } from "@shared/constants";
 
 interface ExpenseFormData extends Omit<InsertExpense, 'paymentDate' | 'value'> {
   paymentDate: string;
@@ -192,21 +193,7 @@ export default function ExpenseModal() {
     }
   };
 
-  const categories = [
-    "Pagamento funcionários",
-    "Material",
-    "Mão de Obra",
-    "Prestador de serviços",
-    "Aluguel de ferramentas",
-    "Manutenção em veículo",
-  ];
 
-  const paymentMethods = [
-    "Pix",
-    "Cartão de Crédito",
-    "Boleto à Vista",
-    "Boleto a Prazo",
-  ];
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -256,7 +243,7 @@ export default function ExpenseModal() {
                   <SelectValue placeholder="Selecione a forma de pagamento" />
                 </SelectTrigger>
                 <SelectContent>
-                  {paymentMethods.map((method) => (
+                  {FORMAS_PAGAMENTO.map((method) => (
                     <SelectItem key={method} value={method}>
                       {method}
                     </SelectItem>
@@ -272,7 +259,7 @@ export default function ExpenseModal() {
                   <SelectValue placeholder="Selecione a categoria" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((category) => (
+                  {CATEGORIAS.map((category) => (
                     <SelectItem key={category} value={category}>
                       {category}
                     </SelectItem>
@@ -288,22 +275,29 @@ export default function ExpenseModal() {
                   <SelectValue placeholder="Selecione o banco emissor" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Banco do Brasil">Banco do Brasil</SelectItem>
-                  <SelectItem value="SICREDI">SICREDI</SelectItem>
-                  <SelectItem value="ALELO">ALELO</SelectItem>
+                  {BANCOS.map((banco) => (
+                    <SelectItem key={banco} value={banco}>
+                      {banco}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
 
             <div>
               <Label htmlFor="contractNumber">Número do Contrato *</Label>
-              <Input
-                id="contractNumber"
-                value={formData.contractNumber}
-                onChange={(e) => setFormData({ ...formData, contractNumber: e.target.value })}
-                placeholder="Ex: CT-2024-001"
-                required
-              />
+              <Select value={formData.contractNumber} onValueChange={(value) => setFormData({ ...formData, contractNumber: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o contrato" />
+                </SelectTrigger>
+                <SelectContent>
+                  {CONTRATOS.map((contrato) => (
+                    <SelectItem key={contrato} value={contrato}>
+                      {contrato}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             
