@@ -348,6 +348,7 @@ export default function ExpenseTable() {
                       <TableHead>Categoria</TableHead>
                       <TableHead>Valor</TableHead>
                       <TableHead>Forma de Pagamento</TableHead>
+                      <TableHead>Banco Emissor</TableHead>
                       <TableHead>Contrato</TableHead>
                       <TableHead>Data</TableHead>
                       {user?.role === "admin" && <TableHead>Ações</TableHead>}
@@ -380,6 +381,11 @@ export default function ExpenseTable() {
                             <span>{getPaymentMethodIcon(expense.paymentMethod)}</span>
                             <span>{expense.paymentMethod}</span>
                           </div>
+                        </TableCell>
+                        <TableCell className={isCancelled(expense.category) ? "text-red-600" : ""}>
+                          <span className="text-sm">
+                            {expense.bankIssuer || '-'}
+                          </span>
                         </TableCell>
                         <TableCell className={isCancelled(expense.category) ? "text-red-600" : ""}>
                           {expense.contractNumber}
@@ -458,6 +464,7 @@ export default function ExpenseTable() {
                     <TableHead>Categoria</TableHead>
                     <TableHead>Valor</TableHead>
                     <TableHead>Forma de Pagamento</TableHead>
+                    <TableHead>Banco Emissor</TableHead>
                     <TableHead>Contrato</TableHead>
                     <TableHead>Data</TableHead>
                     {user?.role === "admin" && <TableHead>Ações</TableHead>}
@@ -490,6 +497,11 @@ export default function ExpenseTable() {
                           <span>{getPaymentMethodIcon(expense.paymentMethod)}</span>
                           <span>{expense.paymentMethod}</span>
                         </div>
+                      </TableCell>
+                      <TableCell className={isCancelled(expense.category) ? "text-red-600" : ""}>
+                        <span className="text-sm">
+                          {expense.bankIssuer || '-'}
+                        </span>
                       </TableCell>
                       <TableCell className={isCancelled(expense.category) ? "text-red-600" : ""}>
                         {expense.contractNumber}
