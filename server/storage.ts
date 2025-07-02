@@ -32,7 +32,6 @@ export interface IStorage {
     paymentMethod?: string;
     startDate?: string;
     endDate?: string;
-    item?: string;
   }): Promise<Expense[]>;
   getExpense(id: string): Promise<Expense | undefined>;
   createExpense(expense: InsertExpense & { userId: number }): Promise<Expense>;
@@ -119,14 +118,12 @@ export class DatabaseStorage implements IStorage {
   async getExpenses(filters?: {
     userId?: number;
     userIds?: number[];
-    year?: string;
     month?: string;
     category?: string;
     contractNumber?: string;
     paymentMethod?: string;
     startDate?: string;
     endDate?: string;
-    item?: string;
   }): Promise<Expense[]> {
     let query = db.select().from(expenses);
 
