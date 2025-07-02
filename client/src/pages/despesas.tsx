@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { authApi } from "@/lib/auth";
 import Sidebar from "@/components/sidebar";
 import ExpenseTable from "@/components/expense-table";
-import ExpenseModal from "@/components/expense-modal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, TrendingUp, Calendar, Receipt } from "lucide-react";
 
@@ -54,17 +53,14 @@ export default function Despesas() {
               </div>
             </div>
             
-            <div className="flex items-center space-x-4">
-              <ExpenseModal />
-              <div className="hidden sm:flex items-center space-x-2 text-sm text-gray-500">
-                <Calendar className="h-4 w-4" />
-                <span>{new Date().toLocaleDateString('pt-BR', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}</span>
-              </div>
+            <div className="hidden sm:flex items-center space-x-2 text-sm text-gray-500">
+              <Calendar className="h-4 w-4" />
+              <span>{new Date().toLocaleDateString('pt-BR', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}</span>
             </div>
           </div>
         </div>
