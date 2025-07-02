@@ -355,7 +355,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       // Para admins, não definimos userId no filtro, permitindo ver todas as despesas
 
-      if (year && year !== "all") filters.year = parseInt(year as string);
+      if (year && year !== "all") filters.year = year as string;
       if (month && month !== "all") filters.month = month as string;
       if (category && category !== "all") filters.category = category as string;
       if (contractNumber) filters.contractNumber = contractNumber as string;

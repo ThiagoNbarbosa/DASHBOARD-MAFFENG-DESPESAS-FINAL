@@ -130,10 +130,10 @@ export class DatabaseStorage implements IStorage {
     }
 
     if (filters?.year) {
-       const startDate = new Date(`${filters.year}-01-01`);
-       const endDate = new Date(`${filters.year}-12-31`);
-       conditions.push(gte(expenses.paymentDate, startDate));
-       conditions.push(lte(expenses.paymentDate, endDate));
+      const startDate = new Date(`${filters.year}-01-01`);
+      const endDate = new Date(`${filters.year}-12-31`);
+      conditions.push(gte(expenses.paymentDate, startDate));
+      conditions.push(lte(expenses.paymentDate, endDate));
     }
 
     if (filters?.month) {

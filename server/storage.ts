@@ -118,7 +118,6 @@ export class DatabaseStorage implements IStorage {
   async getExpenses(filters?: {
     userId?: number;
     userIds?: number[];
-    year?: string;
     month?: string;
     category?: string;
     contractNumber?: string;
