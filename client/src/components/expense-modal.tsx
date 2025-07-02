@@ -26,6 +26,7 @@ export default function ExpenseModal() {
     totalValue: "",
     imageUrl: "",
     paymentDate: "",
+    bankIssuer: "",
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
