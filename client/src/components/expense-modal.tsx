@@ -134,6 +134,7 @@ export default function ExpenseModal() {
       totalValue: "",
       imageUrl: "",
       paymentDate: "",
+      bankIssuer: "",
     });
     setImageFile(null);
     setImagePreview("");
@@ -276,6 +277,20 @@ export default function ExpenseModal() {
                       {category}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="bankIssuer">Banco Emissor</Label>
+              <Select value={formData.bankIssuer || ""} onValueChange={(value) => setFormData({ ...formData, bankIssuer: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o banco emissor" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Banco do Brasil">Banco do Brasil</SelectItem>
+                  <SelectItem value="SICREDI">SICREDI</SelectItem>
+                  <SelectItem value="ALELO">ALELO</SelectItem>
                 </SelectContent>
               </Select>
             </div>
