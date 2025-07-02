@@ -1,8 +1,7 @@
 import type { Express } from "express";
 import express from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage-pg";
-import { billingStorage } from "./billing-storage";
+import { storage } from "./storage";
 import { insertExpenseSchema, loginSchema, signUpSchema } from "@shared/schema";
 import bcrypt from "bcrypt";
 import { supabase } from "./supabase";
@@ -854,10 +853,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (status && status !== "all") filters.status = status as string;
       if (contractNumber) filters.contractNumber = contractNumber as string;
       if (startDate) filters.startDate = startDate as string;
-      const endDate = req.query.endDate as string;
-    const clientName = req.query.clientName as string;
+      if (endDate) filters.endDate = endDate as string;
+      
+      const clientName = req.query.clientName as string;
 
-    const billing = await billingStorage.getBilling({
+    const billing = await storage.getBilling({
       ...filters,
       contractNumber,
       startDate,
@@ -874,7 +874,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/billing", requireAuth, async (req, res) => {
     try {
       const billingData = req.body;
-      const newBilling = await billingStorage.createBilling({
+      const newBilling = await storage.createBilling({
         ...billingData,
         userId: req.session.userId!,
       });
@@ -889,7 +889,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const updates = req.body;
-      const updatedBilling = await billingStorage.updateBilling(id, updates);
+      const updatedBilling = await storage.updateBilling(id, updates);
       res.json(updatedBilling);
     } catch (error) {
       console.error("Error updating billing:", error);
@@ -900,7 +900,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/billing/:id/cancel", requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      const updatedBilling = await billingStorage.updateBilling(id, { status: 'cancelado' });
+      const updatedBilling = await storage.updateBilling(id, { status: 'cancelado' });
       res.json(updatedBilling);
     } catch (error) {
       console.error("Error cancelling billing:", error);
@@ -911,7 +911,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/billing/:id", requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      await billingStorage.deleteBilling(id);
+      await storage.deleteBilling(id);
       res.status(204).send();
     } catch (error) {
       console.error("Error deleting billing:", error);
