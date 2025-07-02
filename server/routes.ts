@@ -626,6 +626,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (columnMapping.category === -1) columnMapping.category = 3;
       if (columnMapping.contractNumber === -1) columnMapping.contractNumber = 4;
       if (columnMapping.paymentDate === -1) columnMapping.paymentDate = 5;
+      if (columnMapping.bankIssuer === -1) columnMapping.bankIssuer = 6; // Banco emissor opcional
 
       console.log('Mapeamento de colunas:', columnMapping);
 
@@ -652,6 +653,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const rawCategory = row[columnMapping.category];
           const rawContract = row[columnMapping.contractNumber];
           const rawDate = row[columnMapping.paymentDate];
+          const rawBankIssuer = columnMapping.bankIssuer >= 0 ? row[columnMapping.bankIssuer] : '';
 
           if (!rawItem || !rawValue) {
             errors.push(`Linha ${i + 2}: item ou valor em branco`);
@@ -717,10 +719,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const intelligentContract = rawContract ? 
             normalizeContractNumber(rawContract) : `AUTO-${Date.now().toString().slice(-6)}`;
 
+          const intelligentBankIssuer = rawBankIssuer ? 
+            normalizeBankIssuer(rawBankIssuer) : '';
+
           // Verificar se houve melhorias nos dados
           if (intelligentCategory !== rawCategory || 
               intelligentPaymentMethod !== rawPaymentMethod ||
-              intelligentContract !== rawContract) {
+              intelligentContract !== rawContract ||
+              intelligentBankIssuer !== rawBankIssuer) {
             enhanced++;
           }
 
@@ -734,6 +740,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             contractNumber: intelligentContract,
             paymentDate,
             imageUrl: '', // Imagem não obrigatória para importação
+            bankIssuer: intelligentBankIssuer,
           };
 
           await storage.createExpense({

@@ -23,6 +23,7 @@ interface ExpenseFormData {
   contractNumber: string;
   totalValue: string;
   paymentDate: string;
+  bankIssuer: string;
 }
 
 export default function EditExpenseModal({ expense, open, onOpenChange }: EditExpenseModalProps) {
@@ -33,6 +34,7 @@ export default function EditExpenseModal({ expense, open, onOpenChange }: EditEx
     contractNumber: "",
     totalValue: "",
     paymentDate: "",
+    bankIssuer: "",
   });
   
   const { toast } = useToast();
@@ -48,6 +50,7 @@ export default function EditExpenseModal({ expense, open, onOpenChange }: EditEx
         contractNumber: expense.contractNumber,
         totalValue: expense.value,
         paymentDate: new Date(expense.paymentDate).toISOString().split('T')[0],
+        bankIssuer: expense.bankIssuer || "",
       });
     }
   }, [expense]);
