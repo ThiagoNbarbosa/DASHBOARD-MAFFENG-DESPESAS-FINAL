@@ -521,6 +521,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return contract.toUpperCase();
   }
 
+  // Função para normalizar banco emissor
+  function normalizeBankIssuer(rawBank: string): string {
+    if (!rawBank) return '';
+    
+    const bank = String(rawBank).trim().toLowerCase();
+    
+    const bankMappings: { [key: string]: string } = {
+      'bb': 'Banco do Brasil',
+      'banco do brasil': 'Banco do Brasil',
+      'brasil': 'Banco do Brasil',
+      
+      'sicredi': 'SICREDI',
+      'sicred': 'SICREDI',
+      
+      'alelo': 'ALELO',
+      'ticket': 'ALELO',
+      'vale': 'ALELO'
+    };
+
+    if (bankMappings[bank]) {
+      return bankMappings[bank];
+    }
+
+    // Procurar correspondência parcial
+    for (const [key, value] of Object.entries(bankMappings)) {
+      if (bank.includes(key) || key.includes(bank)) {
+        return value;
+      }
+    }
+
+    return rawBank.charAt(0).toUpperCase() + rawBank.slice(1).toLowerCase();
+  }
+
   // Endpoint para importação de Excel com inteligência
   app.post("/api/expenses/import-excel", requireAuth, upload.single('excel'), async (req, res) => {
     try {
@@ -563,7 +596,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         paymentMethod: -1,
         category: -1,
         contractNumber: -1,
-        paymentDate: -1
+        paymentDate: -1,
+        bankIssuer: -1
       };
 
       // Detectar colunas por padrões inteligentes
@@ -580,6 +614,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           columnMapping.contractNumber = index;
         } else if (header.includes('data') || header.includes('date') || header.includes('quando')) {
           columnMapping.paymentDate = index;
+        } else if (header.includes('banco') || header.includes('emissor') || header.includes('bank') || header.includes('issuer')) {
+          columnMapping.bankIssuer = index;
         }
       });
 
