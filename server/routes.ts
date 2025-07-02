@@ -4,6 +4,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage-pg";
 import { billingStorage } from "./billing-storage";
 import { insertExpenseSchema, loginSchema, signUpSchema } from "@shared/schema";
+import { CATEGORIAS, CONTRATOS, BANCOS, FORMAS_PAGAMENTO } from "@shared/constants";
 import bcrypt from "bcrypt";
 import { supabase } from "./supabase";
 import session from "express-session";
@@ -399,50 +400,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
   function normalizeCategory(rawCategory: string, existingCategories: string[]): string {
     const category = String(rawCategory).trim().toLowerCase();
 
-    // Mapeamento inteligente de categorias comuns
+    // Primeiro, verificar se existe exatamente nas categorias padrão
+    const exactMatch = CATEGORIAS.find(cat => cat.toLowerCase() === category);
+    if (exactMatch) {
+      return exactMatch;
+    }
+
+    // Mapeamento inteligente para as categorias padrões
     const categoryMappings: { [key: string]: string } = {
-      'alimentacao': 'Alimentação',
-      'alimentação': 'Alimentação',
-      'comida': 'Alimentação',
-      'refeicao': 'Alimentação',
-      'refeição': 'Alimentação',
-      'restaurante': 'Alimentação',
-      'lanche': 'Alimentação',
+      'alimentacao': 'ALIMENTAÇÃO',
+      'alimentação': 'ALIMENTAÇÃO',
+      'comida': 'ALIMENTAÇÃO',
+      'refeicao': 'ALIMENTAÇÃO',
+      'refeição': 'ALIMENTAÇÃO',
+      'restaurante': 'ALIMENTAÇÃO',
+      'lanche': 'ALIMENTAÇÃO',
 
-      'transporte': 'Transporte',
-      'combustivel': 'Transporte',
-      'combustível': 'Transporte',
-      'gasolina': 'Transporte',
-      'uber': 'Transporte',
-      'taxi': 'Transporte',
-      'onibus': 'Transporte',
-      'ônibus': 'Transporte',
+      'transporte': 'TRANSPORTE',
+      'combustivel': 'COMBUSTÍVEL',
+      'combustível': 'COMBUSTÍVEL',
+      'gasolina': 'COMBUSTÍVEL',
+      'uber': 'TÁXI/UBER',
+      'taxi': 'TÁXI/UBER',
+      'onibus': 'TRANSPORTE',
+      'ônibus': 'TRANSPORTE',
 
-      'material': 'Material',
-      'materiais': 'Material',
-      'suprimentos': 'Material',
-      'escritorio': 'Material',
-      'escritório': 'Material',
+      'material': 'MATERIAL DE ESCRITÓRIO',
+      'materiais': 'MATERIAL DE ESCRITÓRIO',
+      'suprimentos': 'MATERIAL DE ESCRITÓRIO',
+      'escritorio': 'MATERIAL DE ESCRITÓRIO',
+      'escritório': 'MATERIAL DE ESCRITÓRIO',
 
-      'servicos': 'Serviços',
-      'serviços': 'Serviços',
-      'manutencao': 'Serviços',
-      'manutenção': 'Serviços',
-      'reparo': 'Serviços',
+      'servicos': 'SERVIÇOS TERCEIRIZADOS',
+      'serviços': 'SERVIÇOS TERCEIRIZADOS',
+      'manutencao': 'MANUTENÇÃO',
+      'manutenção': 'MANUTENÇÃO',
+      'reparo': 'MANUTENÇÃO',
+      'veiculo': 'MANUTENÇÃO DE VEÍCULOS',
+      'veículo': 'MANUTENÇÃO DE VEÍCULOS',
+      'carro': 'MANUTENÇÃO DE VEÍCULOS',
 
-      'tecnologia': 'Tecnologia',
-      'software': 'Tecnologia',
-      'hardware': 'Tecnologia',
-      'computador': 'Tecnologia',
-      'internet': 'Tecnologia',
+      'tecnologia': 'TECNOLOGIA',
+      'software': 'SISTEMA',
+      'hardware': 'TECNOLOGIA',
+      'computador': 'TECNOLOGIA',
+      'internet': 'INTERNET',
 
-      'marketing': 'Marketing',
-      'publicidade': 'Marketing',
-      'propaganda': 'Marketing',
+      'telefone': 'TELEFONE',
+      'celular': 'TELEFONE',
+      'energia': 'ENERGIA',
+      'eletricidade': 'ENERGIA',
+      'agua': 'ENERGIA',
+      'água': 'ENERGIA',
 
-      'outros': 'Outros',
-      'diversos': 'Outros',
-      'geral': 'Outros'
+      'imposto': 'IMPOSTOS',
+      'impostos': 'IMPOSTOS',
+      'taxa': 'IMPOSTOS',
+      'taxas': 'IMPOSTOS',
+
+      'funcionario': 'FUNCIONÁRIOS',
+      'funcionários': 'FUNCIONÁRIOS',
+      'salario': 'FUNCIONÁRIOS',
+      'salário': 'FUNCIONÁRIOS',
+
+      'outros': 'OUTROS',
+      'diversos': 'OUTROS',
+      'geral': 'OUTROS'
     };
 
     // Procurar correspondência direta
@@ -457,13 +480,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
 
-    // Se não encontrar, capitalizar a primeira letra
-    return rawCategory.charAt(0).toUpperCase() + rawCategory.slice(1).toLowerCase();
+    // Se não encontrar, usar OUTROS como padrão
+    return 'OUTROS';
   }
 
   // Função para normalizar métodos de pagamento
   function normalizePaymentMethod(rawMethod: string): string {
     const method = String(rawMethod).trim().toLowerCase();
+
+    // Primeiro, verificar se existe exatamente nas formas de pagamento padrão
+    const exactMatch = FORMAS_PAGAMENTO.find(forma => forma.toLowerCase() === method);
+    if (exactMatch) {
+      return exactMatch;
+    }
 
     const methodMappings: { [key: string]: string } = {
       'dinheiro': 'Dinheiro',
@@ -471,23 +500,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       'especie': 'Dinheiro',
       'espécie': 'Dinheiro',
 
-      'cartao': 'Cartão',
-      'cartão': 'Cartão',
-      'card': 'Cartão',
-      'credito': 'Cartão',
-      'crédito': 'Cartão',
-      'debito': 'Cartão',
-      'débito': 'Cartão',
+      'cartao': 'Cartão de Crédito',
+      'cartão': 'Cartão de Crédito',
+      'card': 'Cartão de Crédito',
+      'credito': 'Cartão de Crédito',
+      'crédito': 'Cartão de Crédito',
+      'debito': 'Cartão de Débito',
+      'débito': 'Cartão de Débito',
 
       'pix': 'PIX',
-      'transferencia': 'PIX',
-      'transferência': 'PIX',
+      'transferencia': 'Transferência Bancária',
+      'transferência': 'Transferência Bancária',
 
-      'boleto': 'Boleto',
-      'bancario': 'Boleto',
-      'bancário': 'Boleto',
+      'boleto': 'Transferência Bancária',
+      'bancario': 'Transferência Bancária',
+      'bancário': 'Transferência Bancária',
 
-      'cheque': 'Cheque'
+      'cheque': 'Transferência Bancária'
     };
 
     if (methodMappings[method]) {
@@ -508,17 +537,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   function normalizeContractNumber(rawContract: string): string {
     const contract = String(rawContract).trim();
 
-    // Se for um número, adicionar prefixo padrão
-    if (/^\d+$/.test(contract)) {
-      return `CONT-${contract.padStart(4, '0')}`;
+    // Primeiro, verificar se existe exatamente nos contratos padrão
+    const exactMatch = CONTRATOS.find(cont => cont.toLowerCase() === contract.toLowerCase());
+    if (exactMatch) {
+      return exactMatch;
     }
 
-    // Se já tem formato de contrato, manter
-    if (/^(CONT|CONTRACT|CTR)-\d+/.test(contract.toUpperCase())) {
-      return contract.toUpperCase();
+    // Verificar correspondência parcial com os contratos padrão
+    for (const contratoBase of CONTRATOS) {
+      if (contratoBase.toLowerCase().includes(contract.toLowerCase()) || 
+          contract.toLowerCase().includes(contratoBase.toLowerCase())) {
+        return contratoBase;
+      }
     }
 
-    return contract.toUpperCase();
+    // Se não encontrar, retornar o primeiro contrato da lista como padrão
+    return CONTRATOS[0];
   }
 
   // Função para normalizar banco emissor
@@ -527,10 +561,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     const bank = String(rawBank).trim().toLowerCase();
     
+    // Primeiro, verificar se existe exatamente nos bancos padrão
+    const exactMatch = BANCOS.find(b => b.toLowerCase() === bank);
+    if (exactMatch) {
+      return exactMatch;
+    }
+    
     const bankMappings: { [key: string]: string } = {
-      'bb': 'Banco do Brasil',
-      'banco do brasil': 'Banco do Brasil',
-      'brasil': 'Banco do Brasil',
+      'bb': 'BANCO DO BRASIL',
+      'banco do brasil': 'BANCO DO BRASIL',
+      'brasil': 'BANCO DO BRASIL',
       
       'sicredi': 'SICREDI',
       'sicred': 'SICREDI',

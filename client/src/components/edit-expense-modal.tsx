@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import type { Expense } from "@shared/schema";
+import { CATEGORIAS, CONTRATOS, BANCOS, FORMAS_PAGAMENTO } from "@shared/constants";
 
 interface EditExpenseModalProps {
   expense: Expense | null;
@@ -121,21 +122,7 @@ export default function EditExpenseModal({ expense, open, onOpenChange }: EditEx
     }
   };
 
-  const categories = [
-    "Pagamento funcionários",
-    "Material",
-    "Mão de Obra",
-    "Prestador de serviços",
-    "Aluguel de ferramentas",
-    "Manutenção em veículo",
-  ];
 
-  const paymentMethods = [
-    "Pix",
-    "Cartão de Crédito",
-    "Boleto à Vista",
-    "Boleto a Prazo",
-  ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -179,7 +166,7 @@ export default function EditExpenseModal({ expense, open, onOpenChange }: EditEx
                   <SelectValue placeholder="Selecione a forma de pagamento" />
                 </SelectTrigger>
                 <SelectContent>
-                  {paymentMethods.map((method) => (
+                  {FORMAS_PAGAMENTO.map((method) => (
                     <SelectItem key={method} value={method}>
                       {method}
                     </SelectItem>
@@ -195,7 +182,7 @@ export default function EditExpenseModal({ expense, open, onOpenChange }: EditEx
                   <SelectValue placeholder="Selecione a categoria" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((category) => (
+                  {CATEGORIAS.map((category) => (
                     <SelectItem key={category} value={category}>
                       {category}
                     </SelectItem>
@@ -206,13 +193,34 @@ export default function EditExpenseModal({ expense, open, onOpenChange }: EditEx
 
             <div>
               <Label htmlFor="edit-contractNumber">Número do Contrato *</Label>
-              <Input
-                id="edit-contractNumber"
-                value={formData.contractNumber}
-                onChange={(e) => setFormData({ ...formData, contractNumber: e.target.value })}
-                placeholder="Ex: CT-2024-001"
-                required
-              />
+              <Select value={formData.contractNumber} onValueChange={(value) => setFormData({ ...formData, contractNumber: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o contrato" />
+                </SelectTrigger>
+                <SelectContent>
+                  {CONTRATOS.map((contrato) => (
+                    <SelectItem key={contrato} value={contrato}>
+                      {contrato}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="edit-bankIssuer">Banco Emissor</Label>
+              <Select value={formData.bankIssuer || ""} onValueChange={(value) => setFormData({ ...formData, bankIssuer: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o banco emissor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {BANCOS.map((banco) => (
+                    <SelectItem key={banco} value={banco}>
+                      {banco}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
