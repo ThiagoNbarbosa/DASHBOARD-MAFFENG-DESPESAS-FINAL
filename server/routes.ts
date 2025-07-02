@@ -921,7 +921,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/billing/stats", requireAdmin, async (req, res) => {
     try {
-      const stats = await billingStorage.getBillingStats();
+      const stats = await storage.getBillingStats();
       res.json(stats);
     } catch (error) {
       console.error("Error fetching billing stats:", error);

@@ -3,7 +3,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initBillingTable } from "./init-billing";
 import { initUsersTable } from "./init-users";
-import { billingStorage } from "./billing-storage";
+
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
@@ -43,7 +43,6 @@ app.use((req, res, next) => {
   // Inicializar tabelas do banco
   await initUsersTable();
   await initBillingTable();
-  await billingStorage.initTable();
   
   const server = await registerRoutes(app);
 
