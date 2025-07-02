@@ -32,6 +32,8 @@ export default function Faturamento() {
     year: new Date().getFullYear().toString(),
     status: "",
     contractNumber: "",
+    startDate: "",
+    endDate: "",
   });
   
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -140,6 +142,8 @@ export default function Faturamento() {
       if (filters.month && filters.month !== 'all') params.append('month', filters.month);
       if (filters.status && filters.status !== 'all') params.append('status', filters.status);
       if (filters.contractNumber) params.append('contractNumber', filters.contractNumber);
+      if (filters.startDate) params.append('startDate', filters.startDate);
+      if (filters.endDate) params.append('endDate', filters.endDate);
 
       const response = await fetch(`/api/billing?${params}`);
       if (!response.ok) {
@@ -200,6 +204,18 @@ export default function Faturamento() {
       style: 'currency',
       currency: 'BRL'
     }).format(numValue);
+  };
+
+  // Função para limpar filtros
+  const clearFilters = () => {
+    setFilters({
+      year: new Date().getFullYear().toString(),
+      month: "",
+      status: "",
+      contractNumber: "",
+      startDate: "",
+      endDate: "",
+    });
   };
 
   // Cálculos de resumo
@@ -331,7 +347,7 @@ export default function Faturamento() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-4">
                 <div>
                   <label className="text-sm font-medium text-gray-700 mb-2 block">
                     Ano
@@ -344,6 +360,7 @@ export default function Faturamento() {
                       <SelectValue placeholder="Selecione o ano" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="all">Todos os anos</SelectItem>
                       <SelectItem value="2024">2024</SelectItem>
                       <SelectItem value="2025">2025</SelectItem>
                     </SelectContent>
@@ -401,7 +418,29 @@ export default function Faturamento() {
 
                 <div>
                   <label className="text-sm font-medium text-gray-700 mb-2 block">
-                    Contrato
+                    Data Início
+                  </label>
+                  <Input
+                    type="date"
+                    value={filters.startDate}
+                    onChange={(e) => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Data Fim
+                  </label>
+                  <Input
+                    type="date"
+                    value={filters.endDate}
+                    onChange={(e) => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Número do Contrato
                   </label>
                   <Input
                     placeholder="Número do contrato"
@@ -409,6 +448,17 @@ export default function Faturamento() {
                     onChange={(e) => setFilters(prev => ({ ...prev, contractNumber: e.target.value }))}
                   />
                 </div>
+              </div>
+
+              <div className="flex justify-end">
+                <Button
+                  variant="outline"
+                  onClick={clearFilters}
+                  className="flex items-center gap-2"
+                >
+                  <X className="h-4 w-4" />
+                  Limpar Filtros
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -625,7 +675,7 @@ function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
     dueDate: new Date().toISOString().split('T')[0], // Define automaticamente como hoje
     paymentDate: "",
     issueDate: new Date().toISOString().split('T')[0],
-    status: "pendente" as const
+    status: "pago" as const
   });
 
   // Função para formatar moeda
@@ -655,22 +705,14 @@ function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
 
   const createPaymentMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      // Validar datas
-      const issueDate = new Date(data.issueDate);
-      const dueDate = new Date(data.dueDate);
-      
-      if (dueDate <= issueDate) {
-        throw new Error('Data de vencimento deve ser posterior à data de emissão');
-      }
-      
       return await apiRequest('/api/billing', 'POST', {
         clientName: data.clientName,
         contractNumber: data.contractNumber,
         description: data.description,
         value: parseFloat(data.value),
-        dueDate: dueDate.toISOString(),
+        dueDate: new Date(data.dueDate).toISOString(),
         paymentDate: data.paymentDate ? new Date(data.paymentDate).toISOString() : null,
-        issueDate: issueDate.toISOString(),
+        issueDate: new Date(data.issueDate).toISOString(),
         status: data.status,
       });
     },
@@ -696,7 +738,7 @@ function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
         dueDate: "",
         paymentDate: "",
         issueDate: new Date().toISOString().split('T')[0],
-        status: "pendente"
+        status: "pago"
       });
     },
     onError: (error: any) => {
@@ -803,11 +845,11 @@ function PaymentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
               onValueChange={(value) => setFormData(prev => ({ ...prev, status: value as any }))}
             >
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="Pago" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="pendente">Pendente</SelectItem>
                 <SelectItem value="pago">Pago</SelectItem>
+                <SelectItem value="pendente">Pendente</SelectItem>
                 <SelectItem value="vencido">Vencido</SelectItem>
               </SelectContent>
             </Select>
