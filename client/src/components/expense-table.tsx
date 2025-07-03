@@ -393,7 +393,7 @@ export default function ExpenseTable() {
                           {expense.contractNumber}
                         </TableCell>
                         <TableCell className={isCancelled(expense.category) ? "text-red-600" : ""}>
-                          {new Date(expense.paymentDate).toLocaleDateString('pt-BR')}
+                          {new Date(expense.paymentDate + 'T00:00:00').toLocaleDateString('pt-BR')}
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
@@ -509,7 +509,7 @@ export default function ExpenseTable() {
                         {expense.contractNumber}
                       </TableCell>
                       <TableCell className={isCancelled(expense.category) ? "text-red-600" : ""}>
-                        {new Date(expense.paymentDate).toLocaleDateString('pt-BR')}
+                        {new Date(expense.paymentDate + 'T00:00:00').toLocaleDateString('pt-BR')}
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">

@@ -185,7 +185,7 @@ export class DatabaseStorage implements IStorage {
         query = query.where(and(...conditions)) as any;
       }
 
-      return await (query as any).orderBy(desc(expenses.createdAt));
+      return await (query as any).orderBy(desc(expenses.paymentDate));
     } catch (error) {
       console.error('Erro na consulta de despesas:', error);
       return [];
