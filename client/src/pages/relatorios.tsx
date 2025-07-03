@@ -40,95 +40,84 @@ export default function Relatorios() {
 
   // Mutation para importar Excel
   const importExcelMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append('excel', file);
-
-      const response = await fetch('/api/expenses/import-excel', {
-        method: 'POST',
+    mutationFn: async (formData: FormData) => {
+      const response = await fetch("/api/expenses/import-excel", {
+        method: "POST",
         body: formData,
-        credentials: 'include',
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Erro no upload: ${errorText}`);
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Erro na importação");
       }
 
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/expenses'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
       setShowImportModal(false);
       setSelectedFile(null);
-      
-      // Mostrar o resultado principal primeiro
-      toast({
-        title: data.success ? "✅ Importação Concluída" : "❌ Importação Falhou",
-        description: data.message,
-        variant: data.success ? "default" : "destructive",
-      });
 
-      // Mostrar estatísticas se importação foi bem-sucedida
-      if (data.success && data.statistics) {
+      // 🛑 TRATAR IMPORTAÇÃO BLOQUEADA
+      if (data.blocked) {
+        toast({
+          title: "🚫 Importação Bloqueada",
+          description: "A planilha contém dados inválidos que não estão nas listas oficiais do sistema.",
+          variant: "destructive",
+          className: "border-red-500 bg-red-50",
+        });
+
+        // Toast detalhado com instruções
         setTimeout(() => {
           toast({
-            title: "📊 Resumo da Importação",
-            description: `Taxa de sucesso: ${data.statistics.successRate} • Qualidade: ${data.statistics.dataQuality} • ${data.enhanced} melhorias aplicadas`,
-          });
-        }, 1000);
-      }
-
-      // Mostrar erros se houver
-      if (data.feedback?.errors && data.feedback.errors.length > 0) {
-        setTimeout(() => {
-          toast({
-            title: "🚫 Erros Encontrados",
-            description: `${data.feedback.errors.length} linhas com erro. ${data.feedback.errors[0]}`,
-            variant: "destructive",
-          });
-        }, 1500);
-      }
-
-      // Mostrar avisos se houver
-      if (data.feedback?.warnings && data.feedback.warnings.length > 0) {
-        setTimeout(() => {
-          toast({
-            title: "⚠️ Avisos",
-            description: `${data.feedback.warnings.length} avisos. ${data.feedback.warnings[0]}`,
+            title: "📋 Dados que precisam ser corrigidos",
+            description: `Categorias inválidas: ${data.blockingReasons?.invalidCategories || 0} | Contratos: ${data.blockingReasons?.invalidContracts || 0} | Formas de pagamento: ${data.blockingReasons?.invalidPaymentMethods || 0}`,
+            className: "bg-orange-50 border-orange-200",
           });
         }, 2000);
+
+        // Log detalhado dos dados inválidos
+        console.log("🚫 IMPORTAÇÃO BLOQUEADA - Detalhes:", {
+          "Motivos do Bloqueio": data.blockingReasons,
+          "Dados Inválidos": data.validation,
+          "Valores Permitidos": data.allowedValues,
+          "Instruções": data.instructions
+        });
+
+        return;
       }
 
-      // Mostrar problemas de validação se houver
-      if (data.feedback?.validationIssues && data.feedback.validationIssues.length > 0) {
-        setTimeout(() => {
-          toast({
-            title: "❌ Problemas de Validação",
-            description: `${data.feedback.validationIssues.length} dados fora do padrão. ${data.feedback.validationIssues[0]}`,
-          });
-        }, 2500);
-      }
+      // Continuar com importação bem-sucedida
+      refetch();
 
-      // Mostrar melhorias aplicadas se houver
-      if (data.feedback?.enhancements && data.feedback.enhancements.length > 0) {
-        setTimeout(() => {
-          toast({
-            title: "✨ Melhorias Aplicadas",
-            description: `${data.feedback.enhancements.length} correções automáticas. ${data.feedback.enhancements[0]}`,
-          });
-        }, 3000);
-      }
+      // Toast com informações mais detalhadas
+      if (data.success) {
+        toast({
+          title: "🎉 Importação concluída!",
+          description: `${data.imported} despesas importadas com sucesso. ${data.enhanced > 0 ? `${data.enhanced} dados foram melhorados automaticamente.` : ''}`,
+          className: "bg-green-50 border-green-200",
+        });
 
-      // Mostrar recomendações
-      if (data.recommendations && data.recommendations.length > 0) {
-        setTimeout(() => {
-          toast({
-            title: "💡 Recomendações",
-            description: data.recommendations[0],
-          });
-        }, 3500);
+        // Toast adicional com estatísticas se houver melhorias
+        if (data.enhanced > 0) {
+          setTimeout(() => {
+            toast({
+              title: "✨ Melhorias aplicadas",
+              description: `${data.enhanced} linhas tiveram dados normalizados automaticamente para o padrão do sistema.`,
+              className: "bg-blue-50 border-blue-200",
+            });
+          }, 2000);
+        }
+
+        // Toast com avisos se houver
+        if (data.feedback?.warnings?.length > 0) {
+          setTimeout(() => {
+            toast({
+              title: "⚠️ Avisos detectados",
+              description: `${data.feedback.warnings.length} avisos foram encontrados. Verifique os dados no console.`,
+              className: "bg-yellow-50 border-yellow-200",
+            });
+          }, 3500);
+        }
       }
 
       // Log detalhado no console para desenvolvimento
@@ -160,10 +149,10 @@ export default function Relatorios() {
       'application/excel',
       'text/csv'
     ];
-    
+
     const validExtensions = ['.xlsx', '.xls', '.csv'];
     const fileExtension = file.name.toLowerCase().slice(file.name.lastIndexOf('.'));
-    
+
     return validTypes.includes(file.type) || validExtensions.includes(fileExtension);
   };
 
@@ -219,7 +208,7 @@ export default function Relatorios() {
     }
 
     const file = files[0];
-    
+
     // Verificar tamanho do arquivo (máximo 10MB)
     if (file.size > 10 * 1024 * 1024) {
       toast({
@@ -247,7 +236,9 @@ export default function Relatorios() {
 
   const handleImportExcel = () => {
     if (selectedFile) {
-      importExcelMutation.mutate(selectedFile);
+      const formData = new FormData();
+      formData.append('excel', selectedFile);
+      importExcelMutation.mutate(formData);
     }
   };
 
@@ -266,7 +257,7 @@ export default function Relatorios() {
       if (filters.category) params.append('category', filters.category);
       if (filters.contractNumber) params.append('contractNumber', filters.contractNumber);
       if (filters.paymentMethod && filters.paymentMethod !== "all") params.append('paymentMethod', filters.paymentMethod);
-      
+
       return apiRequest(`/api/expenses?${params.toString()}`, 'GET');
     },
   });
@@ -279,10 +270,16 @@ export default function Relatorios() {
       if (filters.year && filters.year !== "all") params.append('year', filters.year);
       if (filters.month && filters.month !== "all") params.append('month', filters.month);
       if (filters.contractNumber) params.append('contractNumber', filters.contractNumber);
-      
+
       return apiRequest(`/api/billing?${params.toString()}`, 'GET');
     },
   });
+
+    const refetch = () => {
+    queryClient.invalidateQueries({ queryKey: ['/api/expenses'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
+  };
+
 
   if (userLoading) {
     return (
@@ -310,17 +307,17 @@ export default function Relatorios() {
   const safeDownload = (blob: Blob, filename: string) => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    
+
     try {
       link.setAttribute('href', url);
       link.setAttribute('download', filename);
       link.style.visibility = 'hidden';
-      
+
       // Verificação segura antes de appendChild
       if (document.body) {
         document.body.appendChild(link);
         link.click();
-        
+
         // Verificação segura antes de removeChild
         if (link.parentNode === document.body) {
           document.body.removeChild(link);
@@ -345,11 +342,11 @@ export default function Relatorios() {
 
     let csvContent = '';
     let headers: string[] = [];
-    
+
     if (type === 'despesas') {
       headers = ['ID', 'Item', 'Valor', 'Método Pagamento', 'Categoria', 'Contrato', 'Data Pagamento', 'Criado em'];
       csvContent = headers.join(',') + '\n';
-      
+
       data.forEach((expense: any) => {
         const row = [
           expense.id,
@@ -366,7 +363,7 @@ export default function Relatorios() {
     } else if (type === 'faturamento') {
       headers = ['ID', 'Cliente', 'Descrição', 'Valor', 'Status', 'Contrato', 'Vencimento', 'Data Pagamento', 'Emissão'];
       csvContent = headers.join(',') + '\n';
-      
+
       data.forEach((billing: any) => {
         const row = [
           billing.id,
@@ -437,7 +434,7 @@ export default function Relatorios() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Sidebar />
-      
+
       <div className="lg:pl-64">
         {/* Header */}
         <header className="bg-white shadow-sm border-b border-gray-200">
@@ -454,7 +451,7 @@ export default function Relatorios() {
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex gap-3">
                 <Button 
                   onClick={() => setShowImportModal(true)}
@@ -463,7 +460,7 @@ export default function Relatorios() {
                   <Upload className="h-4 w-4" />
                   Importar Excel
                 </Button>
-                
+
                 <Button 
                   onClick={handleDownload}
                   disabled={isLoading}
@@ -728,7 +725,7 @@ export default function Relatorios() {
           <DialogHeader>
             <DialogTitle>Importar Despesas do Excel</DialogTitle>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             <div className="text-sm text-gray-600">
               <div className="bg-blue-50 p-3 rounded-lg mb-3">
@@ -740,7 +737,7 @@ export default function Relatorios() {
                   e métodos de pagamento, e corrige formatos de dados!
                 </p>
               </div>
-              
+
               <p className="mb-2">Formatos aceitos (ordem flexível):</p>
               <ul className="list-disc list-inside space-y-1 text-xs">
                 <li><strong>Item/Descrição:</strong> Nome do produto/serviço</li>
@@ -793,7 +790,7 @@ export default function Relatorios() {
                   ) : (
                     <Upload className="h-8 w-8 text-gray-400 mx-auto" />
                   )}
-                  
+
                   <div>
                     <label className="cursor-pointer">
                       <input
@@ -806,7 +803,7 @@ export default function Relatorios() {
                         Clique para selecionar arquivo
                       </span>
                     </label>
-                    
+
                     {isDragging ? (
                       <div className="mt-2 p-2 bg-blue-100 rounded-lg">
                         <p className="text-sm font-medium text-blue-700">
@@ -847,8 +844,7 @@ export default function Relatorios() {
                 disabled={!selectedFile || importExcelMutation.isPending}
                 className="flex-1 bg-green-600 hover:bg-green-700"
               >
-                {importExcelMutation.isPending ? "Importando..." : "Importar"}
-              </Button>
+                {importExcelMutation.isPending ? "Importando..." : "Importar"}              </Button>
             </div>
           </div>
         </DialogContent>
