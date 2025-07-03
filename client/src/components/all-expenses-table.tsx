@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Eye, Ban, Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useResponsive } from "@/hooks/use-responsive";
 import { formatDateSafely } from "@/lib/date-utils";
 import { apiRequest } from "@/lib/queryClient";
 import type { Expense, User } from "@shared/schema";
@@ -30,6 +31,7 @@ export function AllExpensesTable({ user, filters }: AllExpensesTableProps) {
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [expenseUser, setExpenseUser] = useState<User | null>(null);
   const queryClient = useQueryClient();
+  const { isMobile, isTablet } = useResponsive();
 
   const itemsPerPage = 100;
 
@@ -284,22 +286,27 @@ export function AllExpensesTable({ user, filters }: AllExpensesTableProps) {
                 </Table>
               </div>
 
-              {/* Controles de Paginação */}
+              {/* Controles de Paginação - Responsivo */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                  <div className="text-sm text-gray-500">
-                    Página {currentPage} de {totalPages} 
-                    <span className="ml-2">
+                <div className="mt-4 pt-4 border-t space-y-3">
+                  {/* Informações da página - Mobile/Desktop */}
+                  <div className="text-sm text-gray-500 text-center sm:text-left">
+                    <span className="block sm:inline">
+                      Página {currentPage} de {totalPages}
+                    </span>
+                    <span className="block sm:inline sm:ml-2">
                       ({((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, totalItems)} de {totalItems})
                     </span>
                   </div>
                   
-                  <div className="flex items-center space-x-2">
+                  {/* Controles de navegação */}
+                  <div className="flex items-center justify-center space-x-1 sm:space-x-2">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={goToFirstPage}
                       disabled={currentPage === 1}
+                      className="hidden sm:inline-flex"
                     >
                       <ChevronsLeft className="h-4 w-4" />
                     </Button>
@@ -312,18 +319,20 @@ export function AllExpensesTable({ user, filters }: AllExpensesTableProps) {
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
                     
-                    {/* Números das páginas */}
+                    {/* Números das páginas - Menos no mobile */}
                     <div className="flex space-x-1">
-                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      {Array.from({ length: Math.min(window.innerWidth < 640 ? 3 : 5, totalPages) }, (_, i) => {
                         let pageNumber;
-                        if (totalPages <= 5) {
+                        const maxPages = window.innerWidth < 640 ? 3 : 5;
+                        
+                        if (totalPages <= maxPages) {
                           pageNumber = i + 1;
-                        } else if (currentPage <= 3) {
+                        } else if (currentPage <= Math.floor(maxPages / 2) + 1) {
                           pageNumber = i + 1;
-                        } else if (currentPage >= totalPages - 2) {
-                          pageNumber = totalPages - 4 + i;
+                        } else if (currentPage >= totalPages - Math.floor(maxPages / 2)) {
+                          pageNumber = totalPages - maxPages + 1 + i;
                         } else {
-                          pageNumber = currentPage - 2 + i;
+                          pageNumber = currentPage - Math.floor(maxPages / 2) + i;
                         }
                         
                         return (
@@ -332,7 +341,7 @@ export function AllExpensesTable({ user, filters }: AllExpensesTableProps) {
                             variant={currentPage === pageNumber ? "default" : "outline"}
                             size="sm"
                             onClick={() => goToPage(pageNumber)}
-                            className="w-8 h-8 p-0"
+                            className="w-8 h-8 p-0 text-xs sm:text-sm"
                           >
                             {pageNumber}
                           </Button>
