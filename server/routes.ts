@@ -605,11 +605,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return exactMatch;
     }
 
+    // Mapeamentos específicos para correções comuns
+    const contractMappings: { [key: string]: string } = {
+      'secretaria de administração': 'SECRETARIA DA ADMINISTRAÇÃO',
+      'secretaria de administracao': 'SECRETARIA DA ADMINISTRAÇÃO',
+      'secretaria administração': 'SECRETARIA DA ADMINISTRAÇÃO',
+      'secretaria administracao': 'SECRETARIA DA ADMINISTRAÇÃO',
+      'administração': 'SECRETARIA DA ADMINISTRAÇÃO',
+      'administracao': 'SECRETARIA DA ADMINISTRAÇÃO',
+      
+      'secretaria de economia': 'SECRETARIA DA ECONOMIA',
+      'secretaria economia': 'SECRETARIA DA ECONOMIA',
+      'economia': 'SECRETARIA DA ECONOMIA',
+      
+      'secretaria de saude': 'SECRETARIA DA SAÚDE',
+      'secretaria saude': 'SECRETARIA DA SAÚDE',
+      'secretaria da saude': 'SECRETARIA DA SAÚDE',
+      'saude': 'SECRETARIA DA SAÚDE',
+      'saúde': 'SECRETARIA DA SAÚDE',
+      
+      'galpao 2': 'GALPÃO 2',
+      'galpao': 'GALPÃO 2',
+      'galpão': 'GALPÃO 2',
+      
+      'escritorio': 'ESCRITÓRIO',
+      'office': 'ESCRITÓRIO',
+      
+      'correios go': 'CORREIOS - GO',
+      'correios': 'CORREIOS - GO',
+      
+      'carro ms': 'CARRO ENGENHARIA MS',
+      'carro engenharia': 'CARRO ENGENHARIA MS',
+      'carro eldorado': 'CARRO ENGENHARIA MS - ELDORADO',
+      'carro nova alvorada': 'CARRO ENGENHARIA MS - NOVA ALVORADA',
+      'carro rio brilhante': 'CARRO ENGENHARIA MS - RIO BRILHANTE',
+      
+      'bb divinopolis': 'BB DIVINÓPOLIS',
+      'bb mato grosso sul': 'BB MATO GROSSO DO SUL',
+      'bb ms': 'BB MATO GROSSO DO SUL',
+      'bb lote 2': 'BB MATO GROSSO LOTE 2',
+      'bb sp': 'BB SÃO PAULO',
+      'bb sao paulo': 'BB SÃO PAULO',
+      'bb são paulo': 'BB SÃO PAULO',
+      
+      'impostos': 'IMPOSTO',
+      'imposto': 'IMPOSTO'
+    };
+
+    const contractLower = contract.toLowerCase();
+    if (contractMappings[contractLower]) {
+      return contractMappings[contractLower];
+    }
+
     // Verificar correspondência parcial com os contratos padrão
     for (const contratoBase of CONTRATOS) {
-      if (contratoBase.toLowerCase().includes(contract.toLowerCase()) || 
-          contract.toLowerCase().includes(contratoBase.toLowerCase())) {
+      const contratoBaseLower = contratoBase.toLowerCase();
+      if (contratoBaseLower.includes(contractLower) || 
+          contractLower.includes(contratoBaseLower)) {
         return contratoBase;
+      }
+    }
+
+    // Verificar correspondência parcial com mapeamentos
+    for (const [key, value] of Object.entries(contractMappings)) {
+      if (contractLower.includes(key) || key.includes(contractLower)) {
+        return value;
       }
     }
 
@@ -665,6 +725,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log('Iniciando importação inteligente de Excel...');
+
+      // Obter data selecionada pelo usuário ou usar data atual
+      const selectedDate = req.body.importDate;
+      const importDate = selectedDate ? new Date(selectedDate) : new Date();
+      console.log('Data selecionada para importação:', importDate);
 
       // Obter despesas existentes para análise de padrões
       const existingExpenses = await storage.getExpenses({ userId: req.session.userId });
@@ -999,39 +1064,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             warnings.push(`💰 Linha ${lineNumber}: valor alto R$ ${value.toFixed(2)} - confirme se está correto`);
           }
 
-          // Processar data com múltiplos formatos
-          let paymentDate: Date;
-          if (typeof rawDate === 'number') {
-            // Excel serializa datas como números
-            paymentDate = new Date((rawDate - 25569) * 86400 * 1000);
-          } else if (rawDate) {
-            const dateStr = String(rawDate);
-            if (dateStr.includes('/')) {
-              const parts = dateStr.split('/');
-              if (parts.length === 3) {
-                // Tentar DD/MM/YYYY e MM/DD/YYYY
-                const [first, second, third] = parts.map(p => parseInt(p));
-                if (third > 31) {
-                  // Ano está no final
-                  paymentDate = new Date(third, second - 1, first);
-                } else {
-                  paymentDate = new Date(first, second - 1, third);
-                }
-              } else {
-                paymentDate = new Date(dateStr);
-              }
-            } else {
-              paymentDate = new Date(dateStr);
-            }
-
-            if (isNaN(paymentDate.getTime())) {
-              paymentDate = new Date(); // Data atual como fallback
-              insights.push(`Linha ${i + 2}: data inválida, usando data atual`);
-            }
-          } else {
-            paymentDate = new Date(); // Data atual se não informada
-            insights.push(`Linha ${i + 2}: sem data, usando data atual`);
-          }
+          // Usar a data selecionada pelo usuário para todas as despesas
+          const paymentDate = importDate;
+          insights.push(`Linha ${i + 2}: aplicando data selecionada: ${paymentDate.toLocaleDateString('pt-BR')}`);
 
           // VALIDAÇÃO E NORMALIZAÇÃO DETALHADA DE CATEGORIA
           const originalCategory = String(rawCategory || '').trim();
