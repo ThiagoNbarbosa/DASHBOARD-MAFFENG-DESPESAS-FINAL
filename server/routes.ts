@@ -767,6 +767,134 @@ export async function registerRoutes(app: Express): Promise<Server> {
         validationIssues.push(`⚠️ Colunas obrigatórias ausentes: ${missingColumns.join(', ')}`);
       }
 
+      // 🔒 VALIDAÇÃO CRÍTICA: Verificar se todos os dados são válidos ANTES de importar
+      console.log('🔍 Iniciando validação crítica dos dados...');
+      
+      const criticalErrors: string[] = [];
+      const invalidCategories: string[] = [];
+      const invalidContracts: string[] = [];
+      const invalidPaymentMethods: string[] = [];
+      const invalidBanks: string[] = [];
+
+      // Primeira passada: validar TODOS os dados críticos
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const lineNumber = i + 2; // +2 porque o cabeçalho é linha 1
+
+        if (!row || row.length < 3) {
+          criticalErrors.push(`🚫 Linha ${lineNumber}: dados insuficientes`);
+          continue;
+        }
+
+        // Extrair dados usando mapeamento inteligente
+        const rawCategory = row[columnMapping.category];
+        const rawContract = row[columnMapping.contractNumber];
+        const rawPaymentMethod = row[columnMapping.paymentMethod];
+        const rawBankIssuer = columnMapping.bankIssuer >= 0 ? row[columnMapping.bankIssuer] : '';
+
+        // VALIDAÇÃO CRÍTICA 1: CATEGORIA
+        if (!rawCategory || String(rawCategory).trim() === '') {
+          criticalErrors.push(`❌ Linha ${lineNumber}: CATEGORIA está vazia - obrigatório preencher`);
+        } else {
+          const categoryStr = String(rawCategory).trim();
+          const normalizedCategory = normalizeCategory(categoryStr, []);
+          
+          // Verificar se a categoria normalizada está nas categorias oficiais
+          if (!CATEGORIAS.includes(normalizedCategory as any)) {
+            invalidCategories.push(`Linha ${lineNumber}: "${categoryStr}" → "${normalizedCategory}"`);
+          }
+        }
+
+        // VALIDAÇÃO CRÍTICA 2: CONTRATO
+        if (!rawContract || String(rawContract).trim() === '') {
+          criticalErrors.push(`❌ Linha ${lineNumber}: CONTRATO está vazio - obrigatório preencher`);
+        } else {
+          const contractStr = String(rawContract).trim();
+          const normalizedContract = normalizeContractNumber(contractStr);
+          
+          // Verificar se o contrato normalizado está nos contratos oficiais
+          if (!CONTRATOS.includes(normalizedContract as any)) {
+            invalidContracts.push(`Linha ${lineNumber}: "${contractStr}" → "${normalizedContract}"`);
+          }
+        }
+
+        // VALIDAÇÃO CRÍTICA 3: FORMA DE PAGAMENTO
+        if (!rawPaymentMethod || String(rawPaymentMethod).trim() === '') {
+          criticalErrors.push(`❌ Linha ${lineNumber}: FORMA DE PAGAMENTO está vazia - obrigatório preencher`);
+        } else {
+          const paymentStr = String(rawPaymentMethod).trim();
+          const normalizedPayment = normalizePaymentMethod(paymentStr);
+          
+          // Verificar se a forma de pagamento normalizada está nas formas oficiais
+          if (!FORMAS_PAGAMENTO.includes(normalizedPayment as any)) {
+            invalidPaymentMethods.push(`Linha ${lineNumber}: "${paymentStr}" → "${normalizedPayment}"`);
+          }
+        }
+
+        // VALIDAÇÃO CRÍTICA 4: BANCO (se preenchido)
+        if (rawBankIssuer && String(rawBankIssuer).trim() !== '') {
+          const bankStr = String(rawBankIssuer).trim();
+          const normalizedBank = normalizeBankIssuer(bankStr);
+          
+          // Verificar se o banco normalizado está nos bancos oficiais
+          if (!BANCOS.includes(normalizedBank as any)) {
+            invalidBanks.push(`Linha ${lineNumber}: "${bankStr}" → "${normalizedBank}"`);
+          }
+        }
+      }
+
+      // 🛑 BLOQUEIO CRÍTICO: Se houver dados inválidos, BLOQUEAR a importação
+      const hasInvalidData = 
+        criticalErrors.length > 0 || 
+        invalidCategories.length > 0 || 
+        invalidContracts.length > 0 || 
+        invalidPaymentMethods.length > 0 || 
+        invalidBanks.length > 0;
+
+      if (hasInvalidData) {
+        console.log('🚫 IMPORTAÇÃO BLOQUEADA: Dados inválidos detectados');
+        
+        return res.status(400).json({
+          success: false,
+          blocked: true,
+          message: "❌ IMPORTAÇÃO BLOQUEADA: Dados inválidos detectados",
+          details: "A planilha contém dados que não estão nas listas oficiais do sistema. Corrija os dados antes de importar.",
+          
+          blockingReasons: {
+            criticalErrors: criticalErrors.length,
+            invalidCategories: invalidCategories.length,
+            invalidContracts: invalidContracts.length,
+            invalidPaymentMethods: invalidPaymentMethods.length,
+            invalidBanks: invalidBanks.length
+          },
+
+          validation: {
+            criticalErrors: criticalErrors.slice(0, 20),
+            invalidCategories: invalidCategories.slice(0, 15),
+            invalidContracts: invalidContracts.slice(0, 15),
+            invalidPaymentMethods: invalidPaymentMethods.slice(0, 15),
+            invalidBanks: invalidBanks.slice(0, 15)
+          },
+
+          allowedValues: {
+            categorias: CATEGORIAS,
+            contratos: CONTRATOS,
+            formasPagamento: FORMAS_PAGAMENTO,
+            bancos: BANCOS
+          },
+
+          instructions: [
+            "1. Verifique se todas as CATEGORIAS estão na lista oficial",
+            "2. Confirme se todos os CONTRATOS estão cadastrados no sistema",
+            "3. Certifique-se de que as FORMAS DE PAGAMENTO são válidas",
+            "4. Valide os BANCOS (se preenchidos) com a lista oficial",
+            "5. Corrija os dados na planilha e tente importar novamente"
+          ]
+        });
+      }
+
+      console.log('✅ Validação crítica passou - iniciando importação...');
+
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
 
