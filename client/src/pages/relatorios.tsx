@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CATEGORIAS, CONTRATOS, BANCOS, FORMAS_PAGAMENTO } from "@shared/constants";
+import { formatDateForCSV } from "@/lib/date-utils";
 
 interface ReportFilters {
   year: string;
@@ -357,7 +358,7 @@ export default function Relatorios() {
           `"${expense.paymentMethod}"`,
           `"${expense.category}"`,
           expense.contractNumber,
-          new Date(expense.paymentDate + 'T00:00:00').toLocaleDateString('pt-BR'),
+          formatDateForCSV(expense.paymentDate),
           new Date(expense.createdAt).toLocaleDateString('pt-BR')
         ];
         csvContent += row.join(',') + '\n';
@@ -375,7 +376,7 @@ export default function Relatorios() {
           billing.status,
           billing.contractNumber,
           new Date(billing.dueDate).toLocaleDateString('pt-BR'),
-          billing.paymentDate ? new Date(billing.paymentDate + 'T00:00:00').toLocaleDateString('pt-BR') : 'N/A',
+          billing.paymentDate ? formatDateForCSV(billing.paymentDate) : 'N/A',
           new Date(billing.issueDate).toLocaleDateString('pt-BR')
         ];
         csvContent += row.join(',') + '\n';

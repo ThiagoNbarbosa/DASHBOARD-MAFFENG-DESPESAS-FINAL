@@ -12,6 +12,7 @@ import { Trash2, Filter, X, Ban, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { authApi } from "@/lib/auth";
+import { formatDateSafely } from "@/lib/date-utils";
 
 import type { Expense } from "@shared/schema";
 import { CATEGORIAS, CONTRATOS, BANCOS, FORMAS_PAGAMENTO } from "@shared/constants";
@@ -393,7 +394,7 @@ export default function ExpenseTable() {
                           {expense.contractNumber}
                         </TableCell>
                         <TableCell className={isCancelled(expense.category) ? "text-red-600" : ""}>
-                          {new Date(expense.paymentDate + 'T00:00:00').toLocaleDateString('pt-BR')}
+                          {formatDateSafely(expense.paymentDate)}
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
@@ -509,7 +510,7 @@ export default function ExpenseTable() {
                         {expense.contractNumber}
                       </TableCell>
                       <TableCell className={isCancelled(expense.category) ? "text-red-600" : ""}>
-                        {new Date(expense.paymentDate + 'T00:00:00').toLocaleDateString('pt-BR')}
+                        {formatDateSafely(expense.paymentDate)}
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
