@@ -357,7 +357,7 @@ export default function Relatorios() {
           `"${expense.paymentMethod}"`,
           `"${expense.category}"`,
           expense.contractNumber,
-          new Date(expense.paymentDate).toLocaleDateString('pt-BR'),
+          new Date(expense.paymentDate + 'T00:00:00').toLocaleDateString('pt-BR'),
           new Date(expense.createdAt).toLocaleDateString('pt-BR')
         ];
         csvContent += row.join(',') + '\n';
@@ -375,7 +375,7 @@ export default function Relatorios() {
           billing.status,
           billing.contractNumber,
           new Date(billing.dueDate).toLocaleDateString('pt-BR'),
-          billing.paymentDate ? new Date(billing.paymentDate).toLocaleDateString('pt-BR') : 'N/A',
+          billing.paymentDate ? new Date(billing.paymentDate + 'T00:00:00').toLocaleDateString('pt-BR') : 'N/A',
           new Date(billing.issueDate).toLocaleDateString('pt-BR')
         ];
         csvContent += row.join(',') + '\n';
