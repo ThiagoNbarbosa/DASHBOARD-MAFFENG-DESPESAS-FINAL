@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { authApi } from "@/lib/auth";
 import Sidebar from "@/components/sidebar";
-import ExpenseTable from "@/components/expense-table";
+import { AllExpensesTable } from "@/components/all-expenses-table";
 import ExpenseModal from "@/components/expense-modal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, TrendingUp, Calendar, Receipt } from "lucide-react";
@@ -92,7 +92,7 @@ export default function Despesas() {
 
         {/* Conteúdo principal */}
         <div className="px-4 sm:px-6 lg:px-8 pb-8">
-          <ExpenseTable />
+          <AllExpensesTable user={user} />
         </div>
       </div>
     </div>

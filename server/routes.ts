@@ -451,6 +451,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get expenses with pagination
+  app.get("/api/expenses/paginated", requireAuth, async (req, res) => {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 100;
+      const offset = (page - 1) * limit;
+      
+      const filters: any = {};
+
+      // Administradores podem ver despesas de todos os usuários
+      // Usuários regulares veem apenas suas próprias despesas
+      if (req.session.userRole !== "admin") {
+        filters.userId = req.session.userId;
+      }
+
+      try {
+        const expenses = await storage.getExpensesPaginated({
+          ...filters,
+          limit,
+          offset,
+        });
+        res.json(expenses);
+      } catch (dbError) {
+        console.log('Erro ao buscar despesas paginadas:', dbError);
+        res.status(500).json({ message: "Erro ao buscar despesas paginadas" });
+      }
+    } catch (error) {
+      console.error('Error fetching paginated expenses:', error);
+      res.status(500).json({ message: 'Erro ao buscar despesas paginadas' });
+    }
+  });
+
   app.post("/api/expenses", requireAuth, async (req, res) => {
     try {
       console.log('Dados recebidos para criação de despesa:', req.body);
