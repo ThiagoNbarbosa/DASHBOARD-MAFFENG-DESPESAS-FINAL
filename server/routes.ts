@@ -733,12 +733,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Mapeamento de colunas:', columnMapping);
 
-      // Processar dados
+      // Processar dados com validação detalhada
       const rows = data.slice(1);
       let imported = 0;
       let enhanced = 0;
       const errors: string[] = [];
+      const warnings: string[] = [];
       const insights: string[] = [];
+      const validationIssues: string[] = [];
+      const enhancements: string[] = [];
+
+      // Validar estrutura da planilha
+      if (rows.length === 0) {
+        return res.status(400).json({ 
+          message: "Nenhum dado encontrado na planilha",
+          details: "A planilha precisa ter pelo menos uma linha de dados além do cabeçalho"
+        });
+      }
+
+      // Verificar se a estrutura esperada está presente
+      const expectedColumns = ['NOME', 'VALOR', 'CATEGORIA', 'CONTRATO', 'FORMA DE PAGAMENTO', 'BANCO'];
+      const detectedHeaders = headers.map(h => h.toUpperCase());
+      
+      const missingColumns: string[] = [];
+      if (!detectedHeaders.some(h => h.includes('NOME') || h.includes('ITEM') || h.includes('DESCRI'))) {
+        missingColumns.push('NOME/ITEM/DESCRIÇÃO');
+      }
+      if (!detectedHeaders.some(h => h.includes('VALOR') || h.includes('PRECO'))) {
+        missingColumns.push('VALOR/PREÇO');
+      }
+      
+      if (missingColumns.length > 0) {
+        validationIssues.push(`⚠️ Colunas obrigatórias ausentes: ${missingColumns.join(', ')}`);
+      }
 
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
@@ -758,12 +785,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const rawDate = row[columnMapping.paymentDate];
           const rawBankIssuer = columnMapping.bankIssuer >= 0 ? row[columnMapping.bankIssuer] : '';
 
-          if (!rawItem || !rawValue) {
-            errors.push(`Linha ${i + 2}: item ou valor em branco`);
+          const lineNumber = i + 2; // +2 porque o cabeçalho é linha 1
+
+          // VALIDAÇÃO DETALHADA DO ITEM/DESCRIÇÃO
+          if (!rawItem || String(rawItem).trim() === '') {
+            errors.push(`🚫 Linha ${lineNumber}: DESCRIÇÃO está vazia - obrigatório preencher`);
+            continue;
+          }
+          
+          const item = String(rawItem).trim();
+          if (item.length < 3) {
+            warnings.push(`⚠️ Linha ${lineNumber}: descrição muito curta "${item}" - recomendado mais detalhes`);
+          }
+
+          // VALIDAÇÃO DETALHADA DO VALOR
+          if (!rawValue || rawValue === '' || rawValue === null || rawValue === undefined) {
+            errors.push(`🚫 Linha ${lineNumber}: VALOR está vazio - obrigatório informar`);
             continue;
           }
 
-          // Processar valor com múltiplos formatos
+          // VALIDAÇÃO E PROCESSAMENTO DO VALOR
           let value: number;
           if (typeof rawValue === 'number') {
             value = rawValue;
@@ -772,10 +813,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
               .replace(/[^\d,.-]/g, '')
               .replace(',', '.');
             value = parseFloat(cleanValue);
+            
             if (isNaN(value)) {
-              errors.push(`Linha ${i + 2}: valor inválido (${rawValue})`);
+              errors.push(`🚫 Linha ${lineNumber}: valor inválido "${rawValue}" - deve ser um número válido (ex: 100,50 ou 100.50)`);
               continue;
             }
+          }
+          
+          // Validações de valor
+          if (value <= 0) {
+            warnings.push(`⚠️ Linha ${lineNumber}: valor suspeito R$ ${value.toFixed(2)} (valor zero ou negativo)`);
+          } else if (value > 50000) {
+            warnings.push(`💰 Linha ${lineNumber}: valor alto R$ ${value.toFixed(2)} - confirme se está correto`);
           }
 
           // Processar data com múltiplos formatos
@@ -812,25 +861,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
             insights.push(`Linha ${i + 2}: sem data, usando data atual`);
           }
 
-          // Aplicar inteligência nos dados
-          const intelligentCategory = rawCategory ? 
-            normalizeCategory(rawCategory, existingCategories) : 'Outros';
-
-          const intelligentPaymentMethod = rawPaymentMethod ? 
-            normalizePaymentMethod(rawPaymentMethod) : 'Não especificado';
-
-          const intelligentContract = rawContract ? 
-            normalizeContractNumber(rawContract) : `AUTO-${Date.now().toString().slice(-6)}`;
-
-          const intelligentBankIssuer = rawBankIssuer ? 
-            normalizeBankIssuer(rawBankIssuer) : '';
-
-          // Verificar se houve melhorias nos dados
-          if (intelligentCategory !== rawCategory || 
-              intelligentPaymentMethod !== rawPaymentMethod ||
-              intelligentContract !== rawContract ||
-              intelligentBankIssuer !== rawBankIssuer) {
+          // VALIDAÇÃO E NORMALIZAÇÃO DETALHADA DE CATEGORIA
+          const originalCategory = String(rawCategory || '').trim();
+          if (!originalCategory) {
+            warnings.push(`📂 Linha ${lineNumber}: categoria vazia - será categorizada como "OUTROS"`);
+          }
+          
+          const intelligentCategory = normalizeCategory(originalCategory, existingCategories);
+          if (originalCategory && intelligentCategory !== originalCategory) {
+            enhancements.push(`✨ Linha ${lineNumber}: categoria "${originalCategory}" → "${intelligentCategory}"`);
             enhanced++;
+          }
+          
+          // Verificar se categoria está na lista oficial
+          if (originalCategory && !CATEGORIAS.includes(intelligentCategory)) {
+            validationIssues.push(`❌ Linha ${lineNumber}: categoria "${originalCategory}" não está nas categorias padrão do sistema`);
+          }
+
+          // VALIDAÇÃO E NORMALIZAÇÃO DE FORMA DE PAGAMENTO
+          const originalPaymentMethod = String(rawPaymentMethod || '').trim();
+          if (!originalPaymentMethod) {
+            warnings.push(`💳 Linha ${lineNumber}: forma de pagamento vazia`);
+          }
+          
+          const intelligentPaymentMethod = normalizePaymentMethod(originalPaymentMethod);
+          if (originalPaymentMethod && intelligentPaymentMethod !== originalPaymentMethod) {
+            enhancements.push(`✨ Linha ${lineNumber}: pagamento "${originalPaymentMethod}" → "${intelligentPaymentMethod}"`);
+            enhanced++;
+          }
+          
+          // Verificar se forma de pagamento está na lista oficial
+          if (originalPaymentMethod && !FORMAS_PAGAMENTO.includes(intelligentPaymentMethod)) {
+            validationIssues.push(`❌ Linha ${lineNumber}: "${originalPaymentMethod}" não está nas formas de pagamento padrão`);
+          }
+
+          // VALIDAÇÃO E NORMALIZAÇÃO DE CONTRATO
+          const originalContract = String(rawContract || '').trim();
+          if (!originalContract) {
+            warnings.push(`📋 Linha ${lineNumber}: contrato vazio`);
+          }
+          
+          const intelligentContract = normalizeContractNumber(originalContract);
+          if (originalContract && intelligentContract !== originalContract) {
+            enhancements.push(`✨ Linha ${lineNumber}: contrato "${originalContract}" → "${intelligentContract}"`);
+            enhanced++;
+          }
+          
+          // Verificar se contrato está na lista oficial
+          if (originalContract && !CONTRATOS.includes(intelligentContract)) {
+            validationIssues.push(`❌ Linha ${lineNumber}: contrato "${originalContract}" não encontrado nos contratos padrão`);
+          }
+
+          // VALIDAÇÃO E NORMALIZAÇÃO DE BANCO EMISSOR
+          const originalBankIssuer = String(rawBankIssuer || '').trim();
+          const intelligentBankIssuer = normalizeBankIssuer(originalBankIssuer);
+          
+          if (originalBankIssuer && intelligentBankIssuer !== originalBankIssuer) {
+            enhancements.push(`✨ Linha ${lineNumber}: banco "${originalBankIssuer}" → "${intelligentBankIssuer}"`);
+            enhanced++;
+          }
+          
+          // Verificar se banco está na lista oficial (se preenchido)
+          if (originalBankIssuer && intelligentBankIssuer && !BANCOS.includes(intelligentBankIssuer)) {
+            validationIssues.push(`❌ Linha ${lineNumber}: banco "${originalBankIssuer}" não está nas opções padrão`);
           }
 
           // Criar despesa com dados inteligentes
@@ -859,18 +952,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`Importação concluída: ${imported} importadas, ${enhanced} melhoradas`);
 
-      res.json({
+      // Criar resumo detalhado do que aconteceu
+      const summary = {
+        success: imported > 0,
         imported,
         enhanced,
         total: rows.length,
-        insights: insights.slice(0, 5), // Primeiros 5 insights
-        errors: errors.length > 0 ? errors.slice(0, 10) : [], // Primeiros 10 erros
+        
+        // Resumo em linguagem simples
+        message: imported > 0 
+          ? `Importação concluída com sucesso! ${imported} despesas foram importadas.`
+          : `Importação não pôde ser concluída devido a erros nos dados.`,
+          
+        // Explicações detalhadas do que significa cada tipo de feedback
+        explanations: {
+          importedMeaning: "Número de despesas que foram efetivamente adicionadas ao sistema",
+          enhancedMeaning: "Quantas linhas tiveram dados corrigidos/melhorados automaticamente pelo sistema inteligente",
+          errorsMeaning: "Linhas que não puderam ser processadas devido a problemas nos dados",
+          warningsMeaning: "Avisos sobre dados que podem precisar de atenção, mas foram processados",
+          validationMeaning: "Dados que não seguem as especificações padrão do sistema"
+        },
+
+        // Detalhes categorizados
+        feedback: {
+          errors: errors.slice(0, 10), // Até 10 erros mais importantes
+          warnings: warnings.slice(0, 10), // Até 10 avisos
+          validationIssues: validationIssues.slice(0, 10), // Problemas de validação
+          enhancements: enhancements.slice(0, 15), // Melhorias aplicadas
+          insights: insights.slice(0, 5) // Insights gerais
+        },
+
+        // Estatísticas detalhadas
+        statistics: {
+          successRate: `${Math.round((imported / rows.length) * 100)}%`,
+          enhancementRate: enhanced > 0 ? `${Math.round((enhanced / imported) * 100)}%` : "0%",
+          dataQuality: errors.length === 0 ? "Excelente" : 
+                      errors.length < 3 ? "Boa" : 
+                      errors.length < 10 ? "Regular" : "Necessita revisão"
+        },
+
+        // Informações sobre o que foi detectado
         intelligence: {
-          categoriesDetected: existingCategories.length,
-          paymentMethodsDetected: existingPaymentMethods.length,
-          columnsAutoMapped: Object.values(columnMapping).filter(v => v !== -1).length
-        }
-      });
+          columnsDetected: headers.length,
+          columnsAutoMapped: Object.values(columnMapping).filter(v => v !== -1).length,
+          categoriesAvailable: CATEGORIAS.length,
+          contractsAvailable: CONTRATOS.length,
+          paymentMethodsAvailable: FORMAS_PAGAMENTO.length,
+          banksAvailable: BANCOS.length
+        },
+
+        // Recomendações baseadas nos resultados
+        recommendations: []
+      };
+
+      // Adicionar recomendações baseadas nos problemas encontrados
+      if (errors.length > 0) {
+        summary.recommendations.push("Revise as linhas com erro e corrija os dados antes de uma nova importação");
+      }
+      
+      if (validationIssues.length > 0) {
+        summary.recommendations.push("Alguns dados não seguem os padrões - verifique se as categorias, contratos e formas de pagamento estão corretos");
+      }
+      
+      if (warnings.length > 0) {
+        summary.recommendations.push("Existem avisos sobre os dados - revise para melhorar a qualidade");
+      }
+      
+      if (enhanced > 0) {
+        summary.recommendations.push(`${enhanced} melhorias automáticas foram aplicadas - os dados foram normalizados para o padrão do sistema`);
+      }
+
+      if (summary.recommendations.length === 0) {
+        summary.recommendations.push("Importação perfeita! Todos os dados estão dentro dos padrões");
+      }
+
+      res.json(summary);
 
     } catch (error) {
       console.error('Erro na importação Excel:', error);

@@ -63,35 +63,86 @@ export default function Relatorios() {
       setShowImportModal(false);
       setSelectedFile(null);
       
-      // Mensagem inteligente com detalhes da importação
-      const message = data.enhanced > 0 
-        ? `${data.imported} despesas importadas. ${data.enhanced} foram melhoradas automaticamente!`
-        : `${data.imported} despesas importadas com sucesso.`;
-      
+      // Mostrar o resultado principal primeiro
       toast({
-        title: "🧠 Importação Inteligente Concluída",
-        description: message,
+        title: data.success ? "✅ Importação Concluída" : "❌ Importação Falhou",
+        description: data.message,
+        variant: data.success ? "default" : "destructive",
       });
 
-      // Mostrar insights se houver
-      if (data.insights && data.insights.length > 0) {
+      // Mostrar estatísticas se importação foi bem-sucedida
+      if (data.success && data.statistics) {
         setTimeout(() => {
           toast({
-            title: "💡 Insights da Importação",
-            description: data.insights.slice(0, 2).join('; '),
+            title: "📊 Resumo da Importação",
+            description: `Taxa de sucesso: ${data.statistics.successRate} • Qualidade: ${data.statistics.dataQuality} • ${data.enhanced} melhorias aplicadas`,
           });
         }, 1000);
       }
 
-      // Mostrar informações sobre a inteligência aplicada
-      if (data.intelligence) {
+      // Mostrar erros se houver
+      if (data.feedback?.errors && data.feedback.errors.length > 0) {
         setTimeout(() => {
           toast({
-            title: "🤖 Inteligência Aplicada",
-            description: `${data.intelligence.columnsAutoMapped} colunas mapeadas automaticamente`,
+            title: "🚫 Erros Encontrados",
+            description: `${data.feedback.errors.length} linhas com erro. ${data.feedback.errors[0]}`,
+            variant: "destructive",
+          });
+        }, 1500);
+      }
+
+      // Mostrar avisos se houver
+      if (data.feedback?.warnings && data.feedback.warnings.length > 0) {
+        setTimeout(() => {
+          toast({
+            title: "⚠️ Avisos",
+            description: `${data.feedback.warnings.length} avisos. ${data.feedback.warnings[0]}`,
           });
         }, 2000);
       }
+
+      // Mostrar problemas de validação se houver
+      if (data.feedback?.validationIssues && data.feedback.validationIssues.length > 0) {
+        setTimeout(() => {
+          toast({
+            title: "❌ Problemas de Validação",
+            description: `${data.feedback.validationIssues.length} dados fora do padrão. ${data.feedback.validationIssues[0]}`,
+          });
+        }, 2500);
+      }
+
+      // Mostrar melhorias aplicadas se houver
+      if (data.feedback?.enhancements && data.feedback.enhancements.length > 0) {
+        setTimeout(() => {
+          toast({
+            title: "✨ Melhorias Aplicadas",
+            description: `${data.feedback.enhancements.length} correções automáticas. ${data.feedback.enhancements[0]}`,
+          });
+        }, 3000);
+      }
+
+      // Mostrar recomendações
+      if (data.recommendations && data.recommendations.length > 0) {
+        setTimeout(() => {
+          toast({
+            title: "💡 Recomendações",
+            description: data.recommendations[0],
+          });
+        }, 3500);
+      }
+
+      // Log detalhado no console para desenvolvimento
+      console.log("📋 Relatório Completo da Importação:", {
+        "✅ Importadas": data.imported,
+        "✨ Melhoradas": data.enhanced,
+        "📈 Taxa de Sucesso": data.statistics?.successRate,
+        "🔍 Qualidade": data.statistics?.dataQuality,
+        "🚫 Erros": data.feedback?.errors?.length || 0,
+        "⚠️ Avisos": data.feedback?.warnings?.length || 0,
+        "❌ Validações": data.feedback?.validationIssues?.length || 0,
+        "💡 Insights": data.feedback?.insights?.length || 0,
+        "Detalhes Completos": data
+      });
     },
     onError: (error) => {
       toast({
