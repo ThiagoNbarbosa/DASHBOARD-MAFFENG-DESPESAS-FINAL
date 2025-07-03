@@ -1,16 +1,20 @@
-import { users, expenses, billing, type User, type InsertUser, type Expense, type InsertExpense, type Billing, type InsertBilling } from "@shared/schema";
-import { eq, and, like, gte, lte, desc, sql, or } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/neon-http";
-import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-serverless";
+import { Pool } from "@neondatabase/serverless";
+import { users, expenses, billing } from "@shared/schema";
+import { eq, desc, and, gte, lte, like, count, sum, countDistinct, or } from "drizzle-orm";
+import type { User, InsertUser, Expense, InsertExpense, Billing, InsertBilling } from "@shared/schema";
 
-// Verificar se DATABASE_URL está configurada corretamente
-const databaseUrl = process.env.DATABASE_URL;
-if (!databaseUrl) {
-  console.error('DATABASE_URL não está configurada');
-}
+const connectionString = process.env.DATABASE_URL || "";
 
-const neonSql = neon(databaseUrl!);
-const db = drizzle(neonSql);
+// Configuração robusta para o pool de conexões
+const pool = new Pool({ 
+  connectionString,
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
+});
+
+const db = drizzle(pool);
 
 export interface IStorage {
   // User methods
@@ -81,18 +85,33 @@ export interface IStorage {
 
 export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
-    const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
-    return result[0];
+    try {
+      const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+      return result[0];
+    } catch (error) {
+      console.error('Erro ao buscar usuário:', error);
+      return undefined;
+    }
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
-    return result[0];
+    try {
+      const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+      return result[0];
+    } catch (error) {
+      console.error('Erro ao buscar usuário por email:', error);
+      return undefined;
+    }
   }
 
   async createUser(user: InsertUser): Promise<User> {
-    const result = await db.insert(users).values(user).returning();
-    return result[0];
+    try {
+      const result = await db.insert(users).values(user).returning();
+      return result[0];
+    } catch (error) {
+      console.error('Erro ao criar usuário:', error);
+      throw error;
+    }
   }
 
   async getUsersByRole(role: string): Promise<User[]> {
@@ -106,18 +125,29 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUserWithAuth(user: InsertUser & { authUid: string }): Promise<User> {
-    const result = await db.insert(users).values(user).returning();
-    return result[0];
+    try {
+      const result = await db.insert(users).values(user).returning();
+      return result[0];
+    } catch (error) {
+      console.error('Erro ao criar usuário com auth:', error);
+      throw error;
+    }
   }
 
   async updateUserAuthUid(id: number, authUid: string): Promise<User> {
-    const result = await db.update(users).set({ authUid }).where(eq(users.id, id)).returning();
-    return result[0];
+    try {
+      const result = await db.update(users).set({ authUid }).where(eq(users.id, id)).returning();
+      return result[0];
+    } catch (error) {
+      console.error('Erro ao atualizar authUid:', error);
+      throw error;
+    }
   }
 
   async getExpenses(filters?: {
     userId?: number;
     userIds?: number[];
+    year?: string;
     month?: string;
     category?: string;
     contractNumber?: string;
@@ -125,34 +155,44 @@ export class DatabaseStorage implements IStorage {
     startDate?: string;
     endDate?: string;
   }): Promise<Expense[]> {
-    let query = db.select().from(expenses);
-
-    const conditions = [];
-
-    if (filters?.userId) {
-      conditions.push(eq(expenses.userId, filters.userId));
-    } else if (filters?.userIds && filters.userIds.length > 0) {
-      // Criar condições OR para múltiplos userIds
-      const userConditions = filters.userIds.map(id => eq(expenses.userId, id));
-      conditions.push(or(...userConditions));
-    }
-
-    if (filters?.month) {
-      const startDate = new Date(filters.month + '-01');
-      const endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
-      conditions.push(gte(expenses.paymentDate, startDate));
-      conditions.push(lte(expenses.paymentDate, endDate));
-    }
-
-    if (filters?.category) {
-      conditions.push(eq(expenses.category, filters.category));
-    }
-
-    if (filters?.contractNumber) {
-      conditions.push(like(expenses.contractNumber, `%${filters.contractNumber}%`));
-    }
-
     try {
+      let query = db.select().from(expenses);
+      const conditions = [];
+
+      if (filters?.userId) {
+        conditions.push(eq(expenses.userId, filters.userId));
+      } else if (filters?.userIds && filters.userIds.length > 0) {
+        const userConditions = filters.userIds.map(id => eq(expenses.userId, id));
+        conditions.push(or(...userConditions));
+      }
+
+      if (filters?.year && filters.year !== "all") {
+        const startDate = new Date(`${filters.year}-01-01`);
+        const endDate = new Date(`${filters.year}-12-31`);
+        conditions.push(gte(expenses.paymentDate, startDate));
+        conditions.push(lte(expenses.paymentDate, endDate));
+      }
+
+      if (filters?.month && filters.month !== "all") {
+        const year = filters.year || new Date().getFullYear().toString();
+        const startDate = new Date(`${year}-${filters.month}-01`);
+        const endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
+        conditions.push(gte(expenses.paymentDate, startDate));
+        conditions.push(lte(expenses.paymentDate, endDate));
+      }
+
+      if (filters?.category && filters.category !== "all") {
+        conditions.push(eq(expenses.category, filters.category));
+      }
+
+      if (filters?.contractNumber && filters.contractNumber !== "all") {
+        conditions.push(eq(expenses.contractNumber, filters.contractNumber));
+      }
+
+      if (filters?.paymentMethod && filters.paymentMethod !== "all") {
+        conditions.push(eq(expenses.paymentMethod, filters.paymentMethod));
+      }
+
       if (conditions.length > 0) {
         query = query.where(and(...conditions)) as any;
       }
@@ -165,40 +205,42 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getExpense(id: string): Promise<Expense | undefined> {
-    const result = await db.select().from(expenses).where(eq(expenses.id, id)).limit(1);
-    return result[0];
+    try {
+      const result = await db.select().from(expenses).where(eq(expenses.id, id)).limit(1);
+      return result[0];
+    } catch (error) {
+      console.error('Erro ao buscar despesa:', error);
+      return undefined;
+    }
   }
 
   async createExpense(expense: InsertExpense & { userId: number }): Promise<Expense> {
-    const result = await db.insert(expenses).values(expense).returning();
-    return result[0];
+    try {
+      const result = await db.insert(expenses).values(expense).returning();
+      return result[0];
+    } catch (error) {
+      console.error('Erro ao criar despesa:', error);
+      throw error;
+    }
   }
 
   async updateExpense(id: string, expense: Partial<InsertExpense>): Promise<Expense> {
-    const result = await db.update(expenses).set(expense).where(eq(expenses.id, id)).returning();
-    return result[0];
-  }
-
-  async cancelExpense(id: string): Promise<Expense> {
-    // Mark expense as cancelled by adding a special prefix to category
-    const expense = await this.getExpense(id);
-    if (!expense) {
-      throw new Error("Expense not found");
+    try {
+      const result = await db.update(expenses).set(expense).where(eq(expenses.id, id)).returning();
+      return result[0];
+    } catch (error) {
+      console.error('Erro ao atualizar despesa:', error);
+      throw error;
     }
-
-    const updatedCategory = expense.category.startsWith('[CANCELADA]') 
-      ? expense.category 
-      : `[CANCELADA] ${expense.category}`;
-
-    const result = await db.update(expenses)
-      .set({ category: updatedCategory })
-      .where(eq(expenses.id, id))
-      .returning();
-    return result[0];
   }
 
   async deleteExpense(id: string): Promise<void> {
-    await db.delete(expenses).where(eq(expenses.id, id));
+    try {
+      await db.delete(expenses).where(eq(expenses.id, id));
+    } catch (error) {
+      console.error('Erro ao excluir despesa:', error);
+      throw error;
+    }
   }
 
   async getExpenseStats(userId?: number): Promise<{
@@ -207,224 +249,168 @@ export class DatabaseStorage implements IStorage {
     thisMonth: number;
     activeContracts: number;
   }> {
-    const currentMonth = new Date().toISOString().slice(0, 7);
-    const startOfMonth = new Date(currentMonth + '-01');
-    const endOfMonth = new Date(startOfMonth.getFullYear(), startOfMonth.getMonth() + 1, 0);
+    try {
+      let allExpensesQuery = db.select().from(expenses);
 
-    let allExpensesQuery = db.select().from(expenses);
-    let monthExpensesQuery = db.select().from(expenses)
-      .where(and(
-        gte(expenses.paymentDate, startOfMonth),
-        lte(expenses.paymentDate, endOfMonth)
-      ));
+      if (userId) {
+        allExpensesQuery = allExpensesQuery.where(eq(expenses.userId, userId)) as any;
+      }
 
-    if (userId) {
-      allExpensesQuery = allExpensesQuery.where(eq(expenses.userId, userId));
-      monthExpensesQuery = monthExpensesQuery.where(and(
-        eq(expenses.userId, userId),
-        gte(expenses.paymentDate, startOfMonth),
-        lte(expenses.paymentDate, endOfMonth)
-      ));
+      const allExpenses = await allExpensesQuery;
+      const totalAmount = allExpenses
+        .filter(e => !e.category.startsWith('[CANCELADA]'))
+        .reduce((sum, e) => sum + parseFloat(e.value), 0);
+
+      const totalExpenses = allExpenses.filter(e => !e.category.startsWith('[CANCELADA]')).length;
+
+      // Calculate this month's total
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+      const thisMonthExpenses = allExpenses.filter(e => {
+        const expenseDate = new Date(e.paymentDate);
+        return expenseDate >= startOfMonth && 
+               expenseDate <= endOfMonth && 
+               !e.category.startsWith('[CANCELADA]');
+      });
+
+      const thisMonth = thisMonthExpenses.reduce((sum, e) => sum + parseFloat(e.value), 0);
+
+      // Count active contracts
+      const activeContracts = new Set(
+        allExpenses
+          .filter(e => !e.category.startsWith('[CANCELADA]'))
+          .map(e => e.contractNumber)
+      ).size;
+
+      return {
+        totalAmount,
+        totalExpenses,
+        thisMonth,
+        activeContracts,
+      };
+    } catch (error) {
+      console.error('Erro ao calcular estatísticas:', error);
+      return { totalAmount: 0, totalExpenses: 0, thisMonth: 0, activeContracts: 0 };
     }
-
-    const allExpenses = await allExpensesQuery;
-    const monthExpenses = await monthExpensesQuery;
-
-    const totalAmount = allExpenses.reduce((sum, exp) => sum + parseFloat(exp.totalValue), 0);
-    const thisMonth = monthExpenses.reduce((sum, exp) => sum + parseFloat(exp.totalValue), 0);
-    const activeContracts = new Set(allExpenses.map(exp => exp.contractNumber)).size;
-
-    return {
-      totalAmount,
-      totalExpenses: allExpenses.length,
-      thisMonth,
-      activeContracts,
-    };
   }
 
   async getCategoryStats(filters?: {
     month?: string;
     contractNumber?: string;
   }): Promise<Array<{ category: string; total: number; count: number; }>> {
-    let query = db.select().from(expenses);
+    try {
+      let query = db.select().from(expenses);
+      const conditions = [];
 
-    const conditions = [];
+      if (filters?.month) {
+        const startDate = new Date(filters.month + '-01');
+        const endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
+        conditions.push(gte(expenses.paymentDate, startDate));
+        conditions.push(lte(expenses.paymentDate, endDate));
+      }
 
-    if (filters?.month) {
-      const startDate = new Date(filters.month + '-01');
-      const endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
-      conditions.push(gte(expenses.paymentDate, startDate));
-      conditions.push(lte(expenses.paymentDate, endDate));
+      if (filters?.contractNumber) {
+        conditions.push(eq(expenses.contractNumber, filters.contractNumber));
+      }
+
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions)) as any;
+      }
+
+      const allExpenses = await query;
+      const categoryStats = allExpenses.reduce((acc, expense) => {
+        if (!expense.category.startsWith('[CANCELADA]')) {
+          if (!acc[expense.category]) {
+            acc[expense.category] = { total: 0, count: 0 };
+          }
+          acc[expense.category].total += parseFloat(expense.value);
+          acc[expense.category].count += 1;
+        }
+        return acc;
+      }, {} as Record<string, { total: number; count: number }>);
+
+      return Object.entries(categoryStats).map(([category, stats]) => ({
+        category,
+        total: stats.total,
+        count: stats.count,
+      }));
+    } catch (error) {
+      console.error('Erro ao calcular estatísticas de categoria:', error);
+      return [];
     }
-
-    if (filters?.contractNumber) {
-      conditions.push(like(expenses.contractNumber, `%${filters.contractNumber}%`));
-    }
-
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions));
-    }
-
-    const results = await query;
-
-    const categoryMap = new Map<string, { total: number; count: number; }>();
-
-    results.forEach(expense => {
-      const existing = categoryMap.get(expense.category) || { total: 0, count: 0 };
-      categoryMap.set(expense.category, {
-        total: existing.total + parseFloat(expense.totalValue),
-        count: existing.count + 1,
-      });
-    });
-
-    return Array.from(categoryMap.entries()).map(([category, stats]) => ({
-      category,
-      ...stats,
-    }));
   }
 
   async getPaymentMethodStats(filters?: {
     month?: string;
     contractNumber?: string;
   }): Promise<Array<{ paymentMethod: string; count: number; }>> {
-    let query = db.select().from(expenses);
+    try {
+      let query = db.select().from(expenses);
+      const conditions = [];
 
-    const conditions = [];
+      if (filters?.month) {
+        const startDate = new Date(filters.month + '-01');
+        const endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
+        conditions.push(gte(expenses.paymentDate, startDate));
+        conditions.push(lte(expenses.paymentDate, endDate));
+      }
 
-    if (filters?.month) {
-      const startDate = new Date(filters.month + '-01');
-      const endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
-      conditions.push(gte(expenses.paymentDate, startDate));
-      conditions.push(lte(expenses.paymentDate, endDate));
+      if (filters?.contractNumber) {
+        conditions.push(eq(expenses.contractNumber, filters.contractNumber));
+      }
+
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions)) as any;
+      }
+
+      const allExpenses = await query;
+      const methodStats = allExpenses.reduce((acc, expense) => {
+        if (!expense.category.startsWith('[CANCELADA]')) {
+          if (!acc[expense.paymentMethod]) {
+            acc[expense.paymentMethod] = 0;
+          }
+          acc[expense.paymentMethod] += 1;
+        }
+        return acc;
+      }, {} as Record<string, number>);
+
+      return Object.entries(methodStats).map(([paymentMethod, count]) => ({
+        paymentMethod,
+        count,
+      }));
+    } catch (error) {
+      console.error('Erro ao calcular estatísticas de método de pagamento:', error);
+      return [];
     }
-
-    if (filters?.contractNumber) {
-      conditions.push(like(expenses.contractNumber, `%${filters.contractNumber}%`));
-    }
-
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions));
-    }
-
-    const results = await query;
-
-    const paymentMap = new Map<string, number>();
-
-    results.forEach(expense => {
-      const existing = paymentMap.get(expense.paymentMethod) || 0;
-      paymentMap.set(expense.paymentMethod, existing + 1);
-    });
-
-    return Array.from(paymentMap.entries()).map(([paymentMethod, count]) => ({
-      paymentMethod,
-      count,
-    }));
   }
 
   async getMonthlyTrends(): Promise<Array<{ month: string; total: number; }>> {
-    const results = await db.select().from(expenses).orderBy(expenses.paymentDate);
+    try {
+      const allExpenses = await db.select().from(expenses);
+      const monthlyTotals = allExpenses.reduce((acc, expense) => {
+        if (!expense.category.startsWith('[CANCELADA]')) {
+          const date = new Date(expense.paymentDate);
+          const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+          
+          if (!acc[monthKey]) {
+            acc[monthKey] = 0;
+          }
+          acc[monthKey] += parseFloat(expense.value);
+        }
+        return acc;
+      }, {} as Record<string, number>);
 
-    const monthlyMap = new Map<string, number>();
-
-    results.forEach(expense => {
-      const month = expense.paymentDate.toISOString().slice(0, 7);
-      const existing = monthlyMap.get(month) || 0;
-      monthlyMap.set(month, existing + parseFloat(expense.totalValue));
-    });
-
-    return Array.from(monthlyMap.entries()).map(([month, total]) => ({
-      month,
-      total,
-    }));
+      return Object.entries(monthlyTotals)
+        .map(([month, total]) => ({ month, total }))
+        .sort((a, b) => a.month.localeCompare(b.month));
+    } catch (error) {
+      console.error('Erro ao calcular tendências mensais:', error);
+      return [];
+    }
   }
 
-  async getExpensesByContract(filters?: {
-    month?: string;
-    contractNumber?: string;
-  }): Promise<Array<{
-    contractNumber: string;
-    totalAmount: number;
-    expenseCount: number;
-    categories: Array<{
-      category: string;
-      amount: number;
-      count: number;
-    }>;
-  }>> {
-    let query = db.select().from(expenses);
-
-    const conditions = [];
-
-    if (filters?.month) {
-      const startDate = new Date(filters.month + '-01');
-      const endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
-      conditions.push(gte(expenses.paymentDate, startDate));
-      conditions.push(lte(expenses.paymentDate, endDate));
-    }
-
-    if (filters?.contractNumber) {
-      conditions.push(like(expenses.contractNumber, `%${filters.contractNumber}%`));
-    }
-
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions));
-    }
-
-    const allExpenses = await query;
-
-    // Agrupar por contrato
-    const contractMap = new Map<string, {
-      totalAmount: number;
-      expenseCount: number;
-      categories: Map<string, { amount: number; count: number }>;
-    }>();
-
-    allExpenses.forEach(expense => {
-      const contractNumber = expense.contractNumber;
-      const value = parseFloat(expense.value);
-
-      if (!contractMap.has(contractNumber)) {
-        contractMap.set(contractNumber, {
-          totalAmount: 0,
-          expenseCount: 0,
-          categories: new Map(),
-        });
-      }
-
-      const contract = contractMap.get(contractNumber)!;
-      contract.totalAmount += value;
-      contract.expenseCount += 1;
-
-      // Agrupar por categoria
-      const category = expense.category;
-      if (!contract.categories.has(category)) {
-        contract.categories.set(category, { amount: 0, count: 0 });
-      }
-
-      const categoryData = contract.categories.get(category)!;
-      categoryData.amount += value;
-      categoryData.count += 1;
-    });
-
-    // Converter para formato final
-    const result = Array.from(contractMap.entries()).map(([contractNumber, data]) => ({
-      contractNumber,
-      totalAmount: data.totalAmount,
-      expenseCount: data.expenseCount,
-      categories: Array.from(data.categories.entries()).map(([category, categoryData]) => ({
-        category,
-        amount: categoryData.amount,
-        count: categoryData.count,
-      })),
-    }));
-
-    // Ordenar por valor total (decrescente)
-    result.sort((a, b) => b.totalAmount - a.totalAmount);
-
-    return result;
-  }
-
-  // Billing methods implementation (mock data until table is created)
   async getBilling(filters?: {
     userId?: number;
     userIds?: number[];
@@ -435,131 +421,76 @@ export class DatabaseStorage implements IStorage {
   }): Promise<Billing[]> {
     try {
       let query = db.select().from(billing);
-
-      const conditions: any[] = [];
-
-      if (filters?.year) {
-        conditions.push(sql`EXTRACT(YEAR FROM ${billing.issueDate}) = ${filters.year}`);
-      }
-
-      if (filters?.month) {
-        conditions.push(sql`EXTRACT(MONTH FROM ${billing.issueDate}) = ${filters.month}`);
-      }
-
-      if (filters?.status) {
-        conditions.push(eq(billing.status, filters.status));
-      }
-
-      if (filters?.contractNumber) {
-        conditions.push(eq(billing.contractNumber, filters.contractNumber));
-      }
+      const conditions = [];
 
       if (filters?.userId) {
         conditions.push(eq(billing.userId, filters.userId));
       } else if (filters?.userIds && filters.userIds.length > 0) {
-        // Criar condições OR para múltiplos userIds no billing
-        const userConditions = filters.userIds.map((id: number) => eq(billing.userId, id));
+        const userConditions = filters.userIds.map(id => eq(billing.userId, id));
         conditions.push(or(...userConditions));
+      }
+
+      if (filters?.year && filters.year !== "all") {
+        const startDate = new Date(`${filters.year}-01-01`);
+        const endDate = new Date(`${filters.year}-12-31`);
+        conditions.push(gte(billing.issueDate, startDate));
+        conditions.push(lte(billing.issueDate, endDate));
+      }
+
+      if (filters?.month && filters.month !== "all") {
+        const year = filters.year || new Date().getFullYear().toString();
+        const startDate = new Date(`${year}-${filters.month}-01`);
+        const endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
+        conditions.push(gte(billing.issueDate, startDate));
+        conditions.push(lte(billing.issueDate, endDate));
+      }
+
+      if (filters?.status && filters.status !== "all") {
+        conditions.push(eq(billing.status, filters.status));
+      }
+
+      if (filters?.contractNumber && filters.contractNumber !== "all") {
+        conditions.push(eq(billing.contractNumber, filters.contractNumber));
       }
 
       if (conditions.length > 0) {
         query = query.where(and(...conditions)) as any;
       }
 
-      return await query.orderBy(desc(billing.createdAt));
+      return await (query as any).orderBy(desc(billing.createdAt));
     } catch (error) {
-      console.error('Error fetching billing:', error);
-      // Return mock data if database query fails
-      const mockBilling: Billing[] = [
-        {
-          id: "bill-001",
-          userId: 1,
-          contractNumber: "0001",
-          clientName: "Cliente Exemplo A",
-          description: "Serviços de consultoria - Janeiro 2025",
-          value: "15000.00",
-          dueDate: new Date("2025-01-31"),
-          issueDate: new Date("2025-01-01"),
-          status: "pago",
-          createdAt: new Date(),
-        },
-        {
-          id: "bill-002",
-          userId: 1,
-          contractNumber: "0002",
-          clientName: "Cliente Exemplo B",
-          description: "Manutenção sistema - Janeiro 2025",
-          value: "8500.00",
-          dueDate: new Date("2025-02-15"),
-          issueDate: new Date("2025-01-15"),
-          status: "pago",
-          createdAt: new Date(),
-        },
-        {
-          id: "bill-003",
-          userId: 1,
-          contractNumber: "0003",
-          clientName: "Cliente Exemplo C",
-          description: "Desenvolvimento - Janeiro 2025",
-          value: "12000.00",
-          dueDate: new Date("2025-02-28"),
-          issueDate: new Date("2025-01-20"),
-          status: "pago",
-          createdAt: new Date(),
-        }
-      ];
-
-      return mockBilling;
+      console.error('Erro na consulta de faturamento:', error);
+      return [];
     }
   }
 
   async getBillingItem(id: string): Promise<Billing | undefined> {
-    // Mock implementation
-    return undefined;
+    try {
+      const result = await db.select().from(billing).where(eq(billing.id, id)).limit(1);
+      return result[0];
+    } catch (error) {
+      console.error('Erro ao buscar item de faturamento:', error);
+      return undefined;
+    }
   }
 
   async createBilling(billingData: InsertBilling & { userId: number }): Promise<Billing> {
     try {
-      const result = await db.insert(billing).values({
-        contractNumber: billingData.contractNumber,
-        clientName: billingData.clientName,
-        description: billingData.description,
-        value: billingData.value,
-        dueDate: billingData.dueDate,
-        issueDate: billingData.issueDate,
-        status: billingData.status || "pendente",
-        userId: billingData.userId,
-      }).returning();
-
+      const result = await db.insert(billing).values(billingData).returning();
       return result[0];
     } catch (error) {
-      console.error('Error creating billing:', error);
-      // Fallback para dados mock se falhar
-      const newBilling: Billing = {
-        id: `bill-${Date.now()}`,
-        ...billingData,
-        status: billingData.status || "pendente",
-        createdAt: new Date(),
-      };
-      return newBilling;
+      console.error('Erro ao criar faturamento:', error);
+      throw error;
     }
   }
 
   async updateBilling(id: string, updates: Partial<InsertBilling>): Promise<Billing> {
     try {
-      const result = await db.update(billing)
-        .set(updates)
-        .where(eq(billing.id, id))
-        .returning();
-
-      if (result.length === 0) {
-        throw new Error("Billing not found");
-      }
-
+      const result = await db.update(billing).set(updates).where(eq(billing.id, id)).returning();
       return result[0];
     } catch (error) {
-      console.error('Error updating billing:', error);
-      throw new Error("Failed to update billing");
+      console.error('Erro ao atualizar faturamento:', error);
+      throw error;
     }
   }
 
@@ -567,8 +498,8 @@ export class DatabaseStorage implements IStorage {
     try {
       await db.delete(billing).where(eq(billing.id, id));
     } catch (error) {
-      console.error('Error deleting billing:', error);
-      throw new Error("Failed to delete billing");
+      console.error('Erro ao excluir faturamento:', error);
+      throw error;
     }
   }
 
@@ -578,34 +509,35 @@ export class DatabaseStorage implements IStorage {
     totalVencido: number;
   }> {
     try {
-      const stats = await db.select({
-        status: billing.status,
-        total: sql<number>`SUM(CAST(${billing.value} AS DECIMAL))`,
-      })
-      .from(billing)
-      .groupBy(billing.status);
-
-      const result = {
-        totalPendente: 0,
-        totalPago: 0,
-        totalVencido: 0,
-      };
-
-      for (const stat of stats) {
-        if (stat.status === 'pendente') result.totalPendente = Number(stat.total) || 0;
-        if (stat.status === 'pago') result.totalPago = Number(stat.total) || 0;
-        if (stat.status === 'vencido') result.totalVencido = Number(stat.total) || 0;
+      let query = db.select().from(billing);
+      
+      if (userId) {
+        query = query.where(eq(billing.userId, userId)) as any;
       }
 
-      return result;
-    } catch (error) {
-      console.error('Error fetching billing stats:', error);
-      // Return mock data if database query fails
+      const allBilling = await query;
+      const now = new Date();
+
+      const totalPendente = allBilling
+        .filter(b => b.status === 'pendente')
+        .reduce((sum, b) => sum + parseFloat(b.value), 0);
+
+      const totalPago = allBilling
+        .filter(b => b.status === 'pago')
+        .reduce((sum, b) => sum + parseFloat(b.value), 0);
+
+      const totalVencido = allBilling
+        .filter(b => b.status === 'pendente' && new Date(b.dueDate) < now)
+        .reduce((sum, b) => sum + parseFloat(b.value), 0);
+
       return {
-        totalPendente: 5000,
-        totalPago: 35500,
-        totalVencido: 2800,
+        totalPendente,
+        totalPago,
+        totalVencido,
       };
+    } catch (error) {
+      console.error('Erro ao calcular estatísticas de faturamento:', error);
+      return { totalPendente: 0, totalPago: 0, totalVencido: 0 };
     }
   }
 }

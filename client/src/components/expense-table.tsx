@@ -14,6 +14,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { authApi } from "@/lib/auth";
 
 import type { Expense } from "@shared/schema";
+import { CATEGORIAS, CONTRATOS, BANCOS, FORMAS_PAGAMENTO } from "@shared/constants";
 
 interface ExpenseFilters {
   year: string;
@@ -158,14 +159,7 @@ export default function ExpenseTable() {
     setFilters({ year: "all", month: "all", category: "all", contractNumber: "", paymentMethod: "all", startDate: "", endDate: "" });
   };
 
-  const categories = [
-    "Pagamento funcionários",
-    "Material",
-    "Mão de Obra",
-    "Prestador de serviços",
-    "Aluguel de ferramentas",
-    "Manutenção em veículo",
-  ];
+
 
   const getCategoryColor = (category: string) => {
     // Check if the expense is cancelled
@@ -257,7 +251,7 @@ export default function ExpenseTable() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas as categorias</SelectItem>
-                  {categories.map((category) => (
+                  {CATEGORIAS.map((category) => (
                     <SelectItem key={category} value={category}>
                       {category}
                     </SelectItem>
@@ -274,10 +268,11 @@ export default function ExpenseTable() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas as formas</SelectItem>
-                  <SelectItem value="Pix">Pix</SelectItem>
-                  <SelectItem value="Cartão de Crédito">Cartão de Crédito</SelectItem>
-                  <SelectItem value="Boleto à Vista">Boleto à Vista</SelectItem>
-                  <SelectItem value="Boleto a Prazo">Boleto a Prazo</SelectItem>
+                  {FORMAS_PAGAMENTO.map((method) => (
+                    <SelectItem key={method} value={method}>
+                      {method}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -285,12 +280,19 @@ export default function ExpenseTable() {
             {user?.role === "admin" && (
               <div>
                 <Label htmlFor="contractFilter">Número do Contrato</Label>
-                <Input
-                  id="contractFilter"
-                  placeholder="Digite o número do contrato"
-                  value={filters.contractNumber}
-                  onChange={(e) => setFilters({ ...filters, contractNumber: e.target.value })}
-                />
+                <Select value={filters.contractNumber} onValueChange={(value) => setFilters({ ...filters, contractNumber: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos os contratos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os contratos</SelectItem>
+                    {CONTRATOS.map((contrato) => (
+                      <SelectItem key={contrato} value={contrato}>
+                        {contrato}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             )}
 

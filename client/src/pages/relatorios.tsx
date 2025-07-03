@@ -11,6 +11,7 @@ import { Download, FileText, Calendar, Filter, BarChart3, Upload, X } from "luci
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { CATEGORIAS, CONTRATOS, BANCOS, FORMAS_PAGAMENTO } from "@shared/constants";
 
 interface ReportFilters {
   year: string;
@@ -508,22 +509,44 @@ export default function Relatorios() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Categoria
                   </label>
-                  <Input
-                    placeholder="Ex: Material, Transporte..."
+                  <Select
                     value={filters.category}
-                    onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value }))}
-                  />
+                    onValueChange={(value) => setFilters(prev => ({ ...prev, category: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todas as categorias" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas as categorias</SelectItem>
+                      {CATEGORIAS.map((categoria) => (
+                        <SelectItem key={categoria} value={categoria}>
+                          {categoria}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Número do Contrato
                   </label>
-                  <Input
-                    placeholder="Ex: 0001, 0002..."
+                  <Select
                     value={filters.contractNumber}
-                    onChange={(e) => setFilters(prev => ({ ...prev, contractNumber: e.target.value }))}
-                  />
+                    onValueChange={(value) => setFilters(prev => ({ ...prev, contractNumber: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todos os contratos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os contratos</SelectItem>
+                      {CONTRATOS.map((contrato) => (
+                        <SelectItem key={contrato} value={contrato}>
+                          {contrato}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
@@ -539,12 +562,11 @@ export default function Relatorios() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todos</SelectItem>
-                      <SelectItem value="Pix">Pix</SelectItem>
-                      <SelectItem value="Cartão de Crédito">Cartão de Crédito</SelectItem>
-                      <SelectItem value="Cartão de Débito">Cartão de Débito</SelectItem>
-                      <SelectItem value="Boleto à Vista">Boleto à Vista</SelectItem>
-                      <SelectItem value="Transferência">Transferência</SelectItem>
-                      <SelectItem value="Dinheiro">Dinheiro</SelectItem>
+                      {FORMAS_PAGAMENTO.map((metodo) => (
+                        <SelectItem key={metodo} value={metodo}>
+                          {metodo}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

@@ -1,0 +1,27 @@
+Prompt para o Replit: Padronização de Filtros no Card 'Filtros'
+Olá, Replit Agent!
+
+Por favor, ajuste o aplicativo para que o card de filtros (onde o nome 'Filtros' aparece) utilize as seguintes configurações padronizadas para as opções de seleção:
+1. Listas Padronizadas
+Utilize as seguintes listas para popular os filtros de categorias, contratos, formas de pagamento e bancos emissores:
+
+Contratos:
+
+["BB DIVINÓPOLIS", "BB MATO GROSSO", "BB MATO GROSSO DO SUL", "BB MATO GROSSO LOTE 2", "BB SALINAS", "BB SÃO PAULO", "BB VALADARES", "BB VARGINHA", "CARRO ENGENHARIA MS", "CORREIOS - GO", "ESCRITÓRIO", "IMPOSTO", "SECRETARIA DA ADMINISTRAÇÃO", "SECRETARIA DA ECONOMIA", "SECRETARIA DA SAÚDE"]
+
+Categorias:
+
+["ADIANTAMENTO", "ALIMENTAÇÃO", "ALUGUEL DE EQUIPAMENTOS", "ALUGUEL DE VEÍCULO", "ART", "ASSESSORIA JURÍDICA", "COMBUSTÍVEL", "CONFRATERNIZAÇÃO", "CONTABILIDADE", "DISTRIBUIÇÃO DE LUCROS", "DOAÇÃO", "EMPRÉSTIMOS", "ENERGIA", "ESTACIONAMENTO", "FÉRIAS", "FRETE", "FUNCIONÁRIOS", "GRATIFICAÇÃO", "HOSPEDAGEM", "IMPOSTO - CARRO", "IMPOSTOS", "IMPOSTOS - FGTS", "IMPOSTOS - ISS", "IMPRESSORAS", "INTERNET", "INSUMOS", "LAVA-RÁPIDO", "MANUTENÇÃO DE VEÍCULOS", "MANUTENÇÃO PREDIAL", "MATERIAL", "MATERIAL - RIO BRILHANTE", "MATERIAL DE PAPELARIA", "MATERIAL DE SEGURANÇA - EPI", "MEDICINA DO TRABALHO", "MULTAS DE VEÍCULOS", "PATRIMÔNIOS", "PRESTADOR DE SERVIÇO", "PRO LABORE", "RECARDA APLICATIVO", "REEMBOLSO", "REEMBOLSO - MATERIAL", "REEMBOLSO - PEDÁGIO", "REEMBOLSO - UBER", "RESCISÃO TRABALHISTA", "SALÁRIO", "SEGURO VEICULAR", "SISTEMA", "TAG - ESTACIONAMENTO", "TAG - PEDÁGIO", "UBER", "VALE TRANSPORTE"]
+
+Bancos:
+
+["ALELO", "BANCO DO BRASIL", "SICREED"]
+
+Formas de Pagamento:
+
+["Cartão de Crédito", "Débito automático", "Transferência Bancária", "PIX", Boleto]
+2. Ação Necessária
+Identifique o componente ou a seção do código responsável pelo card de filtros e garanta que as opções de seleção para categorias, contratos, forma de pagamento e banco emissor sejam preenchidas exclusivamente com os valores fornecidos acima. Isso deve ser aplicado em todas as páginas do aplicativo onde este card de filtros é utilizado.
+
+Obrigado!
+
