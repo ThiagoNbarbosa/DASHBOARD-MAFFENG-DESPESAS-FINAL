@@ -73,8 +73,8 @@ export default function ModernCategoryChart({
     responsive: true,
     maintainAspectRatio: false,
     interaction: {
-      intersect: false,
-      mode: 'index' as const,
+      intersect: true,
+      mode: 'point' as const,
     },
     plugins: {
       legend: {
@@ -88,7 +88,7 @@ export default function ModernCategoryChart({
         borderColor: '#ffffff',
         borderWidth: 1,
         cornerRadius: 12,
-        displayColors: true,
+        displayColors: false,
         padding: 16,
         titleFont: {
           size: 14,
@@ -97,9 +97,12 @@ export default function ModernCategoryChart({
         bodyFont: {
           size: 13,
         },
+        position: 'nearest' as const,
+        intersect: true,
+        mode: 'point' as const,
         callbacks: {
           title: function(context: any) {
-            return context[0].label;
+            return context[0]?.label || '';
           },
           label: function(context: any) {
             const value = context.parsed;
@@ -111,7 +114,7 @@ export default function ModernCategoryChart({
             return [
               `Valor: ${formatted}`,
               `Participação: ${percentage}%`,
-              `Transações: ${data[context.dataIndex].count}`
+              `Transações: ${data[context.dataIndex]?.count || 0}`
             ];
           }
         }
