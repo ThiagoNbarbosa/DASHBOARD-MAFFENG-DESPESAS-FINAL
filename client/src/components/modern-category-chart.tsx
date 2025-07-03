@@ -97,24 +97,10 @@ export default function ModernCategoryChart({
         bodyFont: {
           size: 13,
         },
-        position: function(elements: any, eventPosition: any) {
-          // Posiciona o tooltip fora do gráfico baseado na posição do mouse
-          const centerX = 200; // Centro aproximado do gráfico
-          const centerY = 200; // Centro aproximado do gráfico
-          
-          // Calcula a direção do tooltip baseada na posição do mouse
-          const deltaX = eventPosition.x - centerX;
-          const deltaY = eventPosition.y - centerY;
-          
-          // Posiciona o tooltip na direção oposta ao centro
-          return {
-            x: eventPosition.x + (deltaX > 0 ? 80 : -80),
-            y: eventPosition.y + (deltaY > 0 ? 40 : -40)
-          };
-        },
-        intersect: true,
-        mode: 'point' as const,
-        caretPadding: 15,
+        position: 'average' as const,
+        xAlign: 'center' as const,
+        yAlign: 'top' as const,
+        caretPadding: 20,
         callbacks: {
           title: function(context: any) {
             return context[0]?.label || '';
