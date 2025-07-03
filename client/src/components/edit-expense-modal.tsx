@@ -10,6 +10,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import type { Expense } from "@shared/schema";
 import { CATEGORIAS, CONTRATOS, BANCOS, FORMAS_PAGAMENTO } from "@shared/constants";
+import { dateToInputValue } from "@/lib/date-utils";
 
 interface EditExpenseModalProps {
   expense: Expense | null;
@@ -50,7 +51,7 @@ export default function EditExpenseModal({ expense, open, onOpenChange }: EditEx
         category: expense.category,
         contractNumber: expense.contractNumber,
         totalValue: expense.value,
-        paymentDate: new Date(expense.paymentDate).toISOString().split('T')[0],
+        paymentDate: dateToInputValue(expense.paymentDate),
         bankIssuer: expense.bankIssuer || "",
       });
     }
