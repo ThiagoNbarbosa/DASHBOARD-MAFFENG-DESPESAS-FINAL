@@ -263,6 +263,6 @@ function analyzeExcel(filePath) {
   }
 }
 
-// Executar análise
-const excelFile = 'attached_assets/PLANILHA APP MAFFENG - JULHO - 01-07_1751563110248.xlsx';
+// Executar análise da nova planilha
+const excelFile = 'attached_assets/PLANILHA APP MAFFENG - JULHO - 01-07_1751563823739.xlsx';
 analyzeExcel(excelFile);
