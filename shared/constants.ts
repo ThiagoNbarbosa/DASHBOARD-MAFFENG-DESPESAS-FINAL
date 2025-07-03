@@ -67,15 +67,15 @@ export const CATEGORIAS = [
 export const BANCOS = [
   'ALELO',
   'BANCO DO BRASIL', 
-  'SICREDI'
+  'SICREED'
 ] as const;
 
 export const FORMAS_PAGAMENTO = [
   'Cartão de Crédito',
-  'Cartão de Débito', 
-  'Dinheiro',
+  'Débito automático',
   'Transferência Bancária',
-  'PIX'
+  'PIX',
+  'Boleto'
 ] as const;
 
 // Tipos para TypeScript
