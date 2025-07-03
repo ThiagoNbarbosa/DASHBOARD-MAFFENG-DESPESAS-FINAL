@@ -37,6 +37,7 @@ export default function Relatorios() {
   const [showImportModal, setShowImportModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [importDate, setImportDate] = useState<string>(new Date().toISOString().split('T')[0]);
 
   // Mutation para importar Excel
   const importExcelMutation = useMutation({
@@ -238,6 +239,7 @@ export default function Relatorios() {
     if (selectedFile) {
       const formData = new FormData();
       formData.append('excel', selectedFile);
+      formData.append('importDate', importDate);
       importExcelMutation.mutate(formData);
     }
   };
@@ -826,6 +828,22 @@ export default function Relatorios() {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Seletor de Data para Importação */}
+            <div className="space-y-2 pt-4 border-t">
+              <label className="text-sm font-medium text-gray-700">
+                Data para aplicar às despesas:
+              </label>
+              <Input
+                type="date"
+                value={importDate}
+                onChange={(e) => setImportDate(e.target.value)}
+                className="w-full"
+              />
+              <p className="text-xs text-gray-500">
+                Esta data será aplicada a todas as despesas importadas da planilha
+              </p>
             </div>
 
             <div className="flex gap-3 pt-4">
