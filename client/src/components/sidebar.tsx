@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authApi } from "@/lib/auth";
+import { useResponsive } from "@/hooks/use-responsive";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { BarChart3, FileText, TrendingUp, LogOut, Menu, X, UserPlus, Receipt, Calculator, CreditCard, Download } from "lucide-react";
@@ -14,6 +15,14 @@ export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { isMobile, isTablet } = useResponsive();
+
+  // Fechar sidebar em mobile quando navegar
+  useEffect(() => {
+    if (isMobile) {
+      setIsOpen(false);
+    }
+  }, [location, isMobile]);
 
   const { data: user } = useQuery({
     queryKey: ['/api/auth/me'],
