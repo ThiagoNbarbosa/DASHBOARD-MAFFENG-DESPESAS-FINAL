@@ -67,6 +67,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   };
 
+
+
   // Auth routes
   app.post("/api/auth/login", async (req, res) => {
     try {
@@ -101,28 +103,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Se não for demo, credenciais inválidas
-      return res.status(401).json({ message: "Credenciais inválidas" });
+      // Se não for demo, tentar autenticação no banco de dados
+      try {
+        const user = await storage.getUserByEmail(email);
+        if (!user) {
+          return res.status(401).json({ message: "Credenciais inválidas" });
+        }
 
-      // Se o usuário tem authUid, verificar correspondência
-      if (user.authUid && authData.user.id !== user.authUid) {
+        // Verificar senha
+        const isPasswordValid = await bcrypt.compare(password, user.password || '');
+        if (!isPasswordValid) {
+          return res.status(401).json({ message: "Credenciais inválidas" });
+        }
+
+        // Login bem-sucedido
+        req.session.userId = user.id;
+        req.session.userRole = user.role;
+
+        res.json({
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+        });
+      } catch (error) {
+        console.error('Erro ao buscar usuário:', error);
         return res.status(401).json({ message: "Credenciais inválidas" });
       }
-
-      // Se o usuário não tem authUid (usuários tradicionais migrados), atualizar com o authUid do Supabase
-      if (!user.authUid) {
-        await storage.updateUserAuthUid(user.id, authData.user.id);
-      }
-
-      req.session.userId = user.id;
-      req.session.userRole = user.role;
-
-      res.json({
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-      });
     } catch (error: any) {
       console.error("Login error:", error);
       res.status(400).json({ message: "Dados de requisição inválidos" });
