@@ -11,20 +11,29 @@ export function formatDateSafely(dateValue: string | Date | null | undefined): s
       // Remove qualquer parte de timezone que pode estar causando problemas
       const cleanDate = dateValue.replace(/\+\d{2}:\d{2}$/, '');
       
+      // Se já tem hora (formato datetime), trata como UTC para evitar problemas de timezone
+      if (cleanDate.includes('T') || cleanDate.includes(' ')) {
+        // Para datetime strings, extrair apenas a data e criar uma nova data local
+        const datePart = cleanDate.split('T')[0] || cleanDate.split(' ')[0];
+        const [year, month, day] = datePart.split('-');
+        if (year && month && day) {
+          const localDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+          return localDate.toLocaleDateString('pt-BR');
+        }
+      }
+      
       let date = new Date(cleanDate);
       
       // Se a data é inválida, tenta com formato ISO
       if (isNaN(date.getTime())) {
-        const isoDate = new Date(cleanDate + 'T00:00:00.000Z');
+        const isoDate = new Date(cleanDate + 'T00:00:00');
         if (isNaN(isoDate.getTime())) {
           return 'Data inválida';
         }
         date = isoDate;
       }
       
-      return date.toLocaleDateString('pt-BR', {
-        timeZone: 'America/Sao_Paulo'
-      });
+      return date.toLocaleDateString('pt-BR');
     }
     
     // Se é um objeto Date
@@ -32,9 +41,7 @@ export function formatDateSafely(dateValue: string | Date | null | undefined): s
       if (isNaN(dateValue.getTime())) {
         return 'Data inválida';
       }
-      return dateValue.toLocaleDateString('pt-BR', {
-        timeZone: 'America/Sao_Paulo'
-      });
+      return dateValue.toLocaleDateString('pt-BR');
     }
     
     return 'Formato de data inválido';
@@ -53,24 +60,42 @@ export function dateToInputValue(dateValue: string | Date | null | undefined): s
   try {
     if (typeof dateValue === 'string') {
       const cleanDate = dateValue.replace(/\+\d{2}:\d{2}$/, '');
+      
+      // Se já tem hora (formato datetime), extrair apenas a data
+      if (cleanDate.includes('T') || cleanDate.includes(' ')) {
+        const datePart = cleanDate.split('T')[0] || cleanDate.split(' ')[0];
+        const [year, month, day] = datePart.split('-');
+        if (year && month && day) {
+          // Retorna no formato YYYY-MM-DD para inputs de data
+          return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        }
+      }
+      
       let date = new Date(cleanDate);
       
       if (isNaN(date.getTime())) {
-        const isoDate = new Date(cleanDate + 'T00:00:00.000Z');
+        const isoDate = new Date(cleanDate + 'T00:00:00');
         if (isNaN(isoDate.getTime())) {
           return '';
         }
         date = isoDate;
       }
       
-      return date.toISOString().split('T')[0];
+      // Usar getFullYear, getMonth, getDate para evitar problemas de timezone
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
     }
     
     if (dateValue instanceof Date) {
       if (isNaN(dateValue.getTime())) {
         return '';
       }
-      return dateValue.toISOString().split('T')[0];
+      const year = dateValue.getFullYear();
+      const month = String(dateValue.getMonth() + 1).padStart(2, '0');
+      const day = String(dateValue.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
     }
     
     return '';
@@ -89,10 +114,21 @@ export function formatDateForCSV(dateValue: string | Date | null | undefined): s
   try {
     if (typeof dateValue === 'string') {
       const cleanDate = dateValue.replace(/\+\d{2}:\d{2}$/, '');
+      
+      // Se já tem hora (formato datetime), extrair apenas a data e criar uma nova data local
+      if (cleanDate.includes('T') || cleanDate.includes(' ')) {
+        const datePart = cleanDate.split('T')[0] || cleanDate.split(' ')[0];
+        const [year, month, day] = datePart.split('-');
+        if (year && month && day) {
+          const localDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+          return localDate.toLocaleDateString('pt-BR');
+        }
+      }
+      
       let date = new Date(cleanDate);
       
       if (isNaN(date.getTime())) {
-        const isoDate = new Date(cleanDate + 'T00:00:00.000Z');
+        const isoDate = new Date(cleanDate + 'T00:00:00');
         if (isNaN(isoDate.getTime())) {
           return 'Data inválida';
         }
