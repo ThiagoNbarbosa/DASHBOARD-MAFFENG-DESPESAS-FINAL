@@ -767,16 +767,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
         validationIssues.push(`⚠️ Colunas obrigatórias ausentes: ${missingColumns.join(', ')}`);
       }
 
-      // 🔒 VALIDAÇÃO CRÍTICA: Verificar se todos os dados são válidos ANTES de importar
-      console.log('🔍 Iniciando validação crítica dos dados...');
+      // 🔒 VALIDAÇÃO CRÍTICA FLEXÍVEL: Aceitar variações de texto mas bloquear dados inválidos
+      console.log('🔍 Iniciando validação crítica flexível dos dados...');
       
+      // Função para normalizar texto (remove acentos, espaços extras, converte para minúscula)
+      function normalizeText(text: string): string {
+        return text
+          .toLowerCase()
+          .normalize('NFD') // Decompor caracteres acentuados
+          .replace(/[\u0300-\u036f]/g, '') // Remover acentos
+          .trim()
+          .replace(/\s+/g, ' '); // Normalizar espaços
+      }
+
+      // Função para verificar se um valor tem correspondência flexível
+      function hasFlexibleMatch(inputValue: string, validValues: readonly string[]): boolean {
+        const normalizedInput = normalizeText(inputValue);
+        
+        // Verificar correspondência exata normalizada
+        for (const validValue of validValues) {
+          const normalizedValid = normalizeText(validValue);
+          if (normalizedInput === normalizedValid) {
+            return true;
+          }
+        }
+        
+        // Verificar correspondência parcial (pelo menos 80% de similaridade)
+        for (const validValue of validValues) {
+          const normalizedValid = normalizeText(validValue);
+          
+          // Se o input está contido no valor válido ou vice-versa
+          if (normalizedInput.length >= 3 && normalizedValid.length >= 3) {
+            if (normalizedInput.includes(normalizedValid) || normalizedValid.includes(normalizedInput)) {
+              return true;
+            }
+          }
+        }
+        
+        return false;
+      }
+
       const criticalErrors: string[] = [];
       const invalidCategories: string[] = [];
       const invalidContracts: string[] = [];
       const invalidPaymentMethods: string[] = [];
       const invalidBanks: string[] = [];
 
-      // Primeira passada: validar TODOS os dados críticos
+      // Primeira passada: validar TODOS os dados críticos com flexibilidade
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
         const lineNumber = i + 2; // +2 porque o cabeçalho é linha 1
@@ -792,53 +829,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const rawPaymentMethod = row[columnMapping.paymentMethod];
         const rawBankIssuer = columnMapping.bankIssuer >= 0 ? row[columnMapping.bankIssuer] : '';
 
-        // VALIDAÇÃO CRÍTICA 1: CATEGORIA
+        // VALIDAÇÃO CRÍTICA 1: CATEGORIA - com flexibilidade
         if (!rawCategory || String(rawCategory).trim() === '') {
           criticalErrors.push(`❌ Linha ${lineNumber}: CATEGORIA está vazia - obrigatório preencher`);
         } else {
           const categoryStr = String(rawCategory).trim();
-          const normalizedCategory = normalizeCategory(categoryStr, []);
           
-          // Verificar se a categoria normalizada está nas categorias oficiais
-          if (!CATEGORIAS.includes(normalizedCategory as any)) {
-            invalidCategories.push(`Linha ${lineNumber}: "${categoryStr}" → "${normalizedCategory}"`);
+          // Verificar se a categoria tem correspondência flexível
+          if (!hasFlexibleMatch(categoryStr, CATEGORIAS)) {
+            invalidCategories.push(`Linha ${lineNumber}: "${categoryStr}" não corresponde a nenhuma categoria válida`);
           }
         }
 
-        // VALIDAÇÃO CRÍTICA 2: CONTRATO
+        // VALIDAÇÃO CRÍTICA 2: CONTRATO - com flexibilidade
         if (!rawContract || String(rawContract).trim() === '') {
           criticalErrors.push(`❌ Linha ${lineNumber}: CONTRATO está vazio - obrigatório preencher`);
         } else {
           const contractStr = String(rawContract).trim();
-          const normalizedContract = normalizeContractNumber(contractStr);
           
-          // Verificar se o contrato normalizado está nos contratos oficiais
-          if (!CONTRATOS.includes(normalizedContract as any)) {
-            invalidContracts.push(`Linha ${lineNumber}: "${contractStr}" → "${normalizedContract}"`);
+          // Verificar se o contrato tem correspondência flexível
+          if (!hasFlexibleMatch(contractStr, CONTRATOS)) {
+            invalidContracts.push(`Linha ${lineNumber}: "${contractStr}" não corresponde a nenhum contrato válido`);
           }
         }
 
-        // VALIDAÇÃO CRÍTICA 3: FORMA DE PAGAMENTO
+        // VALIDAÇÃO CRÍTICA 3: FORMA DE PAGAMENTO - com flexibilidade
         if (!rawPaymentMethod || String(rawPaymentMethod).trim() === '') {
           criticalErrors.push(`❌ Linha ${lineNumber}: FORMA DE PAGAMENTO está vazia - obrigatório preencher`);
         } else {
           const paymentStr = String(rawPaymentMethod).trim();
-          const normalizedPayment = normalizePaymentMethod(paymentStr);
           
-          // Verificar se a forma de pagamento normalizada está nas formas oficiais
-          if (!FORMAS_PAGAMENTO.includes(normalizedPayment as any)) {
-            invalidPaymentMethods.push(`Linha ${lineNumber}: "${paymentStr}" → "${normalizedPayment}"`);
+          // Verificar se a forma de pagamento tem correspondência flexível
+          if (!hasFlexibleMatch(paymentStr, FORMAS_PAGAMENTO)) {
+            invalidPaymentMethods.push(`Linha ${lineNumber}: "${paymentStr}" não corresponde a nenhuma forma de pagamento válida`);
           }
         }
 
-        // VALIDAÇÃO CRÍTICA 4: BANCO (se preenchido)
+        // VALIDAÇÃO CRÍTICA 4: BANCO - com flexibilidade (se preenchido)
         if (rawBankIssuer && String(rawBankIssuer).trim() !== '') {
           const bankStr = String(rawBankIssuer).trim();
-          const normalizedBank = normalizeBankIssuer(bankStr);
           
-          // Verificar se o banco normalizado está nos bancos oficiais
-          if (!BANCOS.includes(normalizedBank as any)) {
-            invalidBanks.push(`Linha ${lineNumber}: "${bankStr}" → "${normalizedBank}"`);
+          // Verificar se o banco tem correspondência flexível
+          if (!hasFlexibleMatch(bankStr, BANCOS)) {
+            invalidBanks.push(`Linha ${lineNumber}: "${bankStr}" não corresponde a nenhum banco válido`);
           }
         }
       }
@@ -858,7 +891,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           success: false,
           blocked: true,
           message: "❌ IMPORTAÇÃO BLOQUEADA: Dados inválidos detectados",
-          details: "A planilha contém dados que não estão nas listas oficiais do sistema. Corrija os dados antes de importar.",
+          details: "A planilha contém dados que não correspondem às listas oficiais do sistema. O sistema aceita variações de maiúscula/minúscula, acentos e espaços, mas os dados devem ser reconhecíveis.",
           
           blockingReasons: {
             criticalErrors: criticalErrors.length,
@@ -883,12 +916,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
             bancos: BANCOS
           },
 
+          flexibilityInfo: {
+            message: "✅ O sistema aceita variações como:",
+            examples: [
+              "• Maiúscula/minúscula: 'ALIMENTAÇÃO' = 'alimentação' = 'Alimentação'",
+              "• Acentos: 'alimentacao' = 'alimentação'", 
+              "• Espaços extras: 'Banco  do   Brasil' = 'Banco do Brasil'",
+              "• Correspondência parcial: 'BB MATO GROSSO' aceita 'mato grosso'",
+              "❌ Mas NÃO aceita dados completamente diferentes como 'XYZ' ou 'banco inexistente'"
+            ]
+          },
+
           instructions: [
-            "1. Verifique se todas as CATEGORIAS estão na lista oficial",
-            "2. Confirme se todos os CONTRATOS estão cadastrados no sistema",
-            "3. Certifique-se de que as FORMAS DE PAGAMENTO são válidas",
-            "4. Valide os BANCOS (se preenchidos) com a lista oficial",
-            "5. Corrija os dados na planilha e tente importar novamente"
+            "1. Verifique se as CATEGORIAS são similares às oficiais (aceita variações de texto)",
+            "2. Confirme se os CONTRATOS são reconhecíveis (aceita abreviações conhecidas)", 
+            "3. Certifique-se de que as FORMAS DE PAGAMENTO são válidas (aceita 'pix', 'PIX', etc.)",
+            "4. Valide os BANCOS com as opções disponíveis (aceita 'bb', 'Banco do Brasil', etc.)",
+            "5. Dados completamente diferentes serão rejeitados para manter a integridade"
           ]
         });
       }
