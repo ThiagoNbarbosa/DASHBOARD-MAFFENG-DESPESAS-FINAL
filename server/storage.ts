@@ -1,20 +1,8 @@
-import { drizzle } from "drizzle-orm/neon-serverless";
-import { Pool } from "@neondatabase/serverless";
 import { users, expenses, billing } from "@shared/schema";
 import { eq, desc, and, gte, lte, like, count, sum, countDistinct, or } from "drizzle-orm";
 import type { User, InsertUser, Expense, InsertExpense, Billing, InsertBilling } from "@shared/schema";
-
-const connectionString = process.env.DATABASE_URL || "";
-
-// Configuração robusta para o pool de conexões
-const pool = new Pool({ 
-  connectionString,
-  max: 10,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000,
-});
-
-const db = drizzle(pool);
+import { db } from "./database";
+import { CATEGORIAS, CONTRATOS, BANCOS, FORMAS_PAGAMENTO } from "@shared/constants";
 
 export interface IStorage {
   // User methods
