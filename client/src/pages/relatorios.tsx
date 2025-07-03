@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { authApi } from "@/lib/auth";
 import { apiRequest } from "@/lib/queryClient";
 import Sidebar from "@/components/sidebar";
+import { ExpenseFilters } from "@/components/expense-filters";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CATEGORIAS, CONTRATOS, BANCOS, FORMAS_PAGAMENTO } from "@shared/constants";
 import { formatDateForCSV } from "@/lib/date-utils";
+import type { Expense } from "@shared/schema";
 
 interface ReportFilters {
   year: string;
@@ -20,6 +22,8 @@ interface ReportFilters {
   category: string;
   contractNumber: string;
   paymentMethod: string;
+  startDate: string;
+  endDate: string;
   reportType: 'despesas' | 'faturamento' | 'completo';
 }
 
@@ -29,9 +33,11 @@ export default function Relatorios() {
   const [filters, setFilters] = useState<ReportFilters>({
     year: new Date().getFullYear().toString(),
     month: "all",
-    category: "",
-    contractNumber: "",
-    paymentMethod: "",
+    category: "all",
+    contractNumber: "all",
+    paymentMethod: "all",
+    startDate: "",
+    endDate: "",
     reportType: "completo"
   });
 
@@ -250,18 +256,22 @@ export default function Relatorios() {
     queryFn: authApi.getCurrentUser,
   });
 
-  // Buscar dados de despesas com filtros
-  const { data: expenses = [], isLoading: isLoadingExpenses } = useQuery({
-    queryKey: ['/api/expenses', filters.year, filters.month, filters.category, filters.contractNumber, filters.paymentMethod],
-    queryFn: () => {
+  // Query para buscar despesas com filtros aplicados
+  const { data: filteredExpenses = [], isLoading: expensesLoading, refetch } = useQuery({
+    queryKey: ['/api/expenses', filters.year, filters.month, filters.category, filters.contractNumber, filters.paymentMethod, filters.startDate, filters.endDate],
+    queryFn: async () => {
       const params = new URLSearchParams();
-      if (filters.year && filters.year !== "all") params.append('year', filters.year);
-      if (filters.month && filters.month !== "all") params.append('month', filters.month);
-      if (filters.category) params.append('category', filters.category);
-      if (filters.contractNumber) params.append('contractNumber', filters.contractNumber);
-      if (filters.paymentMethod && filters.paymentMethod !== "all") params.append('paymentMethod', filters.paymentMethod);
-
-      return apiRequest(`/api/expenses?${params.toString()}`, 'GET');
+      if (filters.year !== "all") params.append('year', filters.year);
+      if (filters.month !== "all") params.append('month', filters.month);
+      if (filters.category !== "all") params.append('category', filters.category);
+      if (filters.contractNumber !== "all") params.append('contractNumber', filters.contractNumber);
+      if (filters.paymentMethod !== "all") params.append('paymentMethod', filters.paymentMethod);
+      if (filters.startDate) params.append('startDate', filters.startDate);
+      if (filters.endDate) params.append('endDate', filters.endDate);
+      
+      const response = await fetch(`/api/expenses?${params.toString()}`);
+      if (!response.ok) throw new Error('Erro ao buscar despesas');
+      return response.json();
     },
   });
 
@@ -272,15 +282,27 @@ export default function Relatorios() {
       const params = new URLSearchParams();
       if (filters.year && filters.year !== "all") params.append('year', filters.year);
       if (filters.month && filters.month !== "all") params.append('month', filters.month);
-      if (filters.contractNumber) params.append('contractNumber', filters.contractNumber);
+      if (filters.contractNumber && filters.contractNumber !== "all") params.append('contractNumber', filters.contractNumber);
 
       return apiRequest(`/api/billing?${params.toString()}`, 'GET');
     },
   });
 
-    const refetch = () => {
-    queryClient.invalidateQueries({ queryKey: ['/api/expenses'] });
-    queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
+  // Aliases para manter compatibilidade
+  const expenses = filteredExpenses;
+  const isLoadingExpenses = expensesLoading;
+
+  const clearFilters = () => {
+    setFilters({
+      year: new Date().getFullYear().toString(),
+      month: "all",
+      category: "all",
+      contractNumber: "all",
+      paymentMethod: "all",
+      startDate: "",
+      endDate: "",
+      reportType: "completo"
+    });
   };
 
 
@@ -621,6 +643,16 @@ export default function Relatorios() {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+              
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Filtros Detalhados</h3>
+                <ExpenseFilters
+                  filters={filters}
+                  setFilters={setFilters}
+                  clearFilters={clearFilters}
+                  user={user}
+                />
               </div>
             </CardContent>
           </Card>
