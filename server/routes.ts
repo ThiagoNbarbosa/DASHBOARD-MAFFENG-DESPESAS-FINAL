@@ -458,7 +458,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const limit = parseInt(req.query.limit as string) || 100;
       const offset = (page - 1) * limit;
       
-      const filters: any = {};
+      const filters: any = {
+        limit,
+        offset,
+      };
 
       // Administradores podem ver despesas de todos os usuários
       // Usuários regulares veem apenas suas próprias despesas
@@ -466,12 +469,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         filters.userId = req.session.userId;
       }
 
+      // Adicionar filtros dos parâmetros de query
+      const { year, month, category, contractNumber, paymentMethod, startDate, endDate } = req.query;
+      
+      if (year && year !== "all") filters.year = year as string;
+      if (month && month !== "all") filters.month = month as string;
+      if (category && category !== "all") filters.category = category as string;
+      if (contractNumber && contractNumber !== "all") filters.contractNumber = contractNumber as string;
+      if (paymentMethod && paymentMethod !== "all") filters.paymentMethod = paymentMethod as string;
+      if (startDate) filters.startDate = startDate as string;
+      if (endDate) filters.endDate = endDate as string;
+
       try {
-        const expenses = await storage.getExpensesPaginated({
-          ...filters,
-          limit,
-          offset,
-        });
+        const expenses = await storage.getExpensesPaginated(filters);
         res.json(expenses);
       } catch (dbError) {
         console.log('Erro ao buscar despesas paginadas:', dbError);

@@ -13,9 +13,18 @@ import type { Expense, User } from "@shared/schema";
 
 interface AllExpensesTableProps {
   user: User | null;
+  filters?: {
+    year: string;
+    month: string;
+    category: string;
+    contractNumber: string;
+    paymentMethod: string;
+    startDate: string;
+    endDate: string;
+  };
 }
 
-export function AllExpensesTable({ user }: AllExpensesTableProps) {
+export function AllExpensesTable({ user, filters }: AllExpensesTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
@@ -24,11 +33,25 @@ export function AllExpensesTable({ user }: AllExpensesTableProps) {
 
   const itemsPerPage = 100;
 
-  // Query para buscar todas as despesas com paginação
+  // Query para buscar todas as despesas com paginação e filtros
   const { data: paginatedData, isLoading } = useQuery({
-    queryKey: ['/api/expenses/paginated', currentPage, itemsPerPage],
+    queryKey: ['/api/expenses/paginated', currentPage, itemsPerPage, filters],
     queryFn: async () => {
-      const response = await fetch(`/api/expenses/paginated?page=${currentPage}&limit=${itemsPerPage}`);
+      const params = new URLSearchParams();
+      params.append('page', currentPage.toString());
+      params.append('limit', itemsPerPage.toString());
+      
+      if (filters) {
+        if (filters.year !== "all") params.append('year', filters.year);
+        if (filters.month !== "all") params.append('month', filters.month);
+        if (filters.category !== "all") params.append('category', filters.category);
+        if (filters.contractNumber !== "all") params.append('contractNumber', filters.contractNumber);
+        if (filters.paymentMethod !== "all") params.append('paymentMethod', filters.paymentMethod);
+        if (filters.startDate) params.append('startDate', filters.startDate);
+        if (filters.endDate) params.append('endDate', filters.endDate);
+      }
+      
+      const response = await fetch(`/api/expenses/paginated?${params.toString()}`);
       if (!response.ok) {
         throw new Error('Erro ao carregar despesas');
       }

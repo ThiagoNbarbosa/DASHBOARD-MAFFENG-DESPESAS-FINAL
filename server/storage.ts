@@ -206,6 +206,13 @@ export class DatabaseStorage implements IStorage {
   async getExpensesPaginated(filters?: {
     userId?: number;
     userIds?: number[];
+    year?: string;
+    month?: string;
+    category?: string;
+    contractNumber?: string;
+    paymentMethod?: string;
+    startDate?: string;
+    endDate?: string;
     limit?: number;
     offset?: number;
   }): Promise<{
@@ -222,6 +229,50 @@ export class DatabaseStorage implements IStorage {
       } else if (filters?.userIds && filters.userIds.length > 0) {
         const userConditions = filters.userIds.map(id => eq(expenses.userId, id));
         conditions.push(or(...userConditions));
+      }
+
+      // Filtros de data por ano
+      if (filters?.year && filters.year !== "all") {
+        const startOfYear = new Date(`${filters.year}-01-01T00:00:00.000Z`);
+        const endOfYear = new Date(`${filters.year}-12-31T23:59:59.999Z`);
+        conditions.push(gte(expenses.paymentDate, startOfYear));
+        conditions.push(lte(expenses.paymentDate, endOfYear));
+      }
+
+      // Filtros de data por mês
+      if (filters?.month && filters.month !== "all") {
+        const year = filters.year && filters.year !== "all" ? filters.year : new Date().getFullYear().toString();
+        const startOfMonth = new Date(`${year}-${filters.month.padStart(2, '0')}-01T00:00:00.000Z`);
+        const endOfMonth = new Date(parseInt(year), parseInt(filters.month) - 1 + 1, 0, 23, 59, 59, 999);
+        conditions.push(gte(expenses.paymentDate, startOfMonth));
+        conditions.push(lte(expenses.paymentDate, endOfMonth));
+      }
+
+      // Filtro por categoria
+      if (filters?.category && filters.category !== "all") {
+        conditions.push(like(expenses.category, `%${filters.category}%`));
+      }
+
+      // Filtro por contrato
+      if (filters?.contractNumber && filters.contractNumber !== "all") {
+        conditions.push(like(expenses.contractNumber, `%${filters.contractNumber}%`));
+      }
+
+      // Filtro por método de pagamento
+      if (filters?.paymentMethod && filters.paymentMethod !== "all") {
+        conditions.push(eq(expenses.paymentMethod, filters.paymentMethod));
+      }
+
+      // Filtro por data inicial
+      if (filters?.startDate) {
+        const startDate = new Date(`${filters.startDate}T00:00:00.000Z`);
+        conditions.push(gte(expenses.paymentDate, startDate));
+      }
+
+      // Filtro por data final
+      if (filters?.endDate) {
+        const endDate = new Date(`${filters.endDate}T23:59:59.999Z`);
+        conditions.push(lte(expenses.paymentDate, endDate));
       }
 
       // Get total count
