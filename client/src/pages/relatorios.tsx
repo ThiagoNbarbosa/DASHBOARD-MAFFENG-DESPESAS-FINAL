@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download, FileText, Calendar, Filter, BarChart3, Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useResponsive } from "@/hooks/use-responsive";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CATEGORIAS, CONTRATOS, BANCOS, FORMAS_PAGAMENTO } from "@shared/constants";
@@ -30,6 +31,7 @@ interface ReportFilters {
 export default function Relatorios() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { isMobile, isTablet } = useResponsive();
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
 
@@ -386,10 +388,10 @@ export default function Relatorios() {
     <div className="min-h-screen bg-gray-50 flex">
       <Sidebar />
       
-      <div className="flex-1 ml-64">
+      <div className={`flex-1 ${isMobile ? 'ml-0' : 'ml-64'}`}>
         <header className="bg-white shadow-sm border-b border-gray-200">
           <div className="px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex items-center justify-between">
+            <div className={`${isMobile ? 'flex-col gap-4' : 'flex items-center justify-between'}`}>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                   <FileText className="h-6 w-6 text-orange-600" />
@@ -400,10 +402,10 @@ export default function Relatorios() {
                 </p>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className={`${isMobile ? 'flex flex-col gap-2 w-full' : 'flex items-center gap-3'}`}>
                 <Button 
                   onClick={() => setIsImportModalOpen(true)}
-                  className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+                  className={`bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 ${isMobile ? 'w-full justify-center' : ''}`}
                 >
                   <Upload className="h-4 w-4" />
                   Importar Excel
@@ -412,7 +414,7 @@ export default function Relatorios() {
                 <Button 
                   onClick={handleDownload}
                   disabled={isLoading}
-                  className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+                  className={`bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 ${isMobile ? 'w-full justify-center' : ''}`}
                 >
                   <Download className="h-4 w-4" />
                   Baixar Relatório
@@ -433,7 +435,7 @@ export default function Relatorios() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-3'}`}>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Tipo de Relatório
@@ -465,7 +467,7 @@ export default function Relatorios() {
           </Card>
 
           {/* Prévia dos Dados */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'}`}>
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -530,7 +532,7 @@ export default function Relatorios() {
 
         {/* Modal de Importação */}
         <Dialog open={isImportModalOpen} onOpenChange={setIsImportModalOpen}>
-          <DialogContent className="max-w-md">
+          <DialogContent className={`${isMobile ? 'max-w-[95vw] max-h-[90vh]' : 'max-w-md'}`}>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Upload className="h-5 w-5" />
