@@ -1,5 +1,5 @@
 import { users, expenses, billing } from "@shared/schema";
-import { eq, desc, and, gte, lte, like, count, sum, countDistinct, or } from "drizzle-orm";
+import { eq, desc, and, gte, lte, like, count, sum, countDistinct, or, sql } from "drizzle-orm";
 import type { User, InsertUser, Expense, InsertExpense, Billing, InsertBilling } from "@shared/schema";
 import { db } from "./database";
 import { CATEGORIAS, CONTRATOS, BANCOS, FORMAS_PAGAMENTO } from "@shared/constants";
@@ -25,6 +25,17 @@ export interface IStorage {
     startDate?: string;
     endDate?: string;
   }): Promise<Expense[]>;
+  getExpensesPaginated(filters?: {
+    userId?: number;
+    userIds?: number[];
+    limit?: number;
+    offset?: number;
+  }): Promise<{
+    expenses: Expense[];
+    totalItems: number;
+    totalPages: number;
+    currentPage: number;
+  }>;
   getExpense(id: string): Promise<Expense | undefined>;
   createExpense(expense: InsertExpense & { userId: number }): Promise<Expense>;
   updateExpense(id: string, expense: Partial<InsertExpense>): Promise<Expense>;
@@ -189,6 +200,68 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error('Erro na consulta de despesas:', error);
       return [];
+    }
+  }
+
+  async getExpensesPaginated(filters?: {
+    userId?: number;
+    userIds?: number[];
+    limit?: number;
+    offset?: number;
+  }): Promise<{
+    expenses: Expense[];
+    totalItems: number;
+    totalPages: number;
+    currentPage: number;
+  }> {
+    try {
+      const conditions = [];
+
+      if (filters?.userId) {
+        conditions.push(eq(expenses.userId, filters.userId));
+      } else if (filters?.userIds && filters.userIds.length > 0) {
+        const userConditions = filters.userIds.map(id => eq(expenses.userId, id));
+        conditions.push(or(...userConditions));
+      }
+
+      // Get total count
+      let countQuery = db.select({ count: count() }).from(expenses);
+      if (conditions.length > 0) {
+        countQuery = countQuery.where(and(...conditions)) as any;
+      }
+      
+      const [{ count: totalItems }] = await countQuery;
+
+      // Get paginated data
+      let dataQuery = db.select().from(expenses);
+      if (conditions.length > 0) {
+        dataQuery = dataQuery.where(and(...conditions)) as any;
+      }
+
+      const limit = filters?.limit || 100;
+      const offset = filters?.offset || 0;
+      const currentPage = Math.floor(offset / limit) + 1;
+      const totalPages = Math.ceil(totalItems / limit);
+
+      const result = await (dataQuery as any)
+        .orderBy(desc(expenses.paymentDate))
+        .limit(limit)
+        .offset(offset);
+
+      return {
+        expenses: result,
+        totalItems,
+        totalPages,
+        currentPage,
+      };
+    } catch (error) {
+      console.error('Erro na consulta de despesas paginadas:', error);
+      return {
+        expenses: [],
+        totalItems: 0,
+        totalPages: 0,
+        currentPage: 1,
+      };
     }
   }
 
