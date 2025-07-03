@@ -1,12 +1,36 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { authApi } from "@/lib/auth";
 import Sidebar from "@/components/sidebar";
 import { AllExpensesTable } from "@/components/all-expenses-table";
+import { ExpenseFilters } from "@/components/expense-filters";
 import ExpenseModal from "@/components/expense-modal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, TrendingUp, Calendar, Receipt } from "lucide-react";
+import { FileText, TrendingUp, Calendar, Receipt, Filter } from "lucide-react";
 
 export default function Despesas() {
+  const [filters, setFilters] = useState({
+    year: new Date().getFullYear().toString(),
+    month: "all",
+    category: "all",
+    contractNumber: "all",
+    paymentMethod: "all",
+    startDate: "",
+    endDate: "",
+  });
+
+  const clearFilters = () => {
+    setFilters({
+      year: new Date().getFullYear().toString(),
+      month: "all",
+      category: "all",
+      contractNumber: "all",
+      paymentMethod: "all",
+      startDate: "",
+      endDate: "",
+    });
+  };
+
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['/api/auth/me'],
     queryFn: authApi.getCurrentUser,
@@ -90,9 +114,29 @@ export default function Despesas() {
           </Card>
         </div>
 
+        {/* Filtros */}
+        <div className="px-4 sm:px-6 lg:px-8 pb-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Filter className="h-5 w-5" />
+                Filtros
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ExpenseFilters
+                filters={filters}
+                setFilters={setFilters}
+                clearFilters={clearFilters}
+                user={user}
+              />
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Conteúdo principal */}
         <div className="px-4 sm:px-6 lg:px-8 pb-8">
-          <AllExpensesTable user={user} />
+          <AllExpensesTable user={user} filters={filters} />
         </div>
       </div>
     </div>
