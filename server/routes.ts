@@ -186,9 +186,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
 
           // Criar apenas o registro na nossa tabela usando o authUid existente
+          const hashedPassword = await bcrypt.hash(password, 10);
           const user = await storage.createUserWithAuth({
             authUid: existingAuthUser.id,
             email,
+            password: hashedPassword,
             name,
             role,
           });
@@ -209,10 +211,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Falha ao criar usuário no Supabase Auth" });
       }
 
-      // 2. Criar registro na tabela users com o auth_uid
+      // 2. Criar registro na tabela users com o auth_uid e senha hasheada
+      const hashedPassword = await bcrypt.hash(password, 10);
       const user = await storage.createUserWithAuth({
         authUid: authData.user.id,
         email,
+        password: hashedPassword,
         name,
         role,
       });
