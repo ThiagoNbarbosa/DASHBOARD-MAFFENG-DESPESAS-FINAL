@@ -4,6 +4,7 @@ import Sidebar from "@/components/sidebar";
 import ExpensesByContract from "@/components/expenses-by-contract";
 import ModernCategoryChart from "@/components/modern-category-chart";
 import ModernContractChart from "@/components/modern-contract-chart";
+import ModernPaymentChart from "@/components/modern-payment-chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -329,43 +330,23 @@ export default function Results() {
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            {/* Gráfico de Categoria Moderno */}
+          {/* Gráfico de Categoria Moderno */}
+          <div className="mb-8">
             <ModernCategoryChart 
               data={categoryStats}
               title="Despesas por Categoria"
               showLegend={true}
               showStats={true}
             />
+          </div>
 
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-base font-semibold">Distribuição por Forma de Pagamento</CardTitle>
-              </CardHeader>
-              <CardContent className="p-4">
-                <div className="overflow-x-auto">
-                  <div style={{ height: '300px', minWidth: '300px' }}>
-                    <Bar
-                      data={paymentChartData}
-                      options={{
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                          legend: {
-                            display: false
-                          }
-                        },
-                        scales: {
-                          y: {
-                            beginAtZero: true
-                          }
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          {/* Gráfico de Formas de Pagamento Moderno */}
+          <div className="mb-8">
+            <ModernPaymentChart 
+              data={paymentStats}
+              title="Distribuição por Forma de Pagamento"
+              showStats={true}
+            />
           </div>
 
           {/* Gráfico de Contratos Moderno */}
