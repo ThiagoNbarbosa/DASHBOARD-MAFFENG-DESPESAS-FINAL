@@ -34,6 +34,7 @@ export default function Relatorios() {
   const { isMobile, isTablet } = useResponsive();
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [importDate, setImportDate] = useState(new Date().toISOString().split('T')[0]);
 
   const [filters, setFilters] = useState<ReportFilters>({
     year: new Date().getFullYear().toString(),
@@ -49,59 +50,65 @@ export default function Relatorios() {
   // Import Excel mutation
   const importExcelMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      const response = await fetch('/api/import-excel', {
+      const response = await fetch('/api/expenses/import-excel', {
         method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Erro ao importar planilha');
+        const error = await response.json();
+        throw new Error(error.message || 'Erro na importação');
       }
 
       return response.json();
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
       setIsImportModalOpen(false);
-      
-      // Toasts sequenciais
+
+      // Toast principal de sucesso
       setTimeout(() => {
         toast({
-          title: "Importação concluída!",
-          description: `${data.importedCount} despesas importadas com sucesso.`,
+          title: data.success ? "Importação concluída!" : "Importação com problemas",
+          description: data.message,
+          variant: data.success ? "default" : "destructive",
         });
       }, 100);
 
-      setTimeout(() => {
-        if (data.errors && data.errors.length > 0) {
+      // Toast com detalhes se houve melhorias
+      if (data.enhanced > 0) {
+        setTimeout(() => {
           toast({
-            title: `${data.errors.length} erros encontrados`,
-            description: "Algumas linhas não puderam ser importadas.",
+            title: `${data.enhanced} melhorias aplicadas`,
+            description: "Dados foram normalizados automaticamente conforme padrões do sistema.",
+          });
+        }, 1500);
+      }
+
+      // Toast com avisos se houver
+      if (data.warnings > 0) {
+        setTimeout(() => {
+          toast({
+            title: `${data.warnings} avisos`,
+            description: "Alguns dados foram ajustados automaticamente.",
+          });
+        }, 3000);
+      }
+
+      // Toast com erros se houver
+      if (data.errors > 0) {
+        setTimeout(() => {
+          toast({
+            title: `${data.errors} linhas com problemas`,
+            description: "Algumas linhas não puderam ser importadas devido a dados inválidos.",
             variant: "destructive",
           });
-        }
-      }, 1500);
-
-      setTimeout(() => {
-        if (data.warnings && data.warnings.length > 0) {
-          toast({
-            title: `${data.warnings.length} avisos`,
-            description: "Alguns dados foram normalizados automaticamente.",
-          });
-        }
-      }, 3000);
-
-      setTimeout(() => {
-        if (data.improvements && data.improvements.length > 0) {
-          toast({
-            title: `${data.improvements.length} melhorias aplicadas`,
-            description: "Dados padronizados conforme configurações do sistema.",
-          });
-        }
-      }, 4500);
+        }, 4500);
+      }
     },
     onError: (error: any) => {
+      setIsImportModalOpen(false);
       toast({
         title: "Erro na importação",
         description: error.message || "Falha ao importar planilha Excel",
@@ -117,14 +124,14 @@ export default function Relatorios() {
       'text/csv', // .csv
       'application/octet-stream' // fallback MIME type
     ];
-    
+
     const validExtensions = ['.xlsx', '.xls', '.csv'];
     const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
-    
+
     if (!validTypes.includes(file.type) && !validExtensions.includes(fileExtension)) {
       throw new Error('Formato de arquivo inválido. Use apenas .xlsx, .xls ou .csv');
     }
-    
+
     if (file.size > 10 * 1024 * 1024) { // 10MB limit
       throw new Error('Arquivo muito grande. Limite de 10MB');
     }
@@ -138,11 +145,11 @@ export default function Relatorios() {
       const link = document.createElement('a');
       link.href = url;
       link.download = filename;
-      
+
       // Append to body, click, and remove
       document.body.appendChild(link);
       link.click();
-      
+
       // Clean up
       if (link.parentNode) {
         link.parentNode.removeChild(link);
@@ -154,14 +161,12 @@ export default function Relatorios() {
     }
   };
 
-  const handleFileUpload = (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    
-    const file = files[0];
-    
+  const handleFileUpload = (file: File) => {
+    if (!file) return;
+
     try {
       validateFile(file);
-      
+
       toast({
         title: "Arquivo carregado",
         description: `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`,
@@ -169,13 +174,7 @@ export default function Relatorios() {
 
       const formData = new FormData();
       formData.append('file', file);
-      
-      // Adicionar data selecionada se disponível
-      const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement;
-      if (dateInput && dateInput.value) {
-        formData.append('importDate', dateInput.value);
-      }
-      
+      formData.append('importDate', importDate);
       importExcelMutation.mutate(formData);
     } catch (error: any) {
       toast({
@@ -189,7 +188,7 @@ export default function Relatorios() {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
-    handleFileUpload(e.dataTransfer.files);
+    handleFileUpload(e.dataTransfer.files[0]);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -203,7 +202,9 @@ export default function Relatorios() {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    handleFileUpload(e.target.files);
+    if (e.target.files && e.target.files.length > 0) {
+      handleFileUpload(e.target.files[0]);
+    }
   };
 
   const { data: user, isLoading: userLoading } = useQuery({
@@ -223,7 +224,7 @@ export default function Relatorios() {
       if (filters.paymentMethod !== "all") params.append('paymentMethod', filters.paymentMethod);
       if (filters.startDate) params.append('startDate', filters.startDate);
       if (filters.endDate) params.append('endDate', filters.endDate);
-      
+
       const response = await fetch(`/api/expenses?${params.toString()}`);
       if (!response.ok) throw new Error('Erro ao buscar despesas');
       return response.json();
@@ -387,7 +388,7 @@ export default function Relatorios() {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <Sidebar />
-      
+
       <div className={`flex-1 ${isMobile ? 'ml-0' : 'ml-64'}`}>
         <header className="bg-white shadow-sm border-b border-gray-200">
           <div className="px-4 sm:px-6 lg:px-8 py-4">
@@ -455,7 +456,7 @@ export default function Relatorios() {
                     </Select>
                   </div>
                 </div>
-                
+
                 <ExpenseFilters
                   filters={filters}
                   setFilters={setFilters}
@@ -539,16 +540,18 @@ export default function Relatorios() {
                 Importar Planilha Excel
               </DialogTitle>
             </DialogHeader>
-            
+
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="import-date" className="block text-sm font-medium text-gray-700 mb-2">
                   Data para as despesas importadas
                 </label>
                 <Input
+                  id="import-date"
                   type="date"
-                  defaultValue={new Date().toISOString().split('T')[0]}
+                  defaultValue={importDate}
                   className="w-full"
+                  onChange={(e) => setImportDate(e.target.value)}
                 />
               </div>
 
@@ -566,11 +569,12 @@ export default function Relatorios() {
                 <p className="text-sm text-gray-600 mb-2">
                   Arraste e solte sua planilha aqui ou
                 </p>
-                <label className="inline-block">
+                <label htmlFor="file-input" className="inline-block">
                   <span className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded cursor-pointer">
                     Selecionar Arquivo
                   </span>
                   <input
+                    id="file-input"
                     type="file"
                     className="hidden"
                     accept=".xlsx,.xls,.csv"
