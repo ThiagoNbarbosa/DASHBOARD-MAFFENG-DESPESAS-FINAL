@@ -173,7 +173,7 @@ export default function Relatorios() {
       });
 
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('excel', file);
       formData.append('importDate', importDate);
       importExcelMutation.mutate(formData);
     } catch (error: any) {
