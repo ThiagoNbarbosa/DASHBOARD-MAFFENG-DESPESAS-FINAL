@@ -68,10 +68,12 @@ export function AllExpensesTable({ user, filters }: AllExpensesTableProps) {
   // Mutations para cancelar e deletar despesas
   const cancelMutation = useMutation({
     mutationFn: async (id: string) => {
-      return apiRequest(`/api/expenses/${id}/cancel`, 'PUT');
+      return apiRequest(`/api/expenses/${id}/cancel`, 'PATCH');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/expenses/paginated'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
       toast({
         title: "Despesa cancelada",
         description: "A despesa foi cancelada com sucesso.",
