@@ -95,7 +95,8 @@ export default function Login() {
                 ⚠️ Aplicativo Restrito
               </h3>
               <div className="text-xs text-amber-700">
-                Para acessar este sistema, entre em contato com o desenvolvedor.
+                O aplicativo é restrito a usuários autorizados.
+                Por favor, entre em contato com o desenvolvedor se precisar de acesso.
               </div>
             </div>
           </CardContent>
