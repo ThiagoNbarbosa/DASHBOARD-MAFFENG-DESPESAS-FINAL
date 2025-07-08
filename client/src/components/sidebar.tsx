@@ -8,6 +8,8 @@ import { Separator } from "@/components/ui/separator";
 import { BarChart3, FileText, TrendingUp, LogOut, Menu, X, UserPlus, Receipt, Calculator, CreditCard, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import SignupModal from "@/components/signup-modal";
+import AddContractModal from "@/components/add-contract-modal";
+import AddCategoryModal from "@/components/add-category-modal";
 import logoPath from "@assets/63f5d089-94db-4968-a76f-00d77b188818 (1)_1750213898122.png";
 
 export default function Sidebar() {
@@ -23,6 +25,19 @@ export default function Sidebar() {
       setIsOpen(false);
     }
   }, [location, isMobile]);
+
+  // Prevenir scroll do body quando sidebar estiver aberta em mobile
+  useEffect(() => {
+    if (isMobile && isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobile, isOpen]);
 
   const { data: user } = useQuery({
     queryKey: ['/api/auth/me'],
@@ -85,8 +100,16 @@ export default function Sidebar() {
   ];
 
   const handleNavigation = (href: string) => {
-    setLocation(href);
-    setIsOpen(false);
+    // Fix para mobile: aguardar um pouco antes de navegar
+    if (isMobile) {
+      setIsOpen(false);
+      setTimeout(() => {
+        setLocation(href);
+      }, 100);
+    } else {
+      setLocation(href);
+      setIsOpen(false);
+    }
   };
 
   return (
@@ -127,7 +150,7 @@ export default function Sidebar() {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-4">
+          <nav className="flex-1 px-4 py-6 space-y-4 overflow-y-auto">
             <div className="space-y-2">
               {navigation.map((item) => (
                 <button
@@ -154,8 +177,12 @@ export default function Sidebar() {
 
             {user?.role === "admin" && (
               <div className="border-t border-gray-200 pt-4">
-                <p className="text-xs font-medium text-gray-500 mb-2 px-3">ADMINISTRAÇÃO</p>
-                <SignupModal />
+                <p className="text-xs font-medium text-gray-500 mb-3 px-3">ADMINISTRAÇÃO</p>
+                <div className="space-y-2">
+                  <SignupModal />
+                  <AddContractModal />
+                  <AddCategoryModal />
+                </div>
               </div>
             )}
           </nav>
