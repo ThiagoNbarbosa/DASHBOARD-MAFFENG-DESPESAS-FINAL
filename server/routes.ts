@@ -1259,8 +1259,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/contracts", requireAuth, async (req, res) => {
     try {
+      console.log("=== CREATE CONTRACT DEBUG ===");
+      console.log("Request body:", req.body);
       const parsed = insertContractSchema.parse(req.body);
+      console.log("Parsed data:", parsed);
       const contract = await storage.createContract(parsed);
+      console.log("Created contract:", contract);
       res.status(201).json(contract);
     } catch (error: any) {
       console.error("Error creating contract:", error);
@@ -1322,8 +1326,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/categories", requireAuth, async (req, res) => {
     try {
+      console.log("=== CREATE CATEGORY DEBUG ===");
+      console.log("Request body:", req.body);
       const parsed = insertCategorySchema.parse(req.body);
+      console.log("Parsed data:", parsed);
       const category = await storage.createCategory(parsed);
+      console.log("Created category:", category);
       res.status(201).json(category);
     } catch (error: any) {
       console.error("Error creating category:", error);

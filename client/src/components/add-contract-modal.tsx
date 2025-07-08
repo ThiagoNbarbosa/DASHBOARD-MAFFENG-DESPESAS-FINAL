@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -17,10 +17,7 @@ export default function AddContractModal() {
 
   const addContractMutation = useMutation({
     mutationFn: async (data: { name: string; description?: string }) => {
-      return await apiRequest('/api/contracts', {
-        method: 'POST',
-        body: JSON.stringify(data)
-      });
+      return await apiRequest('/api/contracts', 'POST', data);
     },
     onSuccess: () => {
       setOpen(false);
@@ -66,6 +63,9 @@ export default function AddContractModal() {
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Adicionar Novo Contrato</DialogTitle>
+          <DialogDescription>
+            Preencha as informações abaixo para adicionar um novo contrato ao sistema.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
