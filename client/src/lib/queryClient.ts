@@ -50,20 +50,14 @@ export const getQueryFn: <T>(options: {
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      queryFn: getQueryFn({ on401: "returnNull" }),
-      staleTime: 5 * 60 * 1000, // 5 minutos
-      gcTime: 10 * 60 * 1000, // 10 minutos
-      retry: (failureCount, error: any) => {
-        // Não fazer retry em erros 401/403
-        if (error?.message?.includes('401') || error?.message?.includes('403')) {
-          return false;
-        }
-        return failureCount < 2;
-      },
-      // Melhor controle de cache para mobile
+      queryFn: getQueryFn({ on401: "throw" }),
+      refetchInterval: false,
       refetchOnWindowFocus: false,
-      refetchOnReconnect: true,
       refetchOnMount: true,
+      refetchOnReconnect: false,
+      staleTime: 1000 * 60 * 5, // 5 minutos
+      gcTime: 1000 * 60 * 10,   // 10 minutos
+      retry: 1,
     },
     mutations: {
       retry: false,
