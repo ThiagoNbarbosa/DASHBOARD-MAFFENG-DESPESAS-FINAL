@@ -21,18 +21,12 @@ export const generatePDF = async (
   } = options;
 
   try {
-    console.log('=== INICIANDO GERAÇÃO DE PDF ===');
-    console.log('Elemento recebido:', element);
-    console.log('Opções:', options);
-
     // Mostrar elemento temporariamente para captura
     const originalDisplay = element.style.display;
     element.style.display = 'block';
     element.style.position = 'absolute';
     element.style.left = '-9999px';
     element.style.top = '0';
-
-    console.log('Elemento preparado para captura');
 
     // Configurações do canvas
     const canvas = await html2canvas(element, {
@@ -57,8 +51,6 @@ export const generatePDF = async (
     element.style.position = '';
     element.style.left = '';
     element.style.top = '';
-
-    console.log('Canvas criado:', canvas.width, 'x', canvas.height);
 
     // Dimensões do PDF (A4 em mm)
     const pdfWidth = format === 'a4' ? 210 : 216; // A4 ou Letter
@@ -100,9 +92,7 @@ export const generatePDF = async (
     });
 
     // Salvar PDF
-    console.log('Salvando PDF com nome:', filename);
     pdf.save(filename);
-    console.log('PDF salvo com sucesso!');
 
   } catch (error) {
     console.error('Erro ao gerar PDF:', error);
