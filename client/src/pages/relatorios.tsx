@@ -13,7 +13,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useResponsive } from "@/hooks/use-responsive";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { CATEGORIAS, CONTRATOS, BANCOS, FORMAS_PAGAMENTO } from "@shared/constants";
+import { BANCOS, FORMAS_PAGAMENTO } from "@shared/constants";
+import { useContractsAndCategories } from "@/hooks/use-contracts-categories";
 import { formatDateForCSV } from "@/lib/date-utils";
 import type { Expense } from "@shared/schema";
 
@@ -31,6 +32,10 @@ interface ReportFilters {
 export default function Relatorios() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { data: contractsCategories } = useContractsAndCategories();
+
+  const contracts = contractsCategories?.contracts || [];
+  const categories = contractsCategories?.categories || [];
   const { isMobile, isTablet } = useResponsive();
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);

@@ -9,7 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import type { Expense } from "@shared/schema";
-import { CATEGORIAS, CONTRATOS, BANCOS, FORMAS_PAGAMENTO } from "@shared/constants";
+import { BANCOS, FORMAS_PAGAMENTO } from "@shared/constants";
+import { useContractsAndCategories } from "@/hooks/use-contracts-categories";
 import { dateToInputValue } from "@/lib/date-utils";
 
 interface EditExpenseModalProps {
@@ -41,6 +42,10 @@ export default function EditExpenseModal({ expense, open, onOpenChange }: EditEx
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { data: contractsCategories } = useContractsAndCategories();
+
+  const contracts = contractsCategories?.contracts || [];
+  const categories = contractsCategories?.categories || [];
 
   // Populate form when expense changes
   useEffect(() => {
@@ -183,7 +188,7 @@ export default function EditExpenseModal({ expense, open, onOpenChange }: EditEx
                   <SelectValue placeholder="Selecione a categoria" />
                 </SelectTrigger>
                 <SelectContent>
-                  {CATEGORIAS.map((category) => (
+                  {categories.map((category) => (
                     <SelectItem key={category} value={category}>
                       {category}
                     </SelectItem>
@@ -199,7 +204,7 @@ export default function EditExpenseModal({ expense, open, onOpenChange }: EditEx
                   <SelectValue placeholder="Selecione o contrato" />
                 </SelectTrigger>
                 <SelectContent>
-                  {CONTRATOS.map((contrato) => (
+                  {contracts.map((contrato) => (
                     <SelectItem key={contrato} value={contrato}>
                       {contrato}
                     </SelectItem>

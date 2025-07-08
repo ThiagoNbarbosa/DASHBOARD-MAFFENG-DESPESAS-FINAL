@@ -6,32 +6,37 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function AddContractModal() {
   const [open, setOpen] = useState(false);
   const [contractName, setContractName] = useState("");
+  const [description, setDescription] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const addContractMutation = useMutation({
-    mutationFn: async (name: string) => {
-      // Simular adição de contrato - em produção seria uma API real
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return { name, id: Date.now() };
+    mutationFn: async (data: { name: string; description?: string }) => {
+      return await apiRequest('/api/contracts', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
     },
     onSuccess: () => {
       setOpen(false);
       setContractName("");
+      setDescription("");
       toast({
         title: "Contrato adicionado",
         description: "O novo contrato foi criado com sucesso.",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/contracts'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/contracts-and-categories'] });
     },
     onError: (error: any) => {
       toast({
         title: "Erro ao adicionar contrato",
-        description: error.message,
+        description: error.message || "Erro ao criar contrato",
         variant: "destructive",
       });
     },
@@ -40,7 +45,10 @@ export default function AddContractModal() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (contractName.trim()) {
-      addContractMutation.mutate(contractName.trim());
+      addContractMutation.mutate({
+        name: contractName.trim(),
+        description: description.trim() || undefined
+      });
     }
   };
 
@@ -69,6 +77,16 @@ export default function AddContractModal() {
               onChange={(e) => setContractName(e.target.value)}
               placeholder="Ex: SECRETARIA DA SAÚDE"
               required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="contract-description">Descrição (opcional)</Label>
+            <Input
+              id="contract-description"
+              type="text"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Ex: Contrato com a Secretaria da Saúde"
             />
           </div>
           <div className="flex justify-end space-x-2">

@@ -15,7 +15,8 @@ import { authApi } from "@/lib/auth";
 import { formatDateSafely } from "@/lib/date-utils";
 
 import type { Expense } from "@shared/schema";
-import { CATEGORIAS, CONTRATOS, BANCOS, FORMAS_PAGAMENTO } from "@shared/constants";
+import { BANCOS, FORMAS_PAGAMENTO } from "@shared/constants";
+import { useContractsAndCategories } from "@/hooks/use-contracts-categories";
 
 interface ExpenseFilters {
   year: string;
@@ -47,6 +48,10 @@ export default function ExpenseTable() {
     queryKey: ['/api/auth/me'],
     queryFn: authApi.getCurrentUser,
   });
+
+  const { data: contractsCategories } = useContractsAndCategories();
+  const contracts = contractsCategories?.contracts || [];
+  const categories = contractsCategories?.categories || [];
 
   // Query para buscar dados do usuário da despesa selecionada
   const { data: expenseUser } = useQuery({
@@ -252,7 +257,7 @@ export default function ExpenseTable() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas as categorias</SelectItem>
-                  {CATEGORIAS.map((category) => (
+                  {categories.map((category) => (
                     <SelectItem key={category} value={category}>
                       {category}
                     </SelectItem>
@@ -287,7 +292,7 @@ export default function ExpenseTable() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos os contratos</SelectItem>
-                    {CONTRATOS.map((contrato) => (
+                    {contracts.map((contrato) => (
                       <SelectItem key={contrato} value={contrato}>
                         {contrato}
                       </SelectItem>
