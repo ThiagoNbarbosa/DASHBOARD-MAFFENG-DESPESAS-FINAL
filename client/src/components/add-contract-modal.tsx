@@ -11,18 +11,16 @@ import { apiRequest } from "@/lib/queryClient";
 export default function AddContractModal() {
   const [open, setOpen] = useState(false);
   const [contractName, setContractName] = useState("");
-  const [description, setDescription] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const addContractMutation = useMutation({
-    mutationFn: async (data: { name: string; description?: string }) => {
+    mutationFn: async (data: { name: string }) => {
       return await apiRequest('/api/contracts', 'POST', data);
     },
     onSuccess: () => {
       setOpen(false);
       setContractName("");
-      setDescription("");
       toast({
         title: "Contrato adicionado",
         description: "O novo contrato foi criado com sucesso.",
@@ -43,8 +41,7 @@ export default function AddContractModal() {
     e.preventDefault();
     if (contractName.trim()) {
       addContractMutation.mutate({
-        name: contractName.trim(),
-        description: description.trim() || undefined
+        name: contractName.trim()
       });
     }
   };
@@ -64,7 +61,7 @@ export default function AddContractModal() {
         <DialogHeader>
           <DialogTitle>Adicionar Novo Contrato</DialogTitle>
           <DialogDescription>
-            Preencha as informações abaixo para adicionar um novo contrato ao sistema.
+            Digite o nome do contrato.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -79,16 +76,7 @@ export default function AddContractModal() {
               required
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="contract-description">Descrição (opcional)</Label>
-            <Input
-              id="contract-description"
-              type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Ex: Contrato com a Secretaria da Saúde"
-            />
-          </div>
+
           <div className="flex justify-end space-x-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancelar

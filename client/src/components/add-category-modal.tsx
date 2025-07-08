@@ -11,18 +11,16 @@ import { apiRequest } from "@/lib/queryClient";
 export default function AddCategoryModal() {
   const [open, setOpen] = useState(false);
   const [categoryName, setCategoryName] = useState("");
-  const [description, setDescription] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const addCategoryMutation = useMutation({
-    mutationFn: async (data: { name: string; description?: string }) => {
+    mutationFn: async (data: { name: string }) => {
       return await apiRequest('/api/categories', 'POST', data);
     },
     onSuccess: () => {
       setOpen(false);
       setCategoryName("");
-      setDescription("");
       toast({
         title: "Categoria adicionada",
         description: "A nova categoria foi criada com sucesso.",
@@ -43,8 +41,7 @@ export default function AddCategoryModal() {
     e.preventDefault();
     if (categoryName.trim()) {
       addCategoryMutation.mutate({
-        name: categoryName.trim(),
-        description: description.trim() || undefined
+        name: categoryName.trim()
       });
     }
   };
@@ -64,7 +61,7 @@ export default function AddCategoryModal() {
         <DialogHeader>
           <DialogTitle>Adicionar Nova Categoria</DialogTitle>
           <DialogDescription>
-            Preencha as informações abaixo para adicionar uma nova categoria ao sistema.
+            Digite o nome da categoria.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -79,16 +76,7 @@ export default function AddCategoryModal() {
               required
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="category-description">Descrição (opcional)</Label>
-            <Input
-              id="category-description"
-              type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Ex: Gastos com material de limpeza"
-            />
-          </div>
+
           <div className="flex justify-end space-x-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancelar
