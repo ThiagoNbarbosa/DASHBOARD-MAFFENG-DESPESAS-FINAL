@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Plus } from "lucide-react";
+import { Building2 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
 export default function AddContractModal() {
@@ -56,15 +56,13 @@ export default function AddContractModal() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button
-          variant="outline"
-          className="w-full justify-start h-auto p-3 border-gray-200 hover:bg-gray-50"
+          variant="ghost"
+          className="w-full justify-start h-auto p-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
         >
           <Building2 className="mr-3 h-4 w-4 text-gray-500" />
           <div className="flex flex-col items-start">
             <span className="text-sm font-medium">Adicionar Contrato</span>
-            <span className="text-xs text-gray-500">Novo contrato empresarial</span>
           </div>
-          <Plus className="ml-auto h-4 w-4 text-gray-400" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
