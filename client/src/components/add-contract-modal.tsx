@@ -11,12 +11,11 @@ import { apiRequest } from "@/lib/queryClient";
 export default function AddContractModal() {
   const [open, setOpen] = useState(false);
   const [contractName, setContractName] = useState("");
-  const [contractCode, setContractCode] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const addContractMutation = useMutation({
-    mutationFn: async (data: { name: string; code: string }) => {
+    mutationFn: async (data: { name: string }) => {
       return apiRequest('/api/contracts', {
         method: 'POST',
         body: JSON.stringify(data),
@@ -29,7 +28,6 @@ export default function AddContractModal() {
         description: `${contractName} foi adicionado ao sistema.`,
       });
       setContractName("");
-      setContractCode("");
       setOpen(false);
     },
     onError: (error: any) => {
@@ -43,15 +41,15 @@ export default function AddContractModal() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!contractName.trim() || !contractCode.trim()) {
+    if (!contractName.trim()) {
       toast({
-        title: "Campos obrigatórios",
-        description: "Por favor, preencha o nome e código do contrato.",
+        title: "Campo obrigatório",
+        description: "Por favor, preencha o nome do contrato.",
         variant: "destructive",
       });
       return;
     }
-    addContractMutation.mutate({ name: contractName, code: contractCode });
+    addContractMutation.mutate({ name: contractName });
   };
 
   return (
@@ -84,16 +82,6 @@ export default function AddContractModal() {
               value={contractName}
               onChange={(e) => setContractName(e.target.value)}
               placeholder="Ex: Secretaria da Administração"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="contractCode">Código do Contrato</Label>
-            <Input
-              id="contractCode"
-              value={contractCode}
-              onChange={(e) => setContractCode(e.target.value)}
-              placeholder="Ex: SECAD-2025"
               required
             />
           </div>

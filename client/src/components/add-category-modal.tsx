@@ -11,12 +11,11 @@ import { apiRequest } from "@/lib/queryClient";
 export default function AddCategoryModal() {
   const [open, setOpen] = useState(false);
   const [categoryName, setCategoryName] = useState("");
-  const [categoryDescription, setCategoryDescription] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const addCategoryMutation = useMutation({
-    mutationFn: async (data: { name: string; description: string }) => {
+    mutationFn: async (data: { name: string }) => {
       return apiRequest('/api/categories', {
         method: 'POST',
         body: JSON.stringify(data),
@@ -29,7 +28,6 @@ export default function AddCategoryModal() {
         description: `${categoryName} foi adicionada ao sistema.`,
       });
       setCategoryName("");
-      setCategoryDescription("");
       setOpen(false);
     },
     onError: (error: any) => {
@@ -51,7 +49,7 @@ export default function AddCategoryModal() {
       });
       return;
     }
-    addCategoryMutation.mutate({ name: categoryName, description: categoryDescription });
+    addCategoryMutation.mutate({ name: categoryName });
   };
 
   return (
@@ -85,15 +83,6 @@ export default function AddCategoryModal() {
               onChange={(e) => setCategoryName(e.target.value)}
               placeholder="Ex: Material de Escritório"
               required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="categoryDescription">Descrição (Opcional)</Label>
-            <Input
-              id="categoryDescription"
-              value={categoryDescription}
-              onChange={(e) => setCategoryDescription(e.target.value)}
-              placeholder="Ex: Materiais para uso no escritório"
             />
           </div>
           <div className="flex justify-end space-x-2">
