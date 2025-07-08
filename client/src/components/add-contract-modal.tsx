@@ -5,18 +5,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Plus } from "lucide-react";
+import { Building2 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
 export default function AddContractModal() {
   const [open, setOpen] = useState(false);
   const [contractName, setContractName] = useState("");
-  const [contractCode, setContractCode] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const addContractMutation = useMutation({
-    mutationFn: async (data: { name: string; code: string }) => {
+    mutationFn: async (data: { name: string }) => {
       return apiRequest('/api/contracts', {
         method: 'POST',
         body: JSON.stringify(data),
@@ -29,7 +28,6 @@ export default function AddContractModal() {
         description: `${contractName} foi adicionado ao sistema.`,
       });
       setContractName("");
-      setContractCode("");
       setOpen(false);
     },
     onError: (error: any) => {
@@ -43,30 +41,28 @@ export default function AddContractModal() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!contractName.trim() || !contractCode.trim()) {
+    if (!contractName.trim()) {
       toast({
-        title: "Campos obrigatórios",
-        description: "Por favor, preencha o nome e código do contrato.",
+        title: "Campo obrigatório",
+        description: "Por favor, preencha o nome do contrato.",
         variant: "destructive",
       });
       return;
     }
-    addContractMutation.mutate({ name: contractName, code: contractCode });
+    addContractMutation.mutate({ name: contractName });
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button
-          variant="outline"
-          className="w-full justify-start h-auto p-3 border-gray-200 hover:bg-gray-50"
+          variant="ghost"
+          className="w-full justify-start h-auto p-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
         >
           <Building2 className="mr-3 h-4 w-4 text-gray-500" />
           <div className="flex flex-col items-start">
             <span className="text-sm font-medium">Adicionar Contrato</span>
-            <span className="text-xs text-gray-500">Novo contrato empresarial</span>
           </div>
-          <Plus className="ml-auto h-4 w-4 text-gray-400" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
@@ -84,16 +80,6 @@ export default function AddContractModal() {
               value={contractName}
               onChange={(e) => setContractName(e.target.value)}
               placeholder="Ex: Secretaria da Administração"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="contractCode">Código do Contrato</Label>
-            <Input
-              id="contractCode"
-              value={contractCode}
-              onChange={(e) => setContractCode(e.target.value)}
-              placeholder="Ex: SECAD-2025"
               required
             />
           </div>

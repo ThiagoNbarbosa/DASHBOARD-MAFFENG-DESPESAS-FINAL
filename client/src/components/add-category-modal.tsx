@@ -5,18 +5,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Tag, Plus } from "lucide-react";
+import { Tag } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
 export default function AddCategoryModal() {
   const [open, setOpen] = useState(false);
   const [categoryName, setCategoryName] = useState("");
-  const [categoryDescription, setCategoryDescription] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const addCategoryMutation = useMutation({
-    mutationFn: async (data: { name: string; description: string }) => {
+    mutationFn: async (data: { name: string }) => {
       return apiRequest('/api/categories', {
         method: 'POST',
         body: JSON.stringify(data),
@@ -29,7 +28,6 @@ export default function AddCategoryModal() {
         description: `${categoryName} foi adicionada ao sistema.`,
       });
       setCategoryName("");
-      setCategoryDescription("");
       setOpen(false);
     },
     onError: (error: any) => {
@@ -51,22 +49,20 @@ export default function AddCategoryModal() {
       });
       return;
     }
-    addCategoryMutation.mutate({ name: categoryName, description: categoryDescription });
+    addCategoryMutation.mutate({ name: categoryName });
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button
-          variant="outline"
-          className="w-full justify-start h-auto p-3 border-gray-200 hover:bg-gray-50"
+          variant="ghost"
+          className="w-full justify-start h-auto p-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
         >
           <Tag className="mr-3 h-4 w-4 text-gray-500" />
           <div className="flex flex-col items-start">
             <span className="text-sm font-medium">Adicionar Categoria</span>
-            <span className="text-xs text-gray-500">Nova categoria de despesa</span>
           </div>
-          <Plus className="ml-auto h-4 w-4 text-gray-400" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
@@ -85,15 +81,6 @@ export default function AddCategoryModal() {
               onChange={(e) => setCategoryName(e.target.value)}
               placeholder="Ex: Material de Escritório"
               required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="categoryDescription">Descrição (Opcional)</Label>
-            <Input
-              id="categoryDescription"
-              value={categoryDescription}
-              onChange={(e) => setCategoryDescription(e.target.value)}
-              placeholder="Ex: Materiais para uso no escritório"
             />
           </div>
           <div className="flex justify-end space-x-2">
