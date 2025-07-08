@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -17,10 +17,7 @@ export default function AddCategoryModal() {
 
   const addCategoryMutation = useMutation({
     mutationFn: async (data: { name: string; description?: string }) => {
-      return await apiRequest('/api/categories', {
-        method: 'POST',
-        body: JSON.stringify(data)
-      });
+      return await apiRequest('/api/categories', 'POST', data);
     },
     onSuccess: () => {
       setOpen(false);
@@ -66,6 +63,9 @@ export default function AddCategoryModal() {
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Adicionar Nova Categoria</DialogTitle>
+          <DialogDescription>
+            Preencha as informações abaixo para adicionar uma nova categoria ao sistema.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
