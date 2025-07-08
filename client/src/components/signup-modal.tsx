@@ -58,10 +58,15 @@ export default function SignupModal() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors text-gray-700 hover:bg-gray-100">
-          <UserPlus className="mr-3 h-5 w-5" />
-          Novo Usuário
-        </button>
+        <Button
+          variant="ghost"
+          className="w-full justify-start h-auto p-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+        >
+          <UserPlus className="mr-3 h-4 w-4 text-gray-500" />
+          <div className="flex flex-col items-start">
+            <span className="text-sm font-medium">Novo Usuário</span>
+          </div>
+        </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
