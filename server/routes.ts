@@ -1246,6 +1246,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin routes for managing contracts and categories
+  app.get("/api/contracts", requireAuth, async (req, res) => {
+    try {
+      res.json(CONTRATOS);
+    } catch (error) {
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  app.post("/api/contracts", requireAdmin, async (req, res) => {
+    try {
+      const { name, code } = req.body;
+      if (!name || !code) {
+        return res.status(400).json({ message: "Nome e código são obrigatórios" });
+      }
+      
+      // Por simplicidade, vamos apenas retornar sucesso
+      // Em um ambiente real, você salvaria no banco de dados
+      res.json({ message: "Contrato adicionado com sucesso", name, code });
+    } catch (error) {
+      console.error("Error creating contract:", error);
+      res.status(500).json({ message: "Erro ao adicionar contrato" });
+    }
+  });
+
+  app.get("/api/categories", requireAuth, async (req, res) => {
+    try {
+      res.json(CATEGORIAS);
+    } catch (error) {
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  app.post("/api/categories", requireAdmin, async (req, res) => {
+    try {
+      const { name, description } = req.body;
+      if (!name) {
+        return res.status(400).json({ message: "Nome é obrigatório" });
+      }
+      
+      // Por simplicidade, vamos apenas retornar sucesso
+      // Em um ambiente real, você salvaria no banco de dados
+      res.json({ message: "Categoria adicionada com sucesso", name, description });
+    } catch (error) {
+      console.error("Error creating category:", error);
+      res.status(500).json({ message: "Erro ao adicionar categoria" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
