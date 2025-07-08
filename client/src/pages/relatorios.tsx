@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { authApi } from "@/lib/auth";
 import { apiRequest } from "@/lib/queryClient";
@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, FileText, Calendar, Filter, BarChart3, Upload, X, FileDown } from "lucide-react";
+import { Download, FileText, Calendar, Filter, BarChart3, Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useResponsive } from "@/hooks/use-responsive";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -16,8 +16,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { BANCOS, FORMAS_PAGAMENTO } from "@shared/constants";
 import { useContractsAndCategories } from "@/hooks/use-contracts-categories";
 import { formatDateForCSV } from "@/lib/date-utils";
-import { generatePDF } from "@/lib/pdf-generator";
-import PdfReportTemplate from "@/components/pdf-report-template";
 import type { Expense } from "@shared/schema";
 
 interface ReportFilters {
@@ -42,8 +40,6 @@ export default function Relatorios() {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [importDate, setImportDate] = useState(new Date().toISOString().split('T')[0]);
-  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
-  const pdfTemplateRef = useRef<HTMLDivElement>(null);
 
   const [filters, setFilters] = useState<ReportFilters>({
     year: new Date().getFullYear().toString(),
@@ -253,27 +249,6 @@ export default function Relatorios() {
     },
   });
 
-  // Buscar estatísticas para o PDF
-  const { data: stats = {} } = useQuery({
-    queryKey: ['/api/stats'],
-    queryFn: () => apiRequest('/api/stats', 'GET'),
-  });
-
-  const { data: categoryStats = [] } = useQuery({
-    queryKey: ['/api/stats/categories'],
-    queryFn: () => apiRequest('/api/stats/categories', 'GET'),
-  });
-
-  const { data: monthlyStats = [] } = useQuery({
-    queryKey: ['/api/stats/monthly'],
-    queryFn: () => apiRequest('/api/stats/monthly', 'GET'),
-  });
-
-  const { data: paymentMethodStats = [] } = useQuery({
-    queryKey: ['/api/stats/payment-methods'],
-    queryFn: () => apiRequest('/api/stats/payment-methods', 'GET'),
-  });
-
   // Aliases para manter compatibilidade
   const expenses = filteredExpenses;
   const isLoadingExpenses = expensesLoading;
@@ -382,67 +357,6 @@ export default function Relatorios() {
     }
   };
 
-  const handleGeneratePDF = async () => {
-    if (!pdfTemplateRef.current) {
-      toast({
-        title: "Erro",
-        description: "Template do relatório não encontrado.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsGeneratingPDF(true);
-    
-    try {
-      const reportData = {
-        expenses: expenses,
-        billing: faturamentos,
-        stats: {
-          totalAmount: stats.totalAmount || 0,
-          totalExpenses: stats.totalExpenses || 0,
-          categories: categoryStats,
-          monthly: monthlyStats,
-          paymentMethods: paymentMethodStats,
-        },
-        period: {
-          year: filters.year,
-          month: filters.month,
-        },
-      };
-
-      // Temporariamente mostrar o template para captura
-      const template = pdfTemplateRef.current;
-      template.style.display = 'block';
-      template.setAttribute('data-pdf-content', 'true');
-
-      await generatePDF(template, {
-        filename: `relatorio-executivo-${filters.year}-${filters.month === 'all' ? 'completo' : filters.month}.pdf`,
-        quality: 0.95,
-        format: 'a4',
-        orientation: 'portrait'
-      });
-
-      // Esconder template novamente
-      template.style.display = 'none';
-
-      toast({
-        title: "PDF gerado com sucesso!",
-        description: "Relatório executivo foi baixado automaticamente.",
-      });
-
-    } catch (error: any) {
-      console.error('Erro ao gerar PDF:', error);
-      toast({
-        title: "Erro ao gerar PDF",
-        description: error.message || "Falha na geração do relatório PDF.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGeneratingPDF(false);
-    }
-  };
-
   const isLoading = isLoadingExpenses || isLoadingBilling;
 
   // Estatísticas dos dados filtrados
@@ -490,7 +404,7 @@ export default function Relatorios() {
                   Relatórios
                 </h1>
                 <p className="text-sm text-gray-600 mt-1">
-                  Gere relatórios executivos em PDF e exporte dados em CSV/JSON
+                  Gere e baixe relatórios detalhados de despesas e faturamento
                 </p>
               </div>
 
@@ -504,21 +418,12 @@ export default function Relatorios() {
                 </Button>
 
                 <Button 
-                  onClick={handleGeneratePDF}
-                  disabled={isLoading || isGeneratingPDF}
-                  className={`bg-orange-600 hover:bg-orange-700 text-white flex items-center gap-2 ${isMobile ? 'w-full justify-center' : ''}`}
-                >
-                  <FileDown className="h-4 w-4" />
-                  {isGeneratingPDF ? 'Gerando PDF...' : 'Relatório PDF'}
-                </Button>
-
-                <Button 
                   onClick={handleDownload}
                   disabled={isLoading}
                   className={`bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 ${isMobile ? 'w-full justify-center' : ''}`}
                 >
                   <Download className="h-4 w-4" />
-                  Baixar CSV/JSON
+                  Baixar Relatório
                 </Button>
               </div>
             </div>
@@ -630,28 +535,6 @@ export default function Relatorios() {
             </Card>
           </div>
         </main>
-
-        {/* Template PDF oculto */}
-        <div style={{ display: 'none' }}>
-          <PdfReportTemplate
-            ref={pdfTemplateRef}
-            data={{
-              expenses: expenses,
-              billing: faturamentos,
-              stats: {
-                totalAmount: stats.totalAmount || 0,
-                totalExpenses: stats.totalExpenses || 0,
-                categories: categoryStats,
-                monthly: monthlyStats,
-                paymentMethods: paymentMethodStats,
-              },
-              period: {
-                year: filters.year,
-                month: filters.month,
-              },
-            }}
-          />
-        </div>
 
         {/* Modal de Importação */}
         <Dialog open={isImportModalOpen} onOpenChange={setIsImportModalOpen}>
