@@ -1,6 +1,6 @@
-import { users, expenses, billing } from "@shared/schema";
+import { users, expenses, billing, contracts, categories } from "@shared/schema";
 import { eq, desc, and, gte, lte, like, count, sum, countDistinct, or, sql } from "drizzle-orm";
-import type { User, InsertUser, Expense, InsertExpense, Billing, InsertBilling } from "@shared/schema";
+import type { User, InsertUser, Expense, InsertExpense, Billing, InsertBilling, Contract, InsertContract, Category, InsertCategory } from "@shared/schema";
 import { db } from "./database";
 import { CATEGORIAS, CONTRATOS, BANCOS, FORMAS_PAGAMENTO } from "@shared/constants";
 
@@ -79,6 +79,26 @@ export interface IStorage {
     totalPendente: number;
     totalPago: number;
     totalVencido: number;
+  }>;
+
+  // Contract methods
+  getContracts(): Promise<Contract[]>;
+  getContract(id: number): Promise<Contract | undefined>;
+  createContract(contract: InsertContract): Promise<Contract>;
+  updateContract(id: number, contract: Partial<InsertContract>): Promise<Contract>;
+  deleteContract(id: number): Promise<void>;
+
+  // Category methods
+  getCategories(): Promise<Category[]>;
+  getCategory(id: number): Promise<Category | undefined>;
+  createCategory(category: InsertCategory): Promise<Category>;
+  updateCategory(id: number, category: Partial<InsertCategory>): Promise<Category>;
+  deleteCategory(id: number): Promise<void>;
+
+  // Get all contracts and categories for dropdowns
+  getAllContractsAndCategories(): Promise<{
+    contracts: string[];
+    categories: string[];
   }>;
 }
 
@@ -650,6 +670,134 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error('Erro ao calcular estatísticas de faturamento:', error);
       return { totalPendente: 0, totalPago: 0, totalVencido: 0 };
+    }
+  }
+
+  // Contract methods
+  async getContracts(): Promise<Contract[]> {
+    try {
+      const result = await db.select().from(contracts).where(eq(contracts.isActive, true)).orderBy(contracts.name);
+      return result;
+    } catch (error) {
+      console.error('Erro ao buscar contratos:', error);
+      return [];
+    }
+  }
+
+  async getContract(id: number): Promise<Contract | undefined> {
+    try {
+      const result = await db.select().from(contracts).where(eq(contracts.id, id)).limit(1);
+      return result[0];
+    } catch (error) {
+      console.error('Erro ao buscar contrato:', error);
+      return undefined;
+    }
+  }
+
+  async createContract(contract: InsertContract): Promise<Contract> {
+    try {
+      const result = await db.insert(contracts).values(contract).returning();
+      return result[0];
+    } catch (error) {
+      console.error('Erro ao criar contrato:', error);
+      throw error;
+    }
+  }
+
+  async updateContract(id: number, contract: Partial<InsertContract>): Promise<Contract> {
+    try {
+      const result = await db.update(contracts).set(contract).where(eq(contracts.id, id)).returning();
+      return result[0];
+    } catch (error) {
+      console.error('Erro ao atualizar contrato:', error);
+      throw error;
+    }
+  }
+
+  async deleteContract(id: number): Promise<void> {
+    try {
+      await db.update(contracts).set({ isActive: false }).where(eq(contracts.id, id));
+    } catch (error) {
+      console.error('Erro ao excluir contrato:', error);
+      throw error;
+    }
+  }
+
+  // Category methods
+  async getCategories(): Promise<Category[]> {
+    try {
+      const result = await db.select().from(categories).where(eq(categories.isActive, true)).orderBy(categories.name);
+      return result;
+    } catch (error) {
+      console.error('Erro ao buscar categorias:', error);
+      return [];
+    }
+  }
+
+  async getCategory(id: number): Promise<Category | undefined> {
+    try {
+      const result = await db.select().from(categories).where(eq(categories.id, id)).limit(1);
+      return result[0];
+    } catch (error) {
+      console.error('Erro ao buscar categoria:', error);
+      return undefined;
+    }
+  }
+
+  async createCategory(category: InsertCategory): Promise<Category> {
+    try {
+      const result = await db.insert(categories).values(category).returning();
+      return result[0];
+    } catch (error) {
+      console.error('Erro ao criar categoria:', error);
+      throw error;
+    }
+  }
+
+  async updateCategory(id: number, category: Partial<InsertCategory>): Promise<Category> {
+    try {
+      const result = await db.update(categories).set(category).where(eq(categories.id, id)).returning();
+      return result[0];
+    } catch (error) {
+      console.error('Erro ao atualizar categoria:', error);
+      throw error;
+    }
+  }
+
+  async deleteCategory(id: number): Promise<void> {
+    try {
+      await db.update(categories).set({ isActive: false }).where(eq(categories.id, id));
+    } catch (error) {
+      console.error('Erro ao excluir categoria:', error);
+      throw error;
+    }
+  }
+
+  // Get all contracts and categories for dropdowns
+  async getAllContractsAndCategories(): Promise<{
+    contracts: string[];
+    categories: string[];
+  }> {
+    try {
+      const [dbContracts, dbCategories] = await Promise.all([
+        this.getContracts(),
+        this.getCategories()
+      ]);
+
+      // Combine database items with constants
+      const allContracts = [...CONTRATOS, ...dbContracts.map(c => c.name)];
+      const allCategories = [...CATEGORIAS, ...dbCategories.map(c => c.name)];
+
+      return {
+        contracts: [...new Set(allContracts)].sort(),
+        categories: [...new Set(allCategories)].sort()
+      };
+    } catch (error) {
+      console.error('Erro ao buscar contratos e categorias:', error);
+      return {
+        contracts: [...CONTRATOS],
+        categories: [...CATEGORIAS]
+      };
     }
   }
 }

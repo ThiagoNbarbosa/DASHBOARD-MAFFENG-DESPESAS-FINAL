@@ -6,32 +6,37 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function AddCategoryModal() {
   const [open, setOpen] = useState(false);
   const [categoryName, setCategoryName] = useState("");
+  const [description, setDescription] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const addCategoryMutation = useMutation({
-    mutationFn: async (name: string) => {
-      // Simular adição de categoria - em produção seria uma API real
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return { name, id: Date.now() };
+    mutationFn: async (data: { name: string; description?: string }) => {
+      return await apiRequest('/api/categories', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
     },
     onSuccess: () => {
       setOpen(false);
       setCategoryName("");
+      setDescription("");
       toast({
         title: "Categoria adicionada",
         description: "A nova categoria foi criada com sucesso.",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/contracts-and-categories'] });
     },
     onError: (error: any) => {
       toast({
         title: "Erro ao adicionar categoria",
-        description: error.message,
+        description: error.message || "Erro ao criar categoria",
         variant: "destructive",
       });
     },
@@ -40,7 +45,10 @@ export default function AddCategoryModal() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (categoryName.trim()) {
-      addCategoryMutation.mutate(categoryName.trim());
+      addCategoryMutation.mutate({
+        name: categoryName.trim(),
+        description: description.trim() || undefined
+      });
     }
   };
 
@@ -69,6 +77,16 @@ export default function AddCategoryModal() {
               onChange={(e) => setCategoryName(e.target.value)}
               placeholder="Ex: MATERIAL DE LIMPEZA"
               required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="category-description">Descrição (opcional)</Label>
+            <Input
+              id="category-description"
+              type="text"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Ex: Gastos com material de limpeza"
             />
           </div>
           <div className="flex justify-end space-x-2">

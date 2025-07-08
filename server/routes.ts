@@ -3,7 +3,7 @@ import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { billingStorage } from "./billing-storage";
-import { insertExpenseSchema, loginSchema, signUpSchema } from "@shared/schema";
+import { insertExpenseSchema, loginSchema, signUpSchema, insertContractSchema, insertCategorySchema } from "@shared/schema";
 import { CATEGORIAS, CONTRATOS, BANCOS, FORMAS_PAGAMENTO } from "@shared/constants";
 import bcrypt from "bcrypt";
 import { supabase } from "./supabase";
@@ -1242,6 +1242,143 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(stats);
     } catch (error) {
       console.error("Error fetching billing stats:", error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  // Endpoints para contratos
+  app.get("/api/contracts", requireAuth, async (req, res) => {
+    try {
+      const contracts = await storage.getContracts();
+      res.json(contracts);
+    } catch (error) {
+      console.error("Error fetching contracts:", error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  app.post("/api/contracts", requireAuth, async (req, res) => {
+    try {
+      const parsed = insertContractSchema.parse(req.body);
+      const contract = await storage.createContract(parsed);
+      res.status(201).json(contract);
+    } catch (error: any) {
+      console.error("Error creating contract:", error);
+      if (error.message?.includes('duplicate key')) {
+        res.status(400).json({ message: "Este contrato já existe" });
+      } else {
+        res.status(500).json({ message: "Server error" });
+      }
+    }
+  });
+
+  app.get("/api/contracts/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const contract = await storage.getContract(id);
+      if (!contract) {
+        return res.status(404).json({ message: "Contract not found" });
+      }
+      res.json(contract);
+    } catch (error) {
+      console.error("Error fetching contract:", error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  app.put("/api/contracts/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const parsed = insertContractSchema.partial().parse(req.body);
+      const contract = await storage.updateContract(id, parsed);
+      res.json(contract);
+    } catch (error) {
+      console.error("Error updating contract:", error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  app.delete("/api/contracts/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteContract(id);
+      res.json({ message: "Contract deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting contract:", error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  // Endpoints para categorias
+  app.get("/api/categories", requireAuth, async (req, res) => {
+    try {
+      const categories = await storage.getCategories();
+      res.json(categories);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  app.post("/api/categories", requireAuth, async (req, res) => {
+    try {
+      const parsed = insertCategorySchema.parse(req.body);
+      const category = await storage.createCategory(parsed);
+      res.status(201).json(category);
+    } catch (error: any) {
+      console.error("Error creating category:", error);
+      if (error.message?.includes('duplicate key')) {
+        res.status(400).json({ message: "Esta categoria já existe" });
+      } else {
+        res.status(500).json({ message: "Server error" });
+      }
+    }
+  });
+
+  app.get("/api/categories/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const category = await storage.getCategory(id);
+      if (!category) {
+        return res.status(404).json({ message: "Category not found" });
+      }
+      res.json(category);
+    } catch (error) {
+      console.error("Error fetching category:", error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  app.put("/api/categories/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const parsed = insertCategorySchema.partial().parse(req.body);
+      const category = await storage.updateCategory(id, parsed);
+      res.json(category);
+    } catch (error) {
+      console.error("Error updating category:", error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  app.delete("/api/categories/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteCategory(id);
+      res.json({ message: "Category deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  // Endpoint para obter todos os contratos e categorias (para dropdowns)
+  app.get("/api/contracts-and-categories", requireAuth, async (req, res) => {
+    try {
+      const data = await storage.getAllContractsAndCategories();
+      res.json(data);
+    } catch (error) {
+      console.error("Error fetching contracts and categories:", error);
       res.status(500).json({ message: "Server error" });
     }
   });

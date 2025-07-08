@@ -3,7 +3,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import { CATEGORIAS, CONTRATOS, FORMAS_PAGAMENTO } from "@shared/constants";
+import { FORMAS_PAGAMENTO } from "@shared/constants";
+import { useContractsAndCategories } from "@/hooks/use-contracts-categories";
 import type { User } from "@shared/schema";
 
 interface ExpenseFiltersProps {
@@ -22,6 +23,11 @@ interface ExpenseFiltersProps {
 }
 
 export function ExpenseFilters({ filters, setFilters, clearFilters, user }: ExpenseFiltersProps) {
+  const { data: contractsCategories, isLoading } = useContractsAndCategories();
+
+  const contracts = contractsCategories?.contracts || [];
+  const categories = contractsCategories?.categories || [];
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
@@ -72,7 +78,7 @@ export function ExpenseFilters({ filters, setFilters, clearFilters, user }: Expe
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas as categorias</SelectItem>
-              {CATEGORIAS.map((category) => (
+              {categories.map((category) => (
                 <SelectItem key={category} value={category}>
                   {category}
                 </SelectItem>
@@ -106,7 +112,7 @@ export function ExpenseFilters({ filters, setFilters, clearFilters, user }: Expe
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os contratos</SelectItem>
-              {CONTRATOS.map((contract) => (
+              {contracts.map((contract) => (
                 <SelectItem key={contract} value={contract}>
                   {contract}
                 </SelectItem>

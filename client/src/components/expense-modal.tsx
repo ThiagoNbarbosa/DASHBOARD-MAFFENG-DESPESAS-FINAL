@@ -11,7 +11,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { uploadImage } from "@/lib/supabase";
 import type { InsertExpense } from "@shared/schema";
-import { CATEGORIAS, CONTRATOS, BANCOS, FORMAS_PAGAMENTO } from "@shared/constants";
+import { BANCOS, FORMAS_PAGAMENTO } from "@shared/constants";
+import { useContractsAndCategories } from "@/hooks/use-contracts-categories";
 
 interface ExpenseFormData extends Omit<InsertExpense, 'paymentDate' | 'value'> {
   paymentDate: string;
@@ -35,6 +36,10 @@ export default function ExpenseModal() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { data: contractsCategories } = useContractsAndCategories();
+
+  const contracts = contractsCategories?.contracts || [];
+  const categories = contractsCategories?.categories || [];
 
   const createExpenseMutation = useMutation({
     mutationFn: async (data: ExpenseFormData) => {
@@ -259,7 +264,7 @@ export default function ExpenseModal() {
                   <SelectValue placeholder="Selecione a categoria" />
                 </SelectTrigger>
                 <SelectContent>
-                  {CATEGORIAS.map((category) => (
+                  {categories.map((category) => (
                     <SelectItem key={category} value={category}>
                       {category}
                     </SelectItem>
@@ -291,7 +296,7 @@ export default function ExpenseModal() {
                   <SelectValue placeholder="Selecione o contrato" />
                 </SelectTrigger>
                 <SelectContent>
-                  {CONTRATOS.map((contrato) => (
+                  {contracts.map((contrato) => (
                     <SelectItem key={contrato} value={contrato}>
                       {contrato}
                     </SelectItem>
