@@ -21,12 +21,18 @@ export const generatePDF = async (
   } = options;
 
   try {
+    console.log('=== INICIANDO GERAÇÃO DE PDF ===');
+    console.log('Elemento recebido:', element);
+    console.log('Opções:', options);
+
     // Mostrar elemento temporariamente para captura
     const originalDisplay = element.style.display;
     element.style.display = 'block';
     element.style.position = 'absolute';
     element.style.left = '-9999px';
     element.style.top = '0';
+
+    console.log('Elemento preparado para captura');
 
     // Configurações do canvas
     const canvas = await html2canvas(element, {
@@ -51,6 +57,8 @@ export const generatePDF = async (
     element.style.position = '';
     element.style.left = '';
     element.style.top = '';
+
+    console.log('Canvas criado:', canvas.width, 'x', canvas.height);
 
     // Dimensões do PDF (A4 em mm)
     const pdfWidth = format === 'a4' ? 210 : 216; // A4 ou Letter
@@ -79,48 +87,8 @@ export const generatePDF = async (
     const x = (pdfWidth - scaledWidth) / 2;
     const y = (pdfHeight - scaledHeight) / 2;
 
-    // Se a imagem for muito alta, dividir em múltiplas páginas
-    if (scaledHeight > pdfHeight) {
-      let currentY = 0;
-      const pageHeight = pdfHeight;
-      let pageNumber = 1;
-
-      while (currentY < scaledHeight) {
-        if (pageNumber > 1) {
-          pdf.addPage();
-        }
-
-        const remainingHeight = scaledHeight - currentY;
-        const currentPageHeight = Math.min(pageHeight, remainingHeight);
-
-        // Criar canvas para a página atual
-        const pageCanvas = document.createElement('canvas');
-        const pageCtx = pageCanvas.getContext('2d');
-        
-        if (pageCtx) {
-          const sourceY = (currentY / ratio);
-          const sourceHeight = (currentPageHeight / ratio);
-          
-          pageCanvas.width = imgWidth;
-          pageCanvas.height = sourceHeight;
-          
-          // Criar nova imagem para cada página
-          const img = new Image();
-          img.onload = () => {
-            pageCtx.drawImage(img, 0, sourceY, imgWidth, sourceHeight, 0, 0, imgWidth, sourceHeight);
-            const pageImgData = pageCanvas.toDataURL('image/jpeg', quality);
-            pdf.addImage(pageImgData, 'JPEG', x, 0, scaledWidth, currentPageHeight);
-          };
-          img.src = imgData;
-        }
-
-        currentY += currentPageHeight;
-        pageNumber++;
-      }
-    } else {
-      // Adicionar imagem única ao PDF
-      pdf.addImage(imgData, 'JPEG', x, y, scaledWidth, scaledHeight);
-    }
+    // Adicionar imagem ao PDF (simplificado para evitar problemas assíncronos)
+    pdf.addImage(imgData, 'JPEG', x, y, scaledWidth, scaledHeight);
 
     // Adicionar metadados
     pdf.setProperties({
@@ -132,7 +100,9 @@ export const generatePDF = async (
     });
 
     // Salvar PDF
+    console.log('Salvando PDF com nome:', filename);
     pdf.save(filename);
+    console.log('PDF salvo com sucesso!');
 
   } catch (error) {
     console.error('Erro ao gerar PDF:', error);
