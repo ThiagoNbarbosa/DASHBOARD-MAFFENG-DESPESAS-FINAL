@@ -50,6 +50,10 @@ export default function Results() {
     category: "all",
     contractNumber: "",
   });
+  
+  // Estados para interatividade dos gráficos
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
 
   const { data: categoryStats = [] } = useQuery({
     queryKey: ['/api/stats/categories', filters],
@@ -337,6 +341,9 @@ export default function Results() {
               title="Despesas por Categoria"
               showLegend={true}
               showStats={true}
+              selectedCategory={selectedCategory}
+              onCategorySelect={setSelectedCategory}
+              onCategoryHover={setHoveredCategory}
             />
           </div>
 

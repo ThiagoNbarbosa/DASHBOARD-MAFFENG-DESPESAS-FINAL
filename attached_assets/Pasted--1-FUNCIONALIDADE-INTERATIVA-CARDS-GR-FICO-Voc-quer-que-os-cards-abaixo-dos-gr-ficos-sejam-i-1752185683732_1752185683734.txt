@@ -1,0 +1,59 @@
+✅ 1. FUNCIONALIDADE INTERATIVA: "CARDS → GRÁFICO"
+Você quer que os cards abaixo dos gráficos sejam interativos, ou seja:
+
+🔄 COMPORTAMENTO DESEJADO:
+Ao clicar em um card (ex: "MATERIAL", "INTERNET", "COMBUSTÍVEL"), o sistema:
+
+Realça o setor correspondente no gráfico de rosca (donut chart).
+
+Aplica um destaque visual (ex: borda, efeito de zoom ou cor vibrante).
+
+Exibe os dados detalhados na lateral ou em um popup (valores, % e nº de transações).
+
+🎯 2. CORREÇÃO NA TOOLTIP DO GRÁFICO
+📌 PROBLEMA ATUAL:
+A tooltip está sobreposta ao gráfico, dificultando a leitura e interação.
+
+✅ MELHORIA SUGERIDA:
+Exibir a tooltip fora do gráfico com layout responsivo.
+
+Separar os dados da tooltip em colunas:
+
+makefile
+Copiar
+Editar
+CATEGORIA: MATERIAL  
+TOTAL: R$ 153.235,63  
+PARTICIPAÇÃO: 18,8%  
+TRANSAÇÕES: 196
+🧠 IDEA UX/UI FINAL
+INTERAÇÕES QUE DEVEM ACONTECER:
+Ação	Resultado Visual	Funcionalidade Extra
+Clique no Card	Destaca o setor no gráfico (zoom/contorno)	Exibe painel lateral com detalhes
+Passe o mouse no setor da rosca	Destaca o card correspondente	Mostra tooltip responsiva
+Hover em card	Gráfico pisca o setor correspondente	Tooltip aparece próxima ao card
+
+✅ RESUMO TERMINAL PROMPT PARA O AGENTE
+sh
+Copiar
+Editar
+# 💡 Implementar interatividade entre os cards de categoria e o gráfico de rosca
+
+## 1. Quando o usuário clicar em qualquer card de categoria (ex: MATERIAL, INTERNET), o gráfico de rosca deve:
+# - Destacar o setor correspondente (efeito de contorno ou zoom);
+# - Aplicar um estilo especial ao card ativo (ex: borda azul ou fundo levemente destacado);
+# - Exibir painel lateral com detalhes da categoria: valor, participação e transações.
+
+## 2. Ajustar a tooltip do gráfico de rosca:
+# - Tornar responsiva e exibir fora do gráfico;
+# - Layout com 3 linhas: categoria, valor total, % de participação, número de transações;
+# - Evitar sobreposição ao setor da rosca.
+
+## 3. Sincronizar hover:
+# - Ao passar o mouse no setor do gráfico, o card correspondente também é destacado;
+# - Ao passar o mouse no card, o setor do gráfico pisca/realça levemente.
+
+## Tecnologias esperadas:
+# - Gráfico: Recharts ou Chart.js (donut chart)
+# - Framework: React (com Tailwind para estilos)
+# - Estado interativo: useState para seleção e hover, ou Redux/Context se necessário.
