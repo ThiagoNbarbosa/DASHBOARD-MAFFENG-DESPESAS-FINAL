@@ -15,6 +15,9 @@ interface ModernCategoryChartProps {
   title?: string;
   showLegend?: boolean;
   showStats?: boolean;
+  selectedCategory?: string | null;
+  onCategorySelect?: (category: string | null) => void;
+  onCategoryHover?: (category: string | null) => void;
 }
 
 // Paleta de cores moderna e vibrante
@@ -42,26 +45,35 @@ export default function ModernCategoryChart({
   data, 
   title = "Despesas por Categoria",
   showLegend = true,
-  showStats = true 
+  showStats = true,
+  selectedCategory = null,
+  onCategorySelect = () => {},
+  onCategoryHover = () => {}
 }: ModernCategoryChartProps) {
   const chartRef = useRef<any>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   // Calcular total geral
   const totalAmount = data.reduce((sum, item) => sum + item.total, 0);
   const totalCount = data.reduce((sum, item) => sum + item.count, 0);
   const averagePerCategory = totalAmount / data.length;
 
-  // Preparar dados do gráfico
+  // Preparar dados do gráfico com destaque para seleção
   const chartData = {
     labels: data.map(item => item.category),
     datasets: [
       {
         data: data.map(item => item.total),
-        backgroundColor: MODERN_COLORS.slice(0, data.length),
+        backgroundColor: data.map((item, index) => {
+          if (activeIndex === index) {
+            return MODERN_COLORS[index]; // Cor normal para selecionado
+          }
+          return activeIndex !== null ? MODERN_COLORS[index] + '60' : MODERN_COLORS[index];
+        }),
         hoverBackgroundColor: HOVER_COLORS.slice(0, data.length),
-        borderWidth: 3,
-        borderColor: '#ffffff',
+        borderWidth: data.map((item, index) => activeIndex === index ? 6 : 3),
+        borderColor: data.map((item, index) => activeIndex === index ? '#1f2937' : '#ffffff'),
         hoverBorderWidth: 4,
         hoverBorderColor: '#ffffff',
         cutout: '65%', // Cria um gráfico de rosquinha mais moderno
@@ -82,28 +94,34 @@ export default function ModernCategoryChart({
       },
       tooltip: {
         enabled: true,
-        backgroundColor: 'rgba(0, 0, 0, 0.9)',
-        titleColor: '#ffffff',
-        bodyColor: '#ffffff',
-        borderColor: '#ffffff',
-        borderWidth: 1,
+        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+        titleColor: '#f1f5f9',
+        bodyColor: '#e2e8f0',
+        borderColor: '#3b82f6',
+        borderWidth: 2,
         cornerRadius: 12,
         displayColors: false,
-        padding: 16,
+        padding: 20,
         titleFont: {
-          size: 14,
+          size: 15,
           weight: 'bold' as const,
         },
         bodyFont: {
-          size: 13,
+          size: 14,
         },
-        position: 'average' as const,
+        position: 'nearest' as const,
         xAlign: 'center' as const,
-        yAlign: 'top' as const,
-        caretPadding: 20,
+        yAlign: 'bottom' as const,
+        caretPadding: 10,
+        caretSize: 8,
+        titleAlign: 'center' as const,
+        bodyAlign: 'center' as const,
+        titleSpacing: 8,
+        bodySpacing: 6,
+        footerSpacing: 0,
         callbacks: {
           title: function(context: any) {
-            return context[0]?.label || '';
+            return `📊 ${context[0]?.label || ''}`;
           },
           label: function(context: any) {
             const value = context.parsed;
@@ -113,9 +131,9 @@ export default function ModernCategoryChart({
               currency: 'BRL'
             }).format(value);
             return [
-              `Valor: ${formatted}`,
-              `Participação: ${percentage}%`,
-              `Transações: ${data[context.dataIndex]?.count || 0}`
+              `💰 Valor: ${formatted}`,
+              `📈 Participação: ${percentage}%`,
+              `🧾 Transações: ${data[context.dataIndex]?.count || 0}`
             ];
           }
         }
@@ -123,9 +141,27 @@ export default function ModernCategoryChart({
     },
     onHover: (event: any, elements: any[]) => {
       if (elements.length > 0) {
-        setHoveredIndex(elements[0].index);
+        const index = elements[0].index;
+        setHoveredIndex(index);
+        onCategoryHover(data[index]?.category || null);
       } else {
         setHoveredIndex(null);
+        onCategoryHover(null);
+      }
+    },
+    onClick: (event: any, elements: any[]) => {
+      if (elements.length > 0) {
+        const index = elements[0].index;
+        const category = data[index]?.category;
+        if (category) {
+          // Toggle selection
+          const newSelection = activeIndex === index ? null : category;
+          setActiveIndex(activeIndex === index ? null : index);
+          onCategorySelect(newSelection);
+        }
+      } else {
+        setActiveIndex(null);
+        onCategorySelect(null);
       }
     },
     animation: {
@@ -151,12 +187,23 @@ export default function ModernCategoryChart({
     };
   }, []);
 
+  // Sincronizar selectedCategory com activeIndex
+  useEffect(() => {
+    if (selectedCategory) {
+      const index = data.findIndex(item => item.category === selectedCategory);
+      setActiveIndex(index >= 0 ? index : null);
+    } else {
+      setActiveIndex(null);
+    }
+  }, [selectedCategory, data]);
+
   // Calcular dados para a legenda personalizada
   const legendData = data.map((item, index) => ({
     ...item,
     color: MODERN_COLORS[index],
     percentage: ((item.total / totalAmount) * 100).toFixed(1),
-    isHovered: hoveredIndex === index
+    isHovered: hoveredIndex === index,
+    isSelected: activeIndex === index
   }));
 
   return (
@@ -209,12 +256,25 @@ export default function ModernCategoryChart({
               <div
                 key={item.category}
                 className={`flex items-center gap-3 p-3 rounded-lg border transition-all duration-200 cursor-pointer ${
-                  item.isHovered 
+                  item.isSelected 
+                    ? 'bg-blue-50 border-blue-500 shadow-lg transform scale-105 ring-2 ring-blue-200' 
+                    : item.isHovered 
                     ? 'bg-gray-100 border-gray-300 shadow-md transform scale-105' 
                     : 'bg-white border-gray-200 hover:bg-gray-50'
                 }`}
-                onMouseEnter={() => setHoveredIndex(index)}
-                onMouseLeave={() => setHoveredIndex(null)}
+                onMouseEnter={() => {
+                  setHoveredIndex(index);
+                  onCategoryHover(item.category);
+                }}
+                onMouseLeave={() => {
+                  setHoveredIndex(null);
+                  onCategoryHover(null);
+                }}
+                onClick={() => {
+                  const newSelection = activeIndex === index ? null : item.category;
+                  setActiveIndex(activeIndex === index ? null : index);
+                  onCategorySelect(newSelection);
+                }}
               >
                 <div 
                   className="w-4 h-4 rounded-full flex-shrink-0 shadow-sm"
@@ -239,6 +299,51 @@ export default function ModernCategoryChart({
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Painel de Detalhes da Categoria Selecionada */}
+        {selectedCategory && activeIndex !== null && (
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200 shadow-lg">
+            <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <div 
+                className="w-4 h-4 rounded-full"
+                style={{ backgroundColor: MODERN_COLORS[activeIndex] }}
+              />
+              Detalhes - {selectedCategory}
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="text-center">
+                <p className="text-3xl font-bold text-blue-600">
+                  {new Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL',
+                    notation: 'compact',
+                    maximumFractionDigits: 1
+                  }).format(legendData[activeIndex].total)}
+                </p>
+                <p className="text-sm text-gray-600">Valor Total</p>
+              </div>
+              <div className="text-center">
+                <p className="text-3xl font-bold text-green-600">
+                  {legendData[activeIndex].percentage}%
+                </p>
+                <p className="text-sm text-gray-600">Participação</p>
+              </div>
+              <div className="text-center">
+                <p className="text-3xl font-bold text-purple-600">{legendData[activeIndex].count}</p>
+                <p className="text-sm text-gray-600">Transações</p>
+              </div>
+            </div>
+            <div className="mt-4 pt-4 border-t border-blue-200">
+              <p className="text-sm text-gray-600 text-center">
+                <span className="font-medium">Valor médio por transação:</span> {' '}
+                {new Intl.NumberFormat('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL'
+                }).format(legendData[activeIndex].total / legendData[activeIndex].count)}
+              </p>
+            </div>
           </div>
         )}
 
