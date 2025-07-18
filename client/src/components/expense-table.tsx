@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Trash2, Filter, X, Ban, Eye } from "lucide-react";
+import { Trash2, Filter, X, Ban, Eye, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { authApi } from "@/lib/auth";
@@ -17,6 +17,7 @@ import { formatDateSafely } from "@/lib/date-utils";
 import type { Expense } from "@shared/schema";
 import { BANCOS, FORMAS_PAGAMENTO } from "@shared/constants";
 import { useContractsAndCategories } from "@/hooks/use-contracts-categories";
+import EditExpenseModal from "./edit-expense-modal";
 
 interface ExpenseFilters {
   year: string;
@@ -40,6 +41,7 @@ export default function ExpenseTable() {
   });
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -71,6 +73,12 @@ export default function ExpenseTable() {
   const handleViewDetails = (expense: Expense) => {
     setSelectedExpense(expense);
     setIsDetailsModalOpen(true);
+  };
+
+  // Função para abrir modal de edição
+  const handleEditExpense = (expense: Expense) => {
+    setSelectedExpense(expense);
+    setIsEditModalOpen(true);
   };
 
   // Query unificada para despesas (reduz consultas duplicadas)
@@ -408,8 +416,18 @@ export default function ExpenseTable() {
                               variant="outline"
                               className="text-blue-600 border-blue-600 hover:bg-blue-50"
                               onClick={() => handleViewDetails(expense)}
+                              title="Visualizar detalhes"
                             >
                               <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                              onClick={() => handleEditExpense(expense)}
+                              title="Editar despesa"
+                            >
+                              <Edit className="h-4 w-4" />
                             </Button>
                             {user?.role === "admin" && (
                               <>
@@ -420,6 +438,7 @@ export default function ExpenseTable() {
                                     className="text-orange-600 border-orange-600 hover:bg-orange-50"
                                     onClick={() => handleCancel(expense.id)}
                                     disabled={cancelMutation.isPending}
+                                    title="Cancelar despesa"
                                   >
                                     <Ban className="h-4 w-4" />
                                   </Button>
@@ -434,6 +453,7 @@ export default function ExpenseTable() {
                                     }
                                   }}
                                   disabled={deleteMutation.isPending}
+                                  title="Excluir despesa"
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -524,8 +544,18 @@ export default function ExpenseTable() {
                             variant="outline"
                             className="text-blue-600 border-blue-600 hover:bg-blue-50"
                             onClick={() => handleViewDetails(expense)}
+                            title="Visualizar detalhes"
                           >
                             <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                            onClick={() => handleEditExpense(expense)}
+                            title="Editar despesa"
+                          >
+                            <Edit className="h-4 w-4" />
                           </Button>
                           {user?.role === "admin" && (
                             <>
@@ -536,6 +566,7 @@ export default function ExpenseTable() {
                                   className="text-orange-600 border-orange-600 hover:bg-orange-50"
                                   onClick={() => handleCancel(expense.id)}
                                   disabled={cancelMutation.isPending}
+                                  title="Cancelar despesa"
                                 >
                                   <Ban className="h-4 w-4" />
                                 </Button>
@@ -546,6 +577,7 @@ export default function ExpenseTable() {
                                 className="text-red-600 border-red-600 hover:bg-red-50"
                                 onClick={() => handleDelete(expense.id)}
                                 disabled={deleteMutation.isPending}
+                                title="Excluir despesa"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -638,6 +670,13 @@ export default function ExpenseTable() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Edição da Despesa */}
+      <EditExpenseModal 
+        expense={selectedExpense}
+        open={isEditModalOpen}
+        onOpenChange={setIsEditModalOpen}
+      />
       
     </div>
   );

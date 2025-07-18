@@ -66,9 +66,10 @@ export default function EditExpenseModal({ expense, open, onOpenChange }: EditEx
     mutationFn: async (data: ExpenseFormData) => {
       if (!expense) throw new Error("No expense to update");
 
+      // Remover o valor do objeto de atualização para garantir que não seja alterado
+      const { totalValue, ...updateData } = data;
       const expenseData = {
-        ...data,
-        value: data.totalValue,
+        ...updateData,
         paymentDate: new Date(data.paymentDate).toISOString(),
       };
 
@@ -162,7 +163,10 @@ export default function EditExpenseModal({ expense, open, onOpenChange }: EditEx
                 onChange={handleTotalValueChange}
                 placeholder="R$ 0,00"
                 required
+                disabled
+                className="bg-gray-100 cursor-not-allowed"
               />
+              <p className="text-sm text-gray-500 italic mt-1">Valor inalterado</p>
             </div>
 
             <div>

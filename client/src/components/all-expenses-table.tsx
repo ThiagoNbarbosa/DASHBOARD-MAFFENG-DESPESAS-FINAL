@@ -5,12 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Eye, Ban, Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { Eye, Ban, Trash2, Edit, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useResponsive } from "@/hooks/use-responsive";
 import { formatDateSafely } from "@/lib/date-utils";
 import { apiRequest } from "@/lib/queryClient";
 import type { Expense, User } from "@shared/schema";
+import EditExpenseModal from "./edit-expense-modal";
 
 interface AllExpensesTableProps {
   user: User | null;
@@ -28,6 +29,7 @@ interface AllExpensesTableProps {
 export function AllExpensesTable({ user, filters }: AllExpensesTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [expenseUser, setExpenseUser] = useState<User | null>(null);
   const queryClient = useQueryClient();
@@ -122,6 +124,11 @@ export function AllExpensesTable({ user, filters }: AllExpensesTableProps) {
     } catch (error) {
       console.error('Erro ao buscar dados do usuário:', error);
     }
+  };
+
+  const handleEditExpense = (expense: Expense) => {
+    setSelectedExpense(expense);
+    setIsEditModalOpen(true);
   };
 
   const handleCancel = (id: string) => {
@@ -253,8 +260,18 @@ export function AllExpensesTable({ user, filters }: AllExpensesTableProps) {
                               variant="outline"
                               className="text-blue-600 border-blue-600 hover:bg-blue-50"
                               onClick={() => handleViewDetails(expense)}
+                              title="Visualizar detalhes"
                             >
                               <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                              onClick={() => handleEditExpense(expense)}
+                              title="Editar despesa"
+                            >
+                              <Edit className="h-4 w-4" />
                             </Button>
                             {user?.role === "admin" && (
                               <>
@@ -265,6 +282,7 @@ export function AllExpensesTable({ user, filters }: AllExpensesTableProps) {
                                     className="text-orange-600 border-orange-600 hover:bg-orange-50"
                                     onClick={() => handleCancel(expense.id)}
                                     disabled={cancelMutation.isPending}
+                                    title="Cancelar despesa"
                                   >
                                     <Ban className="h-4 w-4" />
                                   </Button>
@@ -275,6 +293,7 @@ export function AllExpensesTable({ user, filters }: AllExpensesTableProps) {
                                   className="text-red-600 border-red-600 hover:bg-red-50"
                                   onClick={() => handleDelete(expense.id)}
                                   disabled={deleteMutation.isPending}
+                                  title="Excluir despesa"
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -447,6 +466,13 @@ export function AllExpensesTable({ user, filters }: AllExpensesTableProps) {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Edição da Despesa */}
+      <EditExpenseModal 
+        expense={selectedExpense}
+        open={isEditModalOpen}
+        onOpenChange={setIsEditModalOpen}
+      />
     </div>
   );
 }

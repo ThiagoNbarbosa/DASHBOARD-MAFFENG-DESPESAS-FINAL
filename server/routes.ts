@@ -1056,13 +1056,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/expenses/:id", requireAdmin, async (req, res) => {
+  app.put("/api/expenses/:id", requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
-      const expenseData = insertExpenseSchema.partial().parse(req.body);
+      
+      // Buscar a despesa para verificar permissões
+      const expense = await storage.getExpense(id);
+      if (!expense) {
+        return res.status(404).json({ message: "Expense not found" });
+      }
 
-      const expense = await storage.updateExpense(id, expenseData);
-      res.json(expense);
+      // Verificar se o usuário pode editar esta despesa
+      if (req.session.userRole !== "admin" && expense.userId !== req.session.userId) {
+        return res.status(403).json({ message: "Not authorized to edit this expense" });
+      }
+
+      // Usuários regulares não podem editar o valor
+      let expenseData = insertExpenseSchema.partial().parse(req.body);
+      if (req.session.userRole !== "admin") {
+        delete expenseData.value;
+      }
+
+      const updatedExpense = await storage.updateExpense(id, expenseData);
+      res.json(updatedExpense);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid expense data", errors: error.errors });
