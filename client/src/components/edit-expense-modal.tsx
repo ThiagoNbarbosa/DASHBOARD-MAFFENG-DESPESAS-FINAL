@@ -68,10 +68,19 @@ export default function EditExpenseModal({ expense, open, onOpenChange }: EditEx
 
       // Remover o valor do objeto de atualização para garantir que não seja alterado
       const { totalValue, ...updateData } = data;
+      
+      // Validar e formatar data corretamente
+      const paymentDate = new Date(data.paymentDate);
+      if (isNaN(paymentDate.getTime())) {
+        throw new Error("Data de pagamento inválida");
+      }
+      
       const expenseData = {
         ...updateData,
-        paymentDate: new Date(data.paymentDate).toISOString(),
+        paymentDate: paymentDate.toISOString(),
       };
+      
+      console.log("Dados sendo enviados para atualização:", expenseData);
 
       return await apiRequest(`/api/expenses/${expense.id}`, 'PUT', expenseData);
     },

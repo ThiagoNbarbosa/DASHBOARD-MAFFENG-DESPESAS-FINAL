@@ -1059,11 +1059,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/expenses/:id", requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
+      
+      console.log("Dados recebidos para atualização:", req.body);
+      
       const expenseData = insertExpenseSchema.partial().parse(req.body);
+      
+      console.log("Dados validados para atualização:", expenseData);
 
       const expense = await storage.updateExpense(id, expenseData);
       res.json(expense);
     } catch (error) {
+      console.error("Erro na atualização da despesa:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid expense data", errors: error.errors });
       }
