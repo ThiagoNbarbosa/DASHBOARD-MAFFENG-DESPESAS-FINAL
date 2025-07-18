@@ -163,10 +163,7 @@ export default function EditExpenseModal({ expense, open, onOpenChange }: EditEx
                 onChange={handleTotalValueChange}
                 placeholder="R$ 0,00"
                 required
-                disabled
-                className="bg-gray-100 cursor-not-allowed"
               />
-              <p className="text-sm text-gray-500 italic mt-1">Valor inalterado</p>
             </div>
 
             <div>

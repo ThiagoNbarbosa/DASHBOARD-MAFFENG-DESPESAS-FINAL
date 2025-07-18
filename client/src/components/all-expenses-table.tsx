@@ -264,15 +264,17 @@ export function AllExpensesTable({ user, filters }: AllExpensesTableProps) {
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                              onClick={() => handleEditExpense(expense)}
-                              title="Editar despesa"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
+                            {user?.role === "admin" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                                onClick={() => handleEditExpense(expense)}
+                                title="Editar despesa"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            )}
                             {user?.role === "admin" && (
                               <>
                                 {!isCancelled(expense.category) && (
