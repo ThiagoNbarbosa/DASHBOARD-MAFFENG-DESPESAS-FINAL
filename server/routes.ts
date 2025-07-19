@@ -1070,10 +1070,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(expense);
     } catch (error) {
       console.error("Erro na atualização da despesa:", error);
+      console.error("Stack trace:", error instanceof Error ? error.stack : 'No stack trace');
+      
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid expense data", errors: error.errors });
+        console.error("Zod validation errors:", error.errors);
+        return res.status(400).json({ 
+          message: "Invalid expense data", 
+          errors: error.errors,
+          received: req.body 
+        });
       }
-      res.status(500).json({ message: "Server error" });
+      
+      res.status(500).json({ 
+        message: "Server error", 
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 
