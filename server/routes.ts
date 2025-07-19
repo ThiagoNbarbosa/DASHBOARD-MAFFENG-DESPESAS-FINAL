@@ -1062,6 +1062,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log("Dados recebidos para atualização:", req.body);
       
+      // Converter paymentDate de string para Date se necessário
+      if (req.body.paymentDate && typeof req.body.paymentDate === 'string') {
+        req.body.paymentDate = new Date(req.body.paymentDate);
+      }
+      
       const expenseData = insertExpenseSchema.partial().parse(req.body);
       
       console.log("Dados validados para atualização:", expenseData);
