@@ -46,96 +46,130 @@ function MobileFilterGrid({
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="yearFilter">Ano</Label>
-          <Select value={filters.year} onValueChange={(value) => onFilterChange('year', value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Ano" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="2025">2025</SelectItem>
-              <SelectItem value="2026">2026</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="relative">
+            <select 
+              value={filters.year} 
+              onChange={(e) => onFilterChange('year', e.target.value)}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              style={{
+                WebkitTapHighlightColor: 'transparent',
+                touchAction: 'manipulation'
+              }}
+            >
+              <option value="all">Todos</option>
+              <option value="2025">2025</option>
+              <option value="2026">2026</option>
+            </select>
+          </div>
         </div>
 
         <div>
           <Label htmlFor="monthFilter">Mês</Label>
-          <Select value={filters.month} onValueChange={(value) => onFilterChange('month', value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Mês" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
+          <div className="relative">
+            <select 
+              value={filters.month} 
+              onChange={(e) => onFilterChange('month', e.target.value)}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              style={{
+                WebkitTapHighlightColor: 'transparent',
+                touchAction: 'manipulation'
+              }}
+            >
+              <option value="all">Todos</option>
               {Array.from({ length: 12 }, (_, i) => {
                 const monthNumber = String(i + 1).padStart(2, '0');
                 const monthName = new Date(2024, i, 1).toLocaleDateString('pt-BR', { month: 'short' });
                 return (
-                  <SelectItem key={monthNumber} value={monthNumber}>
+                  <option key={monthNumber} value={monthNumber}>
                     {monthName}
-                  </SelectItem>
+                  </option>
                 );
               })}
-            </SelectContent>
-          </Select>
+            </select>
+          </div>
         </div>
       </div>
 
       {/* Categoria */}
       <div>
         <Label htmlFor="categoryFilter">Categoria</Label>
-        <Select value={filters.category} onValueChange={(value) => onFilterChange('category', value)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Categoria" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas</SelectItem>
+        <div className="relative">
+          <select 
+            value={filters.category} 
+            onChange={(e) => onFilterChange('category', e.target.value)}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            style={{
+              WebkitTapHighlightColor: 'transparent',
+              touchAction: 'manipulation'
+            }}
+          >
+            <option value="all">Todas</option>
             {categories.map((category: string) => (
-              <SelectItem key={category} value={category}>
+              <option key={category} value={category}>
                 {category}
-              </SelectItem>
+              </option>
             ))}
-          </SelectContent>
-        </Select>
+          </select>
+        </div>
       </div>
 
       {/* Forma de Pagamento */}
       <div>
         <Label htmlFor="paymentMethodFilter">Pagamento</Label>
-        <Select value={filters.paymentMethod} onValueChange={(value) => onFilterChange('paymentMethod', value)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Pagamento" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
+        <div className="relative">
+          <select 
+            value={filters.paymentMethod} 
+            onChange={(e) => onFilterChange('paymentMethod', e.target.value)}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            style={{
+              WebkitTapHighlightColor: 'transparent',
+              touchAction: 'manipulation'
+            }}
+          >
+            <option value="all">Todos</option>
             {FORMAS_PAGAMENTO.map((method: string) => (
-              <SelectItem key={method} value={method}>
+              <option key={method} value={method}>
                 {method}
-              </SelectItem>
+              </option>
             ))}
-          </SelectContent>
-        </Select>
+          </select>
+        </div>
       </div>
 
       {/* Contrato */}
       <div>
         <Label htmlFor="contractFilter">Contrato</Label>
-        <Select value={filters.contractNumber} onValueChange={(value) => onFilterChange('contractNumber', value)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Contrato" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
+        <div className="relative">
+          <select 
+            value={filters.contractNumber} 
+            onChange={(e) => onFilterChange('contractNumber', e.target.value)}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            style={{
+              WebkitTapHighlightColor: 'transparent',
+              touchAction: 'manipulation'
+            }}
+          >
+            <option value="all">Todos</option>
             {contracts.map((contract: string) => (
-              <SelectItem key={contract} value={contract}>
+              <option key={contract} value={contract}>
                 {contract}
-              </SelectItem>
+              </option>
             ))}
-          </SelectContent>
-        </Select>
+          </select>
+        </div>
       </div>
 
       {/* Botão limpar */}
-      <Button variant="outline" onClick={onClearFilters} className="w-full">
+      <Button 
+        variant="outline" 
+        onClick={onClearFilters} 
+        onTouchEnd={onClearFilters}
+        className="w-full"
+        style={{
+          WebkitTapHighlightColor: 'transparent',
+          touchAction: 'manipulation'
+        }}
+      >
         <X className="h-4 w-4 mr-2" />
         Limpar Filtros
       </Button>
@@ -187,7 +221,14 @@ export function ExpenseFilters({ filters, setFilters, clearFilters, user }: Expe
         <div className="space-y-4">
           <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
             <CollapsibleTrigger asChild>
-              <Button variant="outline" className="w-full justify-between">
+              <Button 
+                variant="outline" 
+                className="w-full justify-between"
+                style={{
+                  WebkitTapHighlightColor: 'transparent',
+                  touchAction: 'manipulation'
+                }}
+              >
                 Filtros
                 {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </Button>
