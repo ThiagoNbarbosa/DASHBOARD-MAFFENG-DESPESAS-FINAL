@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { authApi } from "@/lib/auth";
+import { authApi, type AuthUser } from "@/lib/auth";
 import Sidebar from "@/components/sidebar";
 import { AllExpensesTable } from "@/components/all-expenses-table";
 import { ExpenseFilters } from "@/components/expense-filters";
@@ -146,8 +146,7 @@ export default function Despesas() {
           <AllExpensesTable user={user} filters={filters} />
         </div>
         </div>
-      </ErrorBoundary>
-    );
-  </ErrorBoundary>
+      </div>
+    </ErrorBoundary>
   );
 }

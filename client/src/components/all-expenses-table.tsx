@@ -10,11 +10,12 @@ import { toast } from "@/hooks/use-toast";
 import { useResponsive } from "@/hooks/use-responsive";
 import { formatDateSafely } from "@/lib/date-utils";
 import { apiRequest } from "@/lib/queryClient";
-import type { Expense, User } from "@shared/schema";
+import type { Expense } from "@shared/schema";
+import type { AuthUser } from "@/lib/auth";
 import EditExpenseModal from "./edit-expense-modal";
 
 interface AllExpensesTableProps {
-  user: User | null;
+  user: AuthUser | null;
   filters?: {
     year: string;
     month: string;
@@ -31,7 +32,7 @@ export function AllExpensesTable({ user, filters }: AllExpensesTableProps) {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
-  const [expenseUser, setExpenseUser] = useState<User | null>(null);
+  const [expenseUser, setExpenseUser] = useState<AuthUser | null>(null);
   const queryClient = useQueryClient();
   const { isMobile, isTablet } = useResponsive();
 
