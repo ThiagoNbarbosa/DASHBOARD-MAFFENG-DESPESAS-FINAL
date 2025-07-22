@@ -8,6 +8,16 @@
     min-height: 44px;
     min-width: 44px;
   }
+  
+  /* Ensure dropdowns work on mobile */
+  [data-radix-select-content] {
+    z-index: 9999 !important;
+  }
+  
+  /* Fix mobile touch issues */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
 }
 
 :root {
