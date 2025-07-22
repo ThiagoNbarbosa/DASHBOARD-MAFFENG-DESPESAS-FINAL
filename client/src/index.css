@@ -12,12 +12,20 @@
   /* Ensure dropdowns work on mobile */
   [data-radix-select-content] {
     z-index: 9999 !important;
+    position: fixed !important;
+    max-height: 200px;
+    overflow-y: auto;
   }
   
   /* Fix mobile touch issues */
   * {
     -webkit-tap-highlight-color: transparent;
   }
+}
+
+/* Ensure select dropdowns are always on top */
+[data-radix-select-content] {
+  z-index: 9999 !important;
 }
 
 :root {
