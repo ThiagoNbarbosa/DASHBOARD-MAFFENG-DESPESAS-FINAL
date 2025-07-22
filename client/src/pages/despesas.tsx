@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { authApi } from "@/lib/auth";
 import Sidebar from "@/components/sidebar";
@@ -7,7 +7,6 @@ import { ExpenseFilters } from "@/components/expense-filters";
 import ExpenseModal from "@/components/expense-modal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading-spinner";
-import { ErrorBoundary } from "@/components/error-boundary";
 import { FileText, TrendingUp, Calendar, Receipt, Filter } from "lucide-react";
 
 export default function Despesas() {
@@ -21,21 +20,17 @@ export default function Despesas() {
     endDate: "",
   });
 
-  const clearFilters = useCallback(() => {
-    try {
-      setFilters({
-        year: new Date().getFullYear().toString(),
-        month: "all",
-        category: "all",
-        contractNumber: "all",
-        paymentMethod: "all",
-        startDate: "",
-        endDate: "",
-      });
-    } catch (error) {
-      console.error('Erro ao limpar filtros:', error);
-    }
-  }, []);
+  const clearFilters = () => {
+    setFilters({
+      year: new Date().getFullYear().toString(),
+      month: "all",
+      category: "all",
+      contractNumber: "all",
+      paymentMethod: "all",
+      startDate: "",
+      endDate: "",
+    });
+  };
 
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['/api/auth/me'],
@@ -65,11 +60,10 @@ export default function Despesas() {
   }
 
   return (
-    <ErrorBoundary>
-      <div className="min-h-screen bg-gray-50">
-        <Sidebar />
-        
-        <div className="lg:pl-64">
+    <div className="min-h-screen bg-gray-50">
+      <Sidebar />
+      
+      <div className="lg:pl-64">
         {/* Header - Otimizado para Mobile */}
         <div className="bg-white shadow-sm border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
@@ -145,9 +139,7 @@ export default function Despesas() {
         <div className="px-4 sm:px-6 lg:px-8 pb-8">
           <AllExpensesTable user={user} filters={filters} />
         </div>
-        </div>
-      </ErrorBoundary>
-    );
-  </ErrorBoundary>
+      </div>
+    </div>
   );
 }
