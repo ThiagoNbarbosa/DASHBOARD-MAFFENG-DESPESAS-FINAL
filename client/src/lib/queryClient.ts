@@ -54,13 +54,26 @@ export const queryClient = new QueryClient({
       refetchInterval: false,
       refetchOnWindowFocus: false,
       refetchOnMount: true,
-      refetchOnReconnect: false,
-      staleTime: 1000 * 60 * 5, // 5 minutos
-      gcTime: 1000 * 60 * 10,   // 10 minutos
-      retry: 1,
+      refetchOnReconnect: 'always', // Better mobile reconnection handling
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 10,   // 10 minutes
+      retry: (failureCount, error) => {
+        // More intelligent retry logic for mobile
+        if (failureCount >= 3) return false;
+        if (error?.message?.includes('401')) return false;
+        if (error?.message?.includes('403')) return false;
+        return true;
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
     },
     mutations: {
-      retry: false,
+      retry: (failureCount, error) => {
+        // Only retry mutations for network errors, not auth errors
+        if (failureCount >= 2) return false;
+        if (error?.message?.includes('401') || error?.message?.includes('403')) return false;
+        return true;
+      },
+      retryDelay: 1000,
     },
   },
 });

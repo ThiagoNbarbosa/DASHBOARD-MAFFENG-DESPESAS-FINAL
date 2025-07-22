@@ -2,6 +2,71 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Mobile Optimization Styles */
+@layer base {
+  /* Prevent zoom on mobile */
+  * {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  
+  /* Allow text selection for inputs and content areas */
+  input,
+  textarea,
+  [contenteditable],
+  .selectable {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+  }
+  
+  /* Mobile-specific optimizations */
+  @media (max-width: 768px) {
+    html {
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+    }
+    
+    body {
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: contain;
+    }
+    
+    /* Optimize mobile performance */
+    .mobile-optimized {
+      will-change: transform;
+      backface-visibility: hidden;
+      perspective: 1000px;
+      transform: translate3d(0, 0, 0);
+    }
+    
+    /* Smooth scrolling on mobile */
+    .scrollable-content {
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+    }
+    
+    /* Touch-friendly buttons */
+    button,
+    .btn {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    
+    /* Prevent bounce effect on mobile */
+    .prevent-bounce {
+      position: fixed;
+      overflow: hidden;
+    }
+  }
+}
+
 :root {
   --background: hsl(0, 0%, 100%);
   --foreground: hsl(20, 14.3%, 4.1%);

@@ -4,9 +4,11 @@ import { authApi } from "@/lib/auth";
 import Sidebar from "@/components/sidebar";
 import { AllExpensesTable } from "@/components/all-expenses-table";
 import { ExpenseFilters } from "@/components/expense-filters";
+import MobileFilterPanel from "@/components/mobile-filter-panel";
 import ExpenseModal from "@/components/expense-modal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading-spinner";
+import MobileLayoutWrapper from "@/components/mobile-layout-wrapper";
 import { FileText, TrendingUp, Calendar, Receipt, Filter } from "lucide-react";
 
 export default function Despesas() {
@@ -60,10 +62,11 @@ export default function Despesas() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Sidebar />
-      
-      <div className="lg:pl-64">
+    <MobileLayoutWrapper loading={userLoading}>
+      <div className="min-h-screen bg-gray-50">
+        <Sidebar />
+        
+        <div className="lg:pl-64">
         {/* Header - Otimizado para Mobile */}
         <div className="bg-white shadow-sm border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
@@ -115,31 +118,26 @@ export default function Despesas() {
           </Card>
         </div>
 
-        {/* Filtros */}
+        {/* Filtros - Mobile Optimized */}
         <div className="px-4 sm:px-6 lg:px-8 pb-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Filter className="h-5 w-5" />
-                Filtros
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ExpenseFilters
-                filters={filters}
-                setFilters={setFilters}
-                clearFilters={clearFilters}
-                user={user}
-              />
-            </CardContent>
-          </Card>
+          <MobileFilterPanel
+            filters={filters}
+            setFilters={setFilters}
+            clearFilters={clearFilters}
+            user={user}
+            totalFiltersActive={Object.values(filters).filter(v => v && v !== 'all' && v !== '').length}
+          />
         </div>
 
         {/* Conteúdo principal */}
         <div className="px-4 sm:px-6 lg:px-8 pb-8">
-          <AllExpensesTable user={user} filters={filters} />
+          <AllExpensesTable user={user as any} filters={filters} />
+        </div>
         </div>
       </div>
-    </div>
+
+      {/* Modal de Nova Despesa */}
+      <ExpenseModal />
+    </MobileLayoutWrapper>
   );
 }
