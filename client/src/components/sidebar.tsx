@@ -120,16 +120,15 @@ export default function Sidebar() {
   ];
 
   const handleNavigation = (href: string) => {
-    try {
-      if (isMobile || mobileHelper) {
-        setIsOpen(false);
-      }
-      setLocation(href);
-    } catch (error) {
-      console.error('Navigation error:', error);
-      // Fallback to direct browser navigation
-      window.location.href = href;
+    console.log('Navigating to:', href);
+    
+    // Close mobile menu first
+    if (isMobile || mobileHelper) {
+      setIsOpen(false);
     }
+    
+    // Use direct navigation
+    setLocation(href);
   };
 
   return (

@@ -39,7 +39,7 @@ export function ExpenseFilters({ filters, setFilters, clearFilters, user }: Expe
             <SelectTrigger>
               <SelectValue placeholder="Selecione o ano" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent position="popper" className="z-50">
               <SelectItem value="all">Todos os anos</SelectItem>
               <SelectItem value="2025">2025</SelectItem>
               <SelectItem value="2026">2026</SelectItem>
@@ -57,7 +57,7 @@ export function ExpenseFilters({ filters, setFilters, clearFilters, user }: Expe
             <SelectTrigger>
               <SelectValue placeholder="Todos os meses" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent position="popper" className="z-50">
               <SelectItem value="all">Todos os meses</SelectItem>
               {Array.from({ length: 12 }, (_, i) => {
                 const monthNumber = String(i + 1).padStart(2, '0');
@@ -78,7 +78,7 @@ export function ExpenseFilters({ filters, setFilters, clearFilters, user }: Expe
             <SelectTrigger>
               <SelectValue placeholder="Todas as categorias" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent position="popper" className="z-50">
               <SelectItem value="all">Todas as categorias</SelectItem>
               {categories.map((category: string) => (
                 <SelectItem key={category} value={category}>
@@ -95,7 +95,7 @@ export function ExpenseFilters({ filters, setFilters, clearFilters, user }: Expe
             <SelectTrigger>
               <SelectValue placeholder="Todas as formas" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent position="popper" className="z-50">
               <SelectItem value="all">Todas as formas</SelectItem>
               {FORMAS_PAGAMENTO.map((method) => (
                 <SelectItem key={method} value={method}>
@@ -112,7 +112,7 @@ export function ExpenseFilters({ filters, setFilters, clearFilters, user }: Expe
             <SelectTrigger>
               <SelectValue placeholder="Todos os contratos" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent position="popper" className="z-50">
               <SelectItem value="all">Todos os contratos</SelectItem>
               {contracts.map((contract: string) => (
                 <SelectItem key={contract} value={contract}>
