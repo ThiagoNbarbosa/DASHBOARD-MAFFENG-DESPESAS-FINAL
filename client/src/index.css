@@ -2,6 +2,50 @@
 @tailwind components;
 @tailwind utilities;
 
+/* CSS específico para melhorar touch events no mobile */
+@layer base {
+  /* Remove highlight padrão do webkit em touch */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Melhora responsividade touch em elementos clickáveis */
+  button, 
+  [role="button"],
+  [type="button"],
+  [type="submit"],
+  [role="menuitem"],
+  [role="option"],
+  select,
+  .cursor-pointer {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Garante que o scroll funcione bem no mobile */
+  body {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  
+  /* Previne zoom em inputs no iOS */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="date"],
+  input[type="number"],
+  select,
+  textarea {
+    font-size: 16px;
+  }
+  
+  /* Suporte a touch melhor em elementos interativos */
+  .touch-manipulation {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
 :root {
   --background: hsl(0, 0%, 100%);
   --foreground: hsl(20, 14.3%, 4.1%);

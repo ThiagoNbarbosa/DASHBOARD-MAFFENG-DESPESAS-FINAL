@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authApi } from "@/lib/auth";
@@ -86,10 +86,15 @@ export default function Sidebar() {
     }] : [])
   ];
 
-  const handleNavigation = (href: string) => {
-    setLocation(href);
-    setIsOpen(false);
-  };
+  const handleNavigation = useCallback((href: string) => {
+    console.log('Navegando para:', href);
+    try {
+      setLocation(href);
+      setIsOpen(false);
+    } catch (error) {
+      console.error('Erro na navegação:', error);
+    }
+  }, [setLocation]);
 
   return (
     <>
@@ -99,7 +104,12 @@ export default function Sidebar() {
           variant="outline"
           size="icon"
           onClick={() => setIsOpen(!isOpen)}
+          onTouchEnd={() => setIsOpen(!isOpen)}
           className="bg-white shadow-md border-gray-200"
+          style={{
+            WebkitTapHighlightColor: 'transparent',
+            touchAction: 'manipulation'
+          }}
         >
           {isOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
         </Button>
@@ -132,14 +142,19 @@ export default function Sidebar() {
           <nav className="flex-1 px-4 py-6 space-y-4 overflow-y-auto" style={{ height: 'calc(100vh - 8rem)' }}>
             <div className="space-y-2">
               {navigation.map((item) => (
-                <button
+                <div
                   key={item.name}
-                  onClick={() => handleNavigation(item.href)}
-                  className={`w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 group ${
+                  className={`w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 group cursor-pointer ${
                     item.current
                       ? "bg-orange-50 text-orange-700 border border-orange-200 shadow-sm"
                       : "text-gray-700 hover:bg-gray-50 hover:text-gray-900 border border-transparent"
                   }`}
+                  onClick={() => handleNavigation(item.href)}
+                  onTouchEnd={() => handleNavigation(item.href)}
+                  style={{
+                    WebkitTapHighlightColor: 'transparent',
+                    touchAction: 'manipulation'
+                  }}
                 >
                   <item.icon className={`mr-3 h-5 w-5 transition-colors ${
                     item.current ? "text-orange-600" : "text-gray-500 group-hover:text-gray-700"
@@ -150,7 +165,7 @@ export default function Sidebar() {
                       <span className="text-xs text-gray-500 mt-0.5">{item.description}</span>
                     )}
                   </div>
-                </button>
+                </div>
               ))}
             </div>
 
