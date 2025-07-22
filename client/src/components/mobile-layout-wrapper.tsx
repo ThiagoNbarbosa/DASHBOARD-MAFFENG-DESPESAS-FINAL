@@ -39,30 +39,20 @@ export function MobileLayoutWrapper({
     };
   }, [isMobile, children]);
 
-  // Handle mobile-specific touch events and prevent bouncing
+  // Simplified touch handling - only prevent zoom
   useEffect(() => {
     if (!isMobile) return;
 
-    const preventBounce = (e: TouchEvent) => {
-      // Allow scrolling within content but prevent page bouncing
-      const target = e.target as Element;
-      if (!target.closest('.scrollable-content')) {
-        e.preventDefault();
-      }
-    };
-
-    // Prevent zoom on double tap
+    // Prevent zoom on double tap but allow normal touch interaction
     const preventZoom = (e: TouchEvent) => {
       if (e.touches.length > 1) {
         e.preventDefault();
       }
     };
 
-    document.addEventListener('touchmove', preventBounce, { passive: false });
     document.addEventListener('touchstart', preventZoom, { passive: false });
 
     return () => {
-      document.removeEventListener('touchmove', preventBounce);
       document.removeEventListener('touchstart', preventZoom);
     };
   }, [isMobile]);

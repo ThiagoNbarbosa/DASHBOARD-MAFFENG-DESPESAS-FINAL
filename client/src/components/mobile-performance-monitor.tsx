@@ -144,8 +144,8 @@ export function MobilePerformanceMonitor({
       }
     };
 
-    // Check multiple times to catch white screen issues
-    const checks = [1000, 3000, 5000];
+    // Reduced checking frequency to avoid interference
+    const checks = [2000];
     const timeouts = checks.map(delay => 
       setTimeout(checkForWhiteScreen, delay)
     );
