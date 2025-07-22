@@ -1,5 +1,8 @@
+
 import React from 'react';
+import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -11,7 +14,7 @@ interface ErrorBoundaryProps {
   fallback?: React.ComponentType<{ error?: Error; resetError: () => void }>;
 }
 
-class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
@@ -22,51 +25,50 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Error Boundary caught an error:', error, errorInfo);
-    
-    // Log para debug mobile
-    if (window.innerWidth < 768) {
-      console.error('MOBILE ERROR:', {
-        error: error.message,
-        stack: error.stack,
-        userAgent: navigator.userAgent,
-        viewport: `${window.innerWidth}x${window.innerHeight}`
-      });
-    }
+    console.error('ErrorBoundary caught an error:', error, errorInfo);
   }
 
   resetError = () => {
     this.setState({ hasError: false, error: undefined });
-  }
+  };
 
   render() {
     if (this.state.hasError) {
       if (this.props.fallback) {
-        return <this.props.fallback error={this.state.error} resetError={this.resetError} />;
+        const FallbackComponent = this.props.fallback;
+        return <FallbackComponent error={this.state.error} resetError={this.resetError} />;
       }
 
       return (
-        <div className="min-h-screen flex items-center justify-center p-4">
-          <div className="text-center max-w-md">
-            <h1 className="text-xl font-semibold text-red-600 mb-4">
-              Ops! Algo deu errado
-            </h1>
-            <p className="text-gray-600 mb-4">
-              {this.state.error?.message || 'Ocorreu um erro inesperado'}
-            </p>
-            <div className="space-y-2">
-              <Button onClick={this.resetError} className="w-full">
-                Tentar novamente
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => window.location.reload()}
-                className="w-full"
-              >
-                Recarregar página
-              </Button>
-            </div>
-          </div>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-red-600">
+                <AlertCircle className="h-5 w-5" />
+                Ops! Algo deu errado
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-gray-600">
+                Ocorreu um erro inesperado. Tente recarregar a página.
+              </p>
+              {this.state.error && (
+                <details className="text-xs text-gray-500 bg-gray-100 p-2 rounded">
+                  <summary>Detalhes técnicos</summary>
+                  <pre className="mt-2 whitespace-pre-wrap">{this.state.error.message}</pre>
+                </details>
+              )}
+              <div className="flex gap-2">
+                <Button onClick={this.resetError} variant="outline" className="flex-1">
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Tentar Novamente
+                </Button>
+                <Button onClick={() => window.location.reload()} className="flex-1">
+                  Recarregar Página
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       );
     }
@@ -75,4 +77,15 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 }
 
-export default ErrorBoundary;
+export function withErrorBoundary<P extends object>(
+  Component: React.ComponentType<P>,
+  fallback?: React.ComponentType<{ error?: Error; resetError: () => void }>
+) {
+  return function WrappedComponent(props: P) {
+    return (
+      <ErrorBoundary fallback={fallback}>
+        <Component {...props} />
+      </ErrorBoundary>
+    );
+  };
+}

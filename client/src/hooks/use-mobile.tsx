@@ -1,38 +1,63 @@
+
 import * as React from "react"
 
 const MOBILE_BREAKPOINT = 768
 
 export function useIsMobile() {
-  // Inicializar com valor padrão para evitar hydration mismatch
-  const [isMobile, setIsMobile] = React.useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      return window.innerWidth < MOBILE_BREAKPOINT;
-    }
-    return false;
-  });
+  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)
 
   React.useEffect(() => {
-    const checkMobile = () => {
-      const newIsMobile = window.innerWidth < MOBILE_BREAKPOINT;
-      if (newIsMobile !== isMobile) {
-        setIsMobile(newIsMobile);
+    // Função para verificar se é mobile
+    const checkIsMobile = () => {
+      try {
+        return window.innerWidth < MOBILE_BREAKPOINT;
+      } catch (error) {
+        console.error('Erro ao verificar viewport:', error);
+        return false;
       }
     };
 
-    // Verificar imediatamente
-    checkMobile();
-
-    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
-    mql.addEventListener("change", checkMobile);
+    // Debounce para evitar muitas chamadas
+    let timeoutId: NodeJS.Timeout;
     
-    // Listener adicional para resize (backup)
-    window.addEventListener('resize', checkMobile);
-
-    return () => {
-      mql.removeEventListener("change", checkMobile);
-      window.removeEventListener('resize', checkMobile);
+    const handleResize = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        setIsMobile(checkIsMobile());
+      }, 100);
     };
-  }, [isMobile]);
 
-  return isMobile;
+    // Verificação inicial
+    setIsMobile(checkIsMobile());
+
+    // Media query listener para melhor performance
+    const mediaQuery = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
+    
+    const handleMediaQueryChange = (e: MediaQueryListEvent) => {
+      setIsMobile(e.matches);
+    };
+
+    // Adicionar listeners
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleMediaQueryChange);
+    } else {
+      // Fallback para browsers mais antigos
+      mediaQuery.addListener(handleMediaQueryChange);
+    }
+
+    window.addEventListener('resize', handleResize);
+
+    // Cleanup
+    return () => {
+      clearTimeout(timeoutId);
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener('change', handleMediaQueryChange);
+      } else {
+        mediaQuery.removeListener(handleMediaQueryChange);
+      }
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  return !!isMobile
 }
