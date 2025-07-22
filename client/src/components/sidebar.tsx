@@ -120,8 +120,16 @@ export default function Sidebar() {
   ];
 
   const handleNavigation = (href: string) => {
-    setLocation(href);
-    setIsOpen(false);
+    try {
+      if (isMobile || mobileHelper) {
+        setIsOpen(false);
+      }
+      setLocation(href);
+    } catch (error) {
+      console.error('Navigation error:', error);
+      // Fallback to direct browser navigation
+      window.location.href = href;
+    }
   };
 
   return (

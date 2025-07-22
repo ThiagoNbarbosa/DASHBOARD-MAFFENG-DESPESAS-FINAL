@@ -46,18 +46,15 @@ export function MobileSafeNavigation({
     }
   }, [isMobile, setLocation, onNavigationStart, onNavigationComplete, onNavigationError]);
 
-  // Handle browser back/forward buttons on mobile
+  // Handle browser back/forward buttons on mobile - SIMPLIFIED
   useEffect(() => {
     if (!isMobile) return;
 
     const handlePopState = (event: PopStateEvent) => {
       try {
-        // Prevent default browser behavior that might cause white screens
-        event.preventDefault();
-        
-        // Force a controlled navigation
-        const newPath = window.location.pathname;
-        safeNavigate(newPath);
+        // Allow normal browser navigation but log for debugging
+        console.log('Navigation event:', window.location.pathname);
+        onNavigationComplete?.();
       } catch (error) {
         console.error('PopState navigation error:', error);
         onNavigationError?.(error as Error);
@@ -69,7 +66,7 @@ export function MobileSafeNavigation({
     return () => {
       window.removeEventListener('popstate', handlePopState);
     };
-  }, [isMobile, safeNavigate, onNavigationError]);
+  }, [isMobile, onNavigationComplete, onNavigationError]);
 
   // Monitor for failed navigations and provide recovery
   useEffect(() => {

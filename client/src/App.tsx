@@ -39,11 +39,6 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <MobilePerformanceMonitor />
-      <MobileCacheOptimizer />
-      <MobileSafeNavigation
-        onNavigationError={(error) => console.error('Navigation error:', error)}
-      />
       {children}
     </>
   );

@@ -1,6 +1,6 @@
 import { useState, useCallback, memo } from "react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Filter, X } from "lucide-react";
 import { ExpenseFilters } from "./expense-filters";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -65,8 +65,8 @@ const MobileFilterPanel = memo(function MobileFilterPanel({
 
   return (
     <div className="mb-4">
-      <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetTrigger asChild>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger asChild>
           <Button 
             variant="outline" 
             className="w-full justify-between bg-white border-gray-200 hover:bg-gray-50"
@@ -81,19 +81,17 @@ const MobileFilterPanel = memo(function MobileFilterPanel({
               </div>
             )}
           </Button>
-        </SheetTrigger>
+        </DialogTrigger>
         
-        <SheetContent 
-          side="bottom" 
-          className="h-[80vh] overflow-y-auto"
-          aria-describedby="mobile-filters-description"
+        <DialogContent 
+          className={`${isMobile ? 'max-w-[95vw] max-h-[90vh]' : 'max-w-2xl'} overflow-y-auto`}
         >
-          <SheetHeader className="pb-4">
-            <SheetTitle className="text-left">Filtros de Pesquisa</SheetTitle>
-            <p id="mobile-filters-description" className="text-sm text-gray-600 text-left">
+          <DialogHeader className="pb-4">
+            <DialogTitle className="text-left">Filtros de Pesquisa</DialogTitle>
+            <p className="text-sm text-gray-600 text-left">
               Use os filtros abaixo para encontrar despesas específicas
             </p>
-          </SheetHeader>
+          </DialogHeader>
           
           <div className="space-y-6">
             <ExpenseFilters
@@ -119,8 +117,8 @@ const MobileFilterPanel = memo(function MobileFilterPanel({
               </Button>
             </div>
           </div>
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 });

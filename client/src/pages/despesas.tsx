@@ -4,11 +4,9 @@ import { authApi } from "@/lib/auth";
 import Sidebar from "@/components/sidebar";
 import { AllExpensesTable } from "@/components/all-expenses-table";
 import { ExpenseFilters } from "@/components/expense-filters";
-import MobileFilterPanel from "@/components/mobile-filter-panel";
 import ExpenseModal from "@/components/expense-modal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading-spinner";
-import MobileLayoutWrapper from "@/components/mobile-layout-wrapper";
 import { FileText, TrendingUp, Calendar, Receipt, Filter } from "lucide-react";
 
 export default function Despesas() {
@@ -62,9 +60,8 @@ export default function Despesas() {
   }
 
   return (
-    <MobileLayoutWrapper loading={userLoading}>
-      <div className="min-h-screen bg-gray-50">
-        <Sidebar />
+    <div className="min-h-screen bg-gray-50">
+      <Sidebar />
         
         <div className="lg:pl-64">
         {/* Header - Otimizado para Mobile */}
@@ -118,26 +115,34 @@ export default function Despesas() {
           </Card>
         </div>
 
-        {/* Filtros - Mobile Optimized */}
+        {/* Filtros */}
         <div className="px-4 sm:px-6 lg:px-8 pb-4">
-          <MobileFilterPanel
-            filters={filters}
-            setFilters={setFilters}
-            clearFilters={clearFilters}
-            user={user}
-            totalFiltersActive={Object.values(filters).filter(v => v && v !== 'all' && v !== '').length}
-          />
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Filter className="h-5 w-5" />
+                Filtros
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ExpenseFilters
+                filters={filters}
+                setFilters={setFilters}
+                clearFilters={clearFilters}
+                user={user}
+              />
+            </CardContent>
+          </Card>
         </div>
 
         {/* Conteúdo principal */}
         <div className="px-4 sm:px-6 lg:px-8 pb-8">
           <AllExpensesTable user={user as any} filters={filters} />
         </div>
-        </div>
       </div>
 
       {/* Modal de Nova Despesa */}
       <ExpenseModal />
-    </MobileLayoutWrapper>
+    </div>
   );
 }
