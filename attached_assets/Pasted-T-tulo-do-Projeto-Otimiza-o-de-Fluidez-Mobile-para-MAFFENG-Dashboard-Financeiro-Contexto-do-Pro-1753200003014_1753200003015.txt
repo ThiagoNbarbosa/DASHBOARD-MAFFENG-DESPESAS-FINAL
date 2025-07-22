@@ -1,0 +1,99 @@
+Título do Projeto: Otimização de Fluidez Mobile para MAFFENG - Dashboard Financeiro
+
+Contexto do Problema: O aplicativo web https://dashboard-maffeng-financeiro.replit.app/ apresenta problemas de fluidez e tela branca ao ser acessado em dispositivos móveis, especialmente após interações com o menu lateral e filtros. O comportamento é inconsistente, funcionando normalmente em navegadores desktop, mas falhando no mobile, exigindo recarregamento manual da página. A análise inicial em ambiente simulado não reproduziu o erro, sugerindo que a causa pode estar relacionada a ambientes mobile reais, gerenciamento de estado, performance ou compatibilidade de navegador/dispositivo.
+
+Objetivo do Agente: Identificar a causa raiz dos problemas de fluidez e tela branca no aplicativo MAFFENG - Dashboard Financeiro em dispositivos móveis e implementar as correções necessárias para garantir uma navegação fluida e estável, sem a necessidade de recarregamento manual da página. O agente deve priorizar a estabilidade do aplicativo, evitando qualquer introdução de novos bugs ou quebras.
+
+Plano de Ação Detalhado (Passo a Passo):
+
+1.
+Acesso e Análise do Código-Fonte: O agente deve começar acessando o código-fonte do projeto no ambiente Replit. Focar em arquivos JavaScript (especialmente aqueles relacionados à lógica de UI, navegação, gerenciamento de estado e interações com filtros e menu), arquivos CSS (para responsividade e estilos) e arquivos HTML/templates.
+
+•
+Ação: Listar os principais diretórios e arquivos do projeto para ter uma visão geral da estrutura.
+
+•
+Foco: Identificar o framework frontend utilizado (ex: React, Vue, Angular, ou vanilla JS) e como as rotas e o estado da aplicação são gerenciados.
+
+
+
+2.
+Implementação de Ferramentas de Monitoramento (se aplicável e possível): Se o ambiente Replit permitir a instalação e configuração de SDKs externos, o agente deve investigar a possibilidade de integrar uma ferramenta de monitoramento de erros (ex: Sentry, se houver um plano gratuito ou de teste disponível). Isso é crucial para capturar erros que ocorrem apenas em dispositivos reais.
+
+•
+Ação: Pesquisar a documentação do Replit sobre como adicionar dependências e configurar serviços externos. Se possível, adicionar um SDK de monitoramento de erros e configurar o logging básico.
+
+•
+Alternativa: Se a integração de SDKs for complexa ou inviável, focar em adicionar console.log em pontos estratégicos para depuração manual, especialmente em blocos try-catch.
+
+
+
+3.
+Revisão de Lógica de Navegação e Gerenciamento de Estado: Analisar como as transições de página e as atualizações de UI são tratadas após interações do usuário (cliques no menu lateral, seleção de filtros). Problemas de tela branca frequentemente ocorrem quando o estado da aplicação não é atualizado corretamente ou quando há erros em componentes que deveriam ser renderizados.
+
+•
+Ação: Inspecionar o código que lida com eventos de clique nos elementos do menu e dos filtros. Verificar se há lógica assíncrona envolvida e se todas as promessas são tratadas corretamente (uso de async/await, .then().catch()).
+
+•
+Foco: Procurar por setState (ou equivalente no framework) que não esteja sendo chamado, ou chamadas de API que falham silenciosamente.
+
+
+
+4.
+Otimização de Performance (Inicial): Embora o problema principal seja a tela branca, otimizações de performance podem mitigar problemas relacionados a recursos limitados em dispositivos móveis.
+
+•
+Ação: Verificar o uso de imagens e outros ativos de mídia. Se houver imagens grandes, sugerir otimização (compressão, formatos modernos). (O agente não deve modificar imagens diretamente, apenas identificar e sugerir).
+
+•
+Ação: Verificar se há código JavaScript desnecessariamente grande ou complexo que possa ser otimizado ou dividido (code splitting).
+
+
+
+5.
+Tratamento de Erros e Robustez: Adicionar ou aprimorar blocos try-catch em funções críticas, especialmente aquelas que envolvem chamadas de rede ou manipulação complexa do DOM. Isso evita que erros não tratados causem a quebra da aplicação.
+
+•
+Ação: Identificar funções que interagem com a rede ou que manipulam muitos elementos da UI e garantir que elas tenham tratamento de erros adequado.
+
+
+
+6.
+Testes e Validação (Iterativo): Após cada alteração significativa, o agente deve realizar testes para garantir que a mudança não introduziu novos problemas e que o comportamento esperado foi restaurado.
+
+•
+Ação: Utilizar o ambiente de pré-visualização do Replit para testar as alterações. Se possível, simular o ambiente mobile (via ferramentas de desenvolvedor do navegador) para verificar a responsividade e a funcionalidade.
+
+•
+Importante: O agente DEVE testar as interações que o usuário relatou como problemáticas (cliques no menu lateral e filtros) após cada correção.
+
+
+
+Diretrizes de Segurança e Assertividade:
+
+•
+Não Quebrar o Aplicativo: Cada alteração deve ser pequena, isolada e testada. O agente DEVE evitar mudanças em larga escala sem validação incremental.
+
+•
+Controle de Versão: O agente DEVE utilizar o sistema de controle de versão do Replit (se disponível) ou fazer backups de arquivos antes de modificações significativas.
+
+•
+Comunicação: O agente DEVE comunicar cada passo importante, as alterações realizadas e os resultados dos testes.
+
+•
+Prioridade: A prioridade é resolver a tela branca e a falha de navegação. Outras otimizações são secundárias, a menos que diretamente relacionadas à causa raiz do problema principal.
+
+Critérios de Sucesso:
+
+•
+O aplicativo não exibe mais a tela branca ao interagir com o menu lateral ou filtros em dispositivos móveis.
+
+•
+A navegação entre as seções do aplicativo (Dashboard, Despesas, etc.) é fluida e não exige recarregamento manual da página.
+
+•
+As funcionalidades dos filtros (Ano, Mês, Categoria, Forma de Pagamento, Contrato) operam corretamente e atualizam o conteúdo da página sem problemas.
+
+•
+Não foram introduzidos novos bugs ou regressões no aplicativo.
+
