@@ -6,8 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { X, Loader2 } from "lucide-react";
 import { FORMAS_PAGAMENTO } from "@shared/constants";
-import { useContractsAndCategories } from "@/hooks/use-contracts-categories";
-import type { User } from "@shared/schema";
+import { useContractsAndCategories, type ContractsAndCategories } from "@/hooks/use-contracts-categories";
+import type { AuthUser } from "@/lib/auth";
 
 interface ExpenseFiltersProps {
   filters: {
@@ -21,14 +21,14 @@ interface ExpenseFiltersProps {
   };
   setFilters: (filters: any) => void;
   clearFilters: () => void;
-  user: User | null;
+  user: AuthUser | null;
 }
 
 export function ExpenseFilters({ filters, setFilters, clearFilters, user }: ExpenseFiltersProps) {
   const { data: contractsCategories, isLoading, error } = useContractsAndCategories();
 
-  const contracts = useMemo(() => contractsCategories?.contracts || [], [contractsCategories]);
-  const categories = useMemo(() => contractsCategories?.categories || [], [contractsCategories]);
+  const contracts = useMemo(() => (contractsCategories as ContractsAndCategories)?.contracts || [], [contractsCategories]);
+  const categories = useMemo(() => (contractsCategories as ContractsAndCategories)?.categories || [], [contractsCategories]);
 
   const updateFilter = useCallback((key: string, value: string) => {
     try {
@@ -116,7 +116,7 @@ export function ExpenseFilters({ filters, setFilters, clearFilters, user }: Expe
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas as categorias</SelectItem>
-              {categories.map((category) => (
+              {categories.map((category: string) => (
                 <SelectItem key={category} value={category}>
                   {category}
                 </SelectItem>
@@ -159,7 +159,7 @@ export function ExpenseFilters({ filters, setFilters, clearFilters, user }: Expe
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os contratos</SelectItem>
-              {contracts.map((contract) => (
+              {contracts.map((contract: string) => (
                 <SelectItem key={contract} value={contract}>
                   {contract}
                 </SelectItem>
