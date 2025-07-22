@@ -54,13 +54,25 @@ export const queryClient = new QueryClient({
       refetchInterval: false,
       refetchOnWindowFocus: false,
       refetchOnMount: true,
-      refetchOnReconnect: false,
-      staleTime: 1000 * 60 * 5, // 5 minutos
-      gcTime: 1000 * 60 * 10,   // 10 minutos
-      retry: 1,
+      refetchOnReconnect: true, // Reconectar em mobile é importante
+      staleTime: 1000 * 60 * 3, // 3 minutos (menor para mobile)
+      gcTime: 1000 * 60 * 8,    // 8 minutos
+      retry: (failureCount, error: any) => {
+        // Retry logic mais robusto para mobile
+        if (error?.status === 401) return false;
+        if (error?.status >= 400 && error?.status < 500) return false;
+        return failureCount < 2;
+      },
+      retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 5000),
     },
     mutations: {
-      retry: false,
+      retry: (failureCount, error: any) => {
+        // Retry em mutações para problemas de rede mobile
+        if (error?.status === 401) return false;
+        if (error?.status >= 400 && error?.status < 500) return false;
+        return failureCount < 1;
+      },
+      retryDelay: 1000,
     },
   },
 });
