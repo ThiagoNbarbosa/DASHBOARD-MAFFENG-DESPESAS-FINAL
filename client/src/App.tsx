@@ -5,6 +5,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useQuery } from "@tanstack/react-query";
 import { authApi } from "./lib/auth";
+import ErrorBoundary from "@/components/error-boundary";
+import MobilePerformanceMonitor from "@/components/mobile-performance-monitor";
+import MobileSafeNavigation from "@/components/mobile-safe-navigation";
+import MobileCacheOptimizer from "@/components/mobile-cache-optimizer";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import Despesas from "@/pages/despesas";
@@ -33,33 +37,46 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     return <Login />;
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      <MobilePerformanceMonitor />
+      <MobileCacheOptimizer />
+      <MobileSafeNavigation
+        onNavigationError={(error) => console.error('Navigation error:', error)}
+      />
+      {children}
+    </>
+  );
 }
 
 function Router() {
   return (
-    <Switch>
-      <Route path="/" component={Dashboard} />
-      <Route path="/despesas" component={Despesas} />
-      <Route path="/faturamento" component={Faturamento} />
-      <Route path="/relatorios" component={Relatorios} />
-      <Route path="/results" component={Results} />
-      <Route path="/final" component={Final} />
-      <Route component={NotFound} />
-    </Switch>
+    <ErrorBoundary>
+      <Switch>
+        <Route path="/" component={Dashboard} />
+        <Route path="/despesas" component={Despesas} />
+        <Route path="/faturamento" component={Faturamento} />
+        <Route path="/relatorios" component={Relatorios} />
+        <Route path="/results" component={Results} />
+        <Route path="/final" component={Final} />
+        <Route component={NotFound} />
+      </Switch>
+    </ErrorBoundary>
   );
 }
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <AuthProvider>
-          <Router />
-        </AuthProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <AuthProvider>
+            <Router />
+          </AuthProvider>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

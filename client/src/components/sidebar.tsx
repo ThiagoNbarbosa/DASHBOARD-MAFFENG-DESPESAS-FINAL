@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authApi } from "@/lib/auth";
 import { useResponsive } from "@/hooks/use-responsive";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { BarChart3, FileText, TrendingUp, LogOut, Menu, X, UserPlus, Receipt, Calculator, CreditCard, Download } from "lucide-react";
@@ -18,13 +19,45 @@ export default function Sidebar() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { isMobile, isTablet } = useResponsive();
+  const mobileHelper = useIsMobile();
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
-  // Fechar sidebar em mobile quando navegar
+  // Close sidebar on mobile when navigating (prevents white screen)
   useEffect(() => {
-    if (isMobile) {
+    if (isMobile || mobileHelper) {
       setIsOpen(false);
     }
-  }, [location, isMobile]);
+  }, [location, isMobile, mobileHelper]);
+
+  // Close sidebar when clicking outside on mobile
+  const handleOutsideClick = useCallback((event: Event) => {
+    if (
+      overlayRef.current &&
+      sidebarRef.current &&
+      event.target &&
+      !sidebarRef.current.contains(event.target as Node) &&
+      (isMobile || mobileHelper)
+    ) {
+      setIsOpen(false);
+    }
+  }, [isMobile, mobileHelper]);
+
+  useEffect(() => {
+    if (isOpen && (isMobile || mobileHelper)) {
+      document.addEventListener('mousedown', handleOutsideClick);
+      document.addEventListener('touchstart', handleOutsideClick);
+      
+      // Prevent body scroll when mobile sidebar is open
+      document.body.style.overflow = 'hidden';
+      
+      return () => {
+        document.removeEventListener('mousedown', handleOutsideClick);
+        document.removeEventListener('touchstart', handleOutsideClick);
+        document.body.style.overflow = '';
+      };
+    }
+  }, [isOpen, isMobile, mobileHelper, handleOutsideClick]);
 
   const { data: user } = useQuery({
     queryKey: ['/api/auth/me'],
@@ -108,15 +141,22 @@ export default function Sidebar() {
       {/* Mobile overlay */}
       {isOpen && (
         <div 
-          className="lg:hidden fixed inset-0 z-30 bg-black bg-opacity-50"
+          ref={overlayRef}
+          className="lg:hidden fixed inset-0 z-30 bg-black bg-opacity-50 backdrop-blur-sm"
           onClick={() => setIsOpen(false)}
+          aria-hidden="true"
         />
       )}
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-40 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out ${
-        isOpen ? "translate-x-0" : "-translate-x-full"
-      } lg:translate-x-0`}>
+      <div 
+        ref={sidebarRef}
+        className={`fixed inset-y-0 left-0 z-40 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        } lg:translate-x-0`}
+        role="navigation"
+        aria-label="Main navigation"
+      >
         <div className="flex h-full flex-col">
           {/* Logo/Header */}
           <div className="flex h-16 items-center justify-between px-6 border-b border-gray-200">
