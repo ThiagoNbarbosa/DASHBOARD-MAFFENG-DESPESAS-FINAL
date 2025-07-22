@@ -5,12 +5,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useQuery } from "@tanstack/react-query";
 import { authApi } from "./lib/auth";
+import { ErrorBoundary } from "@/components/error-boundary";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import Despesas from "@/pages/despesas";
-import Results from "@/pages/results";
 import Faturamento from "@/pages/faturamento";
 import Relatorios from "@/pages/relatorios";
+import Results from "@/pages/results";
 import Final from "@/pages/final";
 import NotFound from "@/pages/not-found";
 
@@ -52,14 +53,16 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <Router>
+          <Switch>
+            
+          </Switch>
+        </Router>
         <Toaster />
-        <AuthProvider>
-          <Router />
-        </AuthProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 
