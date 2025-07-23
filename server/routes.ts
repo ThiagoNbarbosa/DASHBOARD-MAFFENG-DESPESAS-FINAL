@@ -521,11 +521,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Função para normalizar categorias com inteligência
-  function normalizeCategory(rawCategory: string, existingCategories: string[]): string {
+  async function normalizeCategory(rawCategory: string, allCategories: string[]): Promise<string> {
     const category = String(rawCategory).trim().toLowerCase();
 
-    // Primeiro, verificar se existe exatamente nas categorias padrão
-    const exactMatch = CATEGORIAS.find(cat => cat.toLowerCase() === category);
+    // Primeiro, verificar se existe exatamente em todas as categorias (constantes + dinâmicas)
+    const exactMatch = allCategories.find(cat => cat.toLowerCase() === category);
     if (exactMatch) {
       return exactMatch;
     }
@@ -597,10 +597,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return categoryMappings[category];
     }
 
-    // Procurar correspondência parcial
+    // Procurar correspondência parcial nos mapeamentos
     for (const [key, value] of Object.entries(categoryMappings)) {
       if (category.includes(key) || key.includes(category)) {
         return value;
+      }
+    }
+
+    // Procurar correspondência parcial em todas as categorias
+    for (const cat of allCategories) {
+      const catLower = cat.toLowerCase();
+      if (catLower.includes(category) || category.includes(catLower)) {
+        return cat;
       }
     }
 
@@ -658,11 +666,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   // Função para validar e corrigir números de contrato
-  function normalizeContractNumber(rawContract: string): string {
+  async function normalizeContractNumber(rawContract: string, allContracts: string[]): Promise<string> {
     const contract = String(rawContract).trim();
 
-    // Primeiro, verificar se existe exatamente nos contratos padrão
-    const exactMatch = CONTRATOS.find(cont => cont.toLowerCase() === contract.toLowerCase());
+    // Primeiro, verificar se existe exatamente em todos os contratos (constantes + dinâmicos)
+    const exactMatch = allContracts.find(cont => cont.toLowerCase() === contract.toLowerCase());
     if (exactMatch) {
       return exactMatch;
     }
@@ -719,15 +727,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return contractMappings[contractLower];
     }
 
-    // Verificar correspondência parcial com os contratos padrão
-    for (const contratoBase of CONTRATOS) {
-      const contratoBaseLower = contratoBase.toLowerCase();
-      if (contratoBaseLower.includes(contractLower) || 
-          contractLower.includes(contratoBaseLower)) {
-        return contratoBase;
-      }
-    }
-
     // Verificar correspondência parcial com mapeamentos
     for (const [key, value] of Object.entries(contractMappings)) {
       if (contractLower.includes(key) || key.includes(contractLower)) {
@@ -735,8 +734,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
 
+    // Verificar correspondência parcial com todos os contratos
+    for (const contratoBase of allContracts) {
+      const contratoBaseLower = contratoBase.toLowerCase();
+      if (contratoBaseLower.includes(contractLower) || 
+          contractLower.includes(contratoBaseLower)) {
+        return contratoBase;
+      }
+    }
+
     // Se não encontrar, retornar o primeiro contrato da lista como padrão
-    return CONTRATOS[0];
+    return allContracts[0] || CONTRATOS[0];
   }
 
   // Função para normalizar banco emissor
@@ -790,6 +798,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log('Iniciando importação de Excel...');
+
+      // Buscar todos os contratos e categorias (constantes + dinâmicos)
+      const contractsAndCategories = await storage.getAllContractsAndCategories();
+      const allContracts = contractsAndCategories.contracts;
+      const allCategories = contractsAndCategories.categories;
+      
+      console.log('Contratos disponíveis:', allContracts.length);
+      console.log('Categorias disponíveis:', allCategories.length);
 
       // Obter data selecionada pelo usuário ou usar data atual
       const selectedDate = req.body.importDate;
@@ -949,7 +965,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const originalCategory = String(rawCategory || '').trim();
           let category = originalCategory;
           if (originalCategory) {
-            category = normalizeCategory(originalCategory, []);
+            category = await normalizeCategory(originalCategory, allCategories);
             if (category !== originalCategory) {
               enhancements.push(`Linha ${lineNumber}: categoria "${originalCategory}" → "${category}"`);
               enhanced++;
@@ -963,13 +979,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const originalContract = String(rawContract || '').trim();
           let contractNumber = originalContract;
           if (originalContract) {
-            contractNumber = normalizeContractNumber(originalContract);
+            contractNumber = await normalizeContractNumber(originalContract, allContracts);
             if (contractNumber !== originalContract) {
               enhancements.push(`Linha ${lineNumber}: contrato "${originalContract}" → "${contractNumber}"`);
               enhanced++;
             }
           } else {
-            contractNumber = CONTRATOS[0]; // Usar primeiro contrato como padrão
+            contractNumber = allContracts[0] || CONTRATOS[0]; // Usar primeiro contrato como padrão
             warnings.push(`Linha ${lineNumber}: contrato vazio, usando "${contractNumber}"`);
           }
 
