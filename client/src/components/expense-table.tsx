@@ -497,7 +497,7 @@ export default function ExpenseTable() {
                     <TableHead>Banco Emissor</TableHead>
                     <TableHead>Contrato</TableHead>
                     <TableHead>Data</TableHead>
-                    <TableHead>Ações</TableHead>
+                    {user?.role === "admin" && <TableHead>Ações</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -550,17 +550,17 @@ export default function ExpenseTable() {
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                            onClick={() => handleEditExpense(expense)}
+                            title="Editar despesa"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
                           {user?.role === "admin" && (
                             <>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                                onClick={() => handleEditExpense(expense)}
-                                title="Editar despesa"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
                               {!isCancelled(expense.category) && (
                                 <Button
                                   size="sm"
