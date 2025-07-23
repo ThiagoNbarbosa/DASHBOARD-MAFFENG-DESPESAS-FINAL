@@ -520,12 +520,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Função para normalizar categorias com inteligência
+  // Função para normalizar categorias com controle de descontrole
   async function normalizeCategory(rawCategory: string, allCategories: string[]): Promise<string> {
-    const category = String(rawCategory).trim().toLowerCase();
+    const category = String(rawCategory).trim();
+
+    // Se categoria estiver vazia, retornar indicador de sem categoria
+    if (!category) {
+      return '(Sem Categoria)';
+    }
+
+    const categoryLower = category.toLowerCase();
 
     // Primeiro, verificar se existe exatamente em todas as categorias (constantes + dinâmicas)
-    const exactMatch = allCategories.find(cat => cat.toLowerCase() === category);
+    const exactMatch = allCategories.find(cat => cat.toLowerCase() === categoryLower);
     if (exactMatch) {
       return exactMatch;
     }
@@ -592,28 +599,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       'geral': 'OUTROS'
     };
 
-    // Procurar correspondência direta
-    if (categoryMappings[category]) {
-      return categoryMappings[category];
+    // Procurar correspondência direta nos mapeamentos
+    if (categoryMappings[categoryLower]) {
+      return categoryMappings[categoryLower];
     }
 
     // Procurar correspondência parcial nos mapeamentos
     for (const [key, value] of Object.entries(categoryMappings)) {
-      if (category.includes(key) || key.includes(category)) {
+      if (categoryLower.includes(key) || key.includes(categoryLower)) {
         return value;
       }
     }
 
-    // Procurar correspondência parcial em todas as categorias
+    // Procurar correspondência parcial em todas as categorias cadastradas
     for (const cat of allCategories) {
       const catLower = cat.toLowerCase();
-      if (catLower.includes(category) || category.includes(catLower)) {
+      if (catLower.includes(categoryLower) || categoryLower.includes(catLower)) {
         return cat;
       }
     }
 
-    // Se não encontrar, usar OUTROS como padrão
-    return 'OUTROS';
+    // Se não encontrar correspondência, marcar como sem categoria
+    return '(Sem Categoria)';
   }
 
   // Função para normalizar métodos de pagamento
@@ -665,12 +672,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return rawMethod.charAt(0).toUpperCase() + rawMethod.slice(1).toLowerCase();
   }
 
-  // Função para validar e corrigir números de contrato
+  // Função para validar e normalizar números de contrato com controle de descontrole
   async function normalizeContractNumber(rawContract: string, allContracts: string[]): Promise<string> {
     const contract = String(rawContract).trim();
 
+    // Se contrato estiver vazio, retornar indicador de sem contrato
+    if (!contract) {
+      return '(Sem Contrato)';
+    }
+
+    const contractLower = contract.toLowerCase();
+
     // Primeiro, verificar se existe exatamente em todos os contratos (constantes + dinâmicos)
-    const exactMatch = allContracts.find(cont => cont.toLowerCase() === contract.toLowerCase());
+    const exactMatch = allContracts.find(cont => cont.toLowerCase() === contractLower);
     if (exactMatch) {
       return exactMatch;
     }
@@ -722,7 +736,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       'imposto': 'IMPOSTO'
     };
 
-    const contractLower = contract.toLowerCase();
+    // Procurar correspondência direta nos mapeamentos
     if (contractMappings[contractLower]) {
       return contractMappings[contractLower];
     }
@@ -734,7 +748,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
 
-    // Verificar correspondência parcial com todos os contratos
+    // Verificar correspondência parcial com todos os contratos cadastrados
     for (const contratoBase of allContracts) {
       const contratoBaseLower = contratoBase.toLowerCase();
       if (contratoBaseLower.includes(contractLower) || 
@@ -743,8 +757,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
 
-    // Se não encontrar, retornar o primeiro contrato da lista como padrão
-    return allContracts[0] || CONTRATOS[0];
+    // Se não encontrar correspondência, marcar como sem contrato
+    return '(Sem Contrato)';
   }
 
   // Função para normalizar banco emissor
@@ -963,30 +977,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           // Normalizar categoria
           const originalCategory = String(rawCategory || '').trim();
-          let category = originalCategory;
-          if (originalCategory) {
-            category = await normalizeCategory(originalCategory, allCategories);
-            if (category !== originalCategory) {
-              enhancements.push(`Linha ${lineNumber}: categoria "${originalCategory}" → "${category}"`);
-              enhanced++;
+          const category = await normalizeCategory(originalCategory, allCategories);
+          
+          if (category === '(Sem Categoria)') {
+            if (!originalCategory) {
+              warnings.push(`Linha ${lineNumber}: categoria vazia, marcada como "(Sem Categoria)"`);
+            } else {
+              warnings.push(`Linha ${lineNumber}: categoria "${originalCategory}" não encontrada, marcada como "(Sem Categoria)"`);
             }
-          } else {
-            category = 'OUTROS';
-            warnings.push(`Linha ${lineNumber}: categoria vazia, usando "OUTROS"`);
+          } else if (category !== originalCategory && originalCategory) {
+            enhancements.push(`Linha ${lineNumber}: categoria "${originalCategory}" → "${category}"`);
+            enhanced++;
           }
 
           // Normalizar contrato
           const originalContract = String(rawContract || '').trim();
-          let contractNumber = originalContract;
-          if (originalContract) {
-            contractNumber = await normalizeContractNumber(originalContract, allContracts);
-            if (contractNumber !== originalContract) {
-              enhancements.push(`Linha ${lineNumber}: contrato "${originalContract}" → "${contractNumber}"`);
-              enhanced++;
+          const contractNumber = await normalizeContractNumber(originalContract, allContracts);
+          
+          if (contractNumber === '(Sem Contrato)') {
+            if (!originalContract) {
+              warnings.push(`Linha ${lineNumber}: contrato vazio, marcado como "(Sem Contrato)"`);
+            } else {
+              warnings.push(`Linha ${lineNumber}: contrato "${originalContract}" não encontrado, marcado como "(Sem Contrato)"`);
             }
-          } else {
-            contractNumber = allContracts[0] || CONTRATOS[0]; // Usar primeiro contrato como padrão
-            warnings.push(`Linha ${lineNumber}: contrato vazio, usando "${contractNumber}"`);
+          } else if (contractNumber !== originalContract && originalContract) {
+            enhancements.push(`Linha ${lineNumber}: contrato "${originalContract}" → "${contractNumber}"`);
+            enhanced++;
           }
 
           // Normalizar forma de pagamento
