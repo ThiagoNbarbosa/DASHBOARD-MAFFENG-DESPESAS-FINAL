@@ -3,13 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { authApi } from "@/lib/auth";
 import Sidebar from "@/components/sidebar";
 import { AllExpensesTable } from "@/components/all-expenses-table";
-import { ModernFilters } from "@/components/ui/modern-filters";
+import { ExpenseFilters } from "@/components/expense-filters";
 import ExpenseModal from "@/components/expense-modal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading-spinner";
 import { FileText, TrendingUp, Calendar, Receipt, Filter } from "lucide-react";
 import { FORMAS_PAGAMENTO } from "@shared/constants";
-import { useContractsAndCategories } from "@/hooks/use-contracts-categories";
 
 export default function Despesas() {
   const [filters, setFilters] = useState({
@@ -23,8 +22,17 @@ export default function Despesas() {
     search: "",
   });
 
-  const handleFilterChange = (newFilters: Partial<Record<string, string>>) => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
+  const clearFilters = () => {
+    setFilters({
+      year: new Date().getFullYear().toString(),
+      month: "all",
+      category: "all",
+      contractNumber: "all",
+      paymentMethod: "all",
+      startDate: "",
+      endDate: "",
+      search: "",
+    });
   };
 
   const { data: user, isLoading: userLoading } = useQuery({
@@ -32,11 +40,7 @@ export default function Despesas() {
     queryFn: authApi.getCurrentUser,
   });
 
-  // Hook para buscar contratos e categorias completos (constantes + dinâmicos)
-  const { data: contractsAndCategories } = useContractsAndCategories();
-  
-  const contracts = contractsAndCategories?.contracts || [];
-  const categories = contractsAndCategories?.categories || [];
+
 
   if (userLoading) {
     return (
@@ -118,66 +122,22 @@ export default function Despesas() {
 
         {/* Filtros */}
         <div className="px-4 sm:px-6 lg:px-8 pb-4">
-          <ModernFilters
-            filters={filters}
-            onFilterChange={handleFilterChange}
-            filterOptions={[
-              {
-                key: "year",
-                label: "Ano",
-                placeholder: "Selecione o ano",
-                options: [
-                  { value: "all", label: "Todos os anos" },
-                  { value: "2024", label: "2024" },
-                  { value: "2025", label: "2025" },
-                  { value: "2026", label: "2026" }
-                ]
-              },
-              {
-                key: "month",
-                label: "Mês",  
-                placeholder: "Todos os meses",
-                options: [
-                  { value: "all", label: "Todos os meses" },
-                  ...Array.from({ length: 12 }, (_, i) => {
-                    const monthNumber = String(i + 1).padStart(2, '0');
-                    const monthName = new Date(2024, i, 1).toLocaleDateString('pt-BR', { month: 'long' });
-                    return { value: monthNumber, label: monthName };
-                  })
-                ]
-              },
-              {
-                key: "category",
-                label: "Categoria",
-                placeholder: "Todas as categorias", 
-                options: [
-                  { value: "all", label: "Todas as categorias" },
-                  ...categories.map(category => ({ value: category, label: category }))
-                ]
-              },
-              {
-                key: "paymentMethod",
-                label: "Forma de Pagamento",
-                placeholder: "Todas as formas",
-                options: [
-                  { value: "all", label: "Todas as formas" },
-                  ...FORMAS_PAGAMENTO.map(method => ({ value: method, label: method }))
-                ]
-              },
-              ...(user?.role === "admin" ? [{
-                key: "contractNumber" as const,
-                label: "Contrato",
-                placeholder: "Todos os contratos",
-                options: [
-                  { value: "all", label: "Todos os contratos" },
-                  ...contracts.map(contract => ({ value: contract, label: contract }))
-                ]
-              }] : [])
-            ]}
-            searchPlaceholder="Buscar por item, categoria, contrato ou forma de pagamento..."
-            showExport={false}
-            title="Filtros de Despesas"
-          />
+          <Card className="rounded-2xl shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                <Filter className="h-5 w-5" />
+                Filtros de Despesas
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ExpenseFilters
+                filters={filters}
+                setFilters={setFilters}
+                clearFilters={clearFilters}
+                user={user}
+              />
+            </CardContent>
+          </Card>
         </div>
 
         {/* Conteúdo principal */}
