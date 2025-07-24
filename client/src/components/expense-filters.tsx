@@ -3,7 +3,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { X, Filter } from "lucide-react";
+import { X, Filter, Search } from "lucide-react";
 import { FORMAS_PAGAMENTO } from "@shared/constants";
 import { useContractsAndCategories } from "@/hooks/use-contracts-categories";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -18,6 +18,7 @@ interface ExpenseFiltersProps {
     paymentMethod: string;
     startDate: string;
     endDate: string;
+    search?: string;
   };
   setFilters: (filters: any) => void;
   clearFilters: () => void;
@@ -133,7 +134,33 @@ export function ExpenseFilters({ filters, setFilters, clearFilters, user }: Expe
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Barra de Pesquisa */}
+      <div className="mt-4">
+        <Label htmlFor="searchFilter">Buscar</Label>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            id="searchFilter"
+            type="text"
+            placeholder="Buscar por agência, código ou chamado..."
+            value={filters.search || ""}
+            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+            className="pl-10 pr-10"
+          />
+          {filters.search && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setFilters({ ...filters, search: "" })}
+              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
         <div>
           <Label htmlFor="startDate">Data Inicial</Label>
           <Input
