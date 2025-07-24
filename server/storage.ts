@@ -24,10 +24,19 @@ export interface IStorage {
     paymentMethod?: string;
     startDate?: string;
     endDate?: string;
+    search?: string;
   }): Promise<Expense[]>;
   getExpensesPaginated(filters?: {
     userId?: number;
     userIds?: number[];
+    year?: string;
+    month?: string;
+    category?: string;
+    contractNumber?: string;
+    paymentMethod?: string;
+    startDate?: string;
+    endDate?: string;
+    search?: string;
     limit?: number;
     offset?: number;
   }): Promise<{
@@ -173,6 +182,7 @@ export class DatabaseStorage implements IStorage {
     paymentMethod?: string;
     startDate?: string;
     endDate?: string;
+    search?: string;
   }): Promise<Expense[]> {
     try {
       let query = db.select().from(expenses);
@@ -212,6 +222,17 @@ export class DatabaseStorage implements IStorage {
         conditions.push(eq(expenses.paymentMethod, filters.paymentMethod));
       }
 
+      // Filtro de busca por múltiplos campos
+      if (filters?.search) {
+        const searchTerm = `%${filters.search}%`;
+        conditions.push(or(
+          like(expenses.item, searchTerm),
+          like(expenses.category, searchTerm), 
+          like(expenses.contractNumber, searchTerm),
+          like(expenses.paymentMethod, searchTerm)
+        ));
+      }
+
       if (conditions.length > 0) {
         query = query.where(and(...conditions)) as any;
       }
@@ -233,6 +254,7 @@ export class DatabaseStorage implements IStorage {
     paymentMethod?: string;
     startDate?: string;
     endDate?: string;
+    search?: string;
     limit?: number;
     offset?: number;
   }): Promise<{
@@ -293,6 +315,17 @@ export class DatabaseStorage implements IStorage {
       if (filters?.endDate) {
         const endDate = new Date(`${filters.endDate}T23:59:59.999Z`);
         conditions.push(lte(expenses.paymentDate, endDate));
+      }
+
+      // Filtro de busca por múltiplos campos
+      if (filters?.search) {
+        const searchTerm = `%${filters.search}%`;
+        conditions.push(or(
+          like(expenses.item, searchTerm),
+          like(expenses.category, searchTerm), 
+          like(expenses.contractNumber, searchTerm),
+          like(expenses.paymentMethod, searchTerm)
+        ));
       }
 
       // Get total count
