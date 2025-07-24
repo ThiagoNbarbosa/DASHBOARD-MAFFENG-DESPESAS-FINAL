@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, Ban, Trash2, Edit, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useResponsive } from "@/hooks/use-responsive";
@@ -32,6 +33,7 @@ export function AllExpensesTable({ user, filters }: AllExpensesTableProps) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [expenseUser, setExpenseUser] = useState<User | null>(null);
+  const [selectedExpenses, setSelectedExpenses] = useState<string[]>([]);
   const queryClient = useQueryClient();
   const { isMobile, isTablet } = useResponsive();
 
@@ -110,6 +112,48 @@ export function AllExpensesTable({ user, filters }: AllExpensesTableProps) {
     },
   });
 
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      await Promise.all(ids.map(id => apiRequest(`/api/expenses/${id}`, 'DELETE')));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/expenses/paginated'] });
+      setSelectedExpenses([]);
+      toast({
+        title: "Despesas excluídas",
+        description: `${selectedExpenses.length} despesas foram excluídas com sucesso.`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao excluir despesas",
+        description: error.message || "Ocorreu um erro ao excluir as despesas.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const bulkCancelMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      await Promise.all(ids.map(id => apiRequest(`/api/expenses/${id}/cancel`, 'PATCH')));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/expenses/paginated'] });
+      setSelectedExpenses([]);
+      toast({
+        title: "Despesas canceladas",
+        description: `${selectedExpenses.length} despesas foram canceladas com sucesso.`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao cancelar despesas",
+        description: error.message || "Ocorreu um erro ao cancelar as despesas.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleViewDetails = async (expense: Expense) => {
     setSelectedExpense(expense);
     setIsDetailsModalOpen(true);
@@ -142,6 +186,47 @@ export function AllExpensesTable({ user, filters }: AllExpensesTableProps) {
       deleteMutation.mutate(id);
     }
   };
+
+  const handleSelectExpense = (expenseId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedExpenses(prev => [...prev, expenseId]);
+    } else {
+      setSelectedExpenses(prev => prev.filter(id => id !== expenseId));
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const selectableExpenses = expenses.filter((expense: Expense) => 
+        user?.role === "admin" || !isCancelled(expense.category)
+      );
+      setSelectedExpenses(selectableExpenses.map((expense: Expense) => expense.id));
+    } else {
+      setSelectedExpenses([]);
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedExpenses.length === 0) return;
+    
+    if (window.confirm(`Tem certeza que deseja excluir ${selectedExpenses.length} despesas? Esta ação não pode ser desfeita.`)) {
+      bulkDeleteMutation.mutate(selectedExpenses);
+    }
+  };
+
+  const handleBulkCancel = () => {
+    if (selectedExpenses.length === 0) return;
+    
+    if (window.confirm(`Tem certeza que deseja cancelar ${selectedExpenses.length} despesas?`)) {
+      bulkCancelMutation.mutate(selectedExpenses);
+    }
+  };
+
+  const isAllSelected = expenses.length > 0 && selectedExpenses.length === expenses.filter((expense: Expense) => 
+    user?.role === "admin" || !isCancelled(expense.category)
+  ).length;
+  
+  const isSomeSelected = selectedExpenses.length > 0 && !isAllSelected;
 
   const isCancelled = (category: string) => {
     return category.startsWith('[CANCELADA]');
@@ -184,12 +269,42 @@ export function AllExpensesTable({ user, filters }: AllExpensesTableProps) {
     <div className="space-y-6">
       <Card className="shadow-sm">
         <CardHeader>
-          <CardTitle className="text-base font-semibold">
-            Todas as Despesas
-            <span className="ml-2 text-sm font-normal text-gray-500">
-              ({totalItems} {totalItems === 1 ? 'despesa' : 'despesas'})
-            </span>
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base font-semibold">
+              Todas as Despesas
+              <span className="ml-2 text-sm font-normal text-gray-500">
+                ({totalItems} {totalItems === 1 ? 'despesa' : 'despesas'})
+              </span>
+            </CardTitle>
+            
+            {selectedExpenses.length > 0 && user?.role === "admin" && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-500">
+                  {selectedExpenses.length} selecionada{selectedExpenses.length !== 1 ? 's' : ''}
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-orange-600 border-orange-600 hover:bg-orange-50"
+                  onClick={handleBulkCancel}
+                  disabled={bulkCancelMutation.isPending}
+                >
+                  <Ban className="h-4 w-4 mr-1" />
+                  Cancelar Selecionadas
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-red-600 border-red-600 hover:bg-red-50"
+                  onClick={handleBulkDelete}
+                  disabled={bulkDeleteMutation.isPending}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Excluir Selecionadas
+                </Button>
+              </div>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -204,6 +319,20 @@ export function AllExpensesTable({ user, filters }: AllExpensesTableProps) {
                 <Table className="min-w-full">
                   <TableHeader>
                     <TableRow>
+                      {user?.role === "admin" && (
+                        <TableHead className="w-12">
+                          <Checkbox
+                            checked={isAllSelected}
+                            onCheckedChange={handleSelectAll}
+                            ref={(el) => {
+                              if (el) {
+                                el.indeterminate = isSomeSelected;
+                              }
+                            }}
+                            title="Selecionar todas as despesas"
+                          />
+                        </TableHead>
+                      )}
                       <TableHead>Item</TableHead>
                       <TableHead>Categoria</TableHead>
                       <TableHead>Valor</TableHead>
@@ -220,6 +349,16 @@ export function AllExpensesTable({ user, filters }: AllExpensesTableProps) {
                         key={expense.id}
                         className={isCancelled(expense.category) ? "bg-red-50" : ""}
                       >
+                        {user?.role === "admin" && (
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedExpenses.includes(expense.id)}
+                              onCheckedChange={(checked) => handleSelectExpense(expense.id, checked as boolean)}
+                              disabled={isCancelled(expense.category)}
+                              title={isCancelled(expense.category) ? "Despesa cancelada não pode ser selecionada" : "Selecionar despesa"}
+                            />
+                          </TableCell>
+                        )}
                         <TableCell>
                           <div className={`font-medium ${isCancelled(expense.category) ? "text-red-600" : ""}`}>
                             {expense.item}
