@@ -6,11 +6,9 @@ import { useResponsive } from "@/hooks/use-responsive";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { BarChart3, FileText, TrendingUp, LogOut, Menu, X, UserPlus, Receipt, Calculator, CreditCard, Download } from "lucide-react";
+import { BarChart3, FileText, TrendingUp, LogOut, Menu, X, UserPlus, Receipt, Calculator, CreditCard, Download, Settings, Building, Tag } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import SignupModal from "@/components/signup-modal";
-import AddContractModal from "@/components/add-contract-modal";
-import AddCategoryModal from "@/components/add-category-modal";
 import logoPath from "@assets/63f5d089-94db-4968-a76f-00d77b188818 (1)_1750213898122.png";
 
 export default function Sidebar() {
@@ -103,6 +101,13 @@ export default function Sidebar() {
       icon: Download,
       current: location === "/relatorios",
       description: "Exportar dados filtrados"
+    },
+    {
+      name: "Configurações",
+      href: "/configuracoes",
+      icon: Settings,
+      current: location === "/configuracoes",
+      description: "Contratos e categorias"
     },
     ...(user?.role === "admin" ? [{
       name: "Resultados",
@@ -206,8 +211,6 @@ export default function Sidebar() {
                 <p className="text-xs font-medium text-gray-500 mb-2 px-3">ADMINISTRAÇÃO</p>
                 <div className="space-y-2">
                   <SignupModal />
-                  <AddContractModal />
-                  <AddCategoryModal />
                 </div>
               </div>
             )}

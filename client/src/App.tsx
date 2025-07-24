@@ -16,6 +16,7 @@ import Results from "@/pages/results";
 import Faturamento from "@/pages/faturamento";
 import Relatorios from "@/pages/relatorios";
 import Final from "@/pages/final";
+import Configuracoes from "@/pages/configuracoes";
 import NotFound from "@/pages/not-found";
 
 function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -54,6 +55,7 @@ function Router() {
         <Route path="/relatorios" component={Relatorios} />
         <Route path="/results" component={Results} />
         <Route path="/final" component={Final} />
+        <Route path="/configuracoes" component={Configuracoes} />
         <Route component={NotFound} />
       </Switch>
     </ErrorBoundary>
