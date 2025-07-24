@@ -34,6 +34,9 @@ export default function Despesas() {
 
   // Hook para buscar contratos e categorias completos (constantes + dinâmicos)
   const { data: contractsAndCategories } = useContractsAndCategories();
+  
+  const contracts = contractsAndCategories?.contracts || [];
+  const categories = contractsAndCategories?.categories || [];
 
   if (userLoading) {
     return (
@@ -149,7 +152,7 @@ export default function Despesas() {
                 placeholder: "Todas as categorias", 
                 options: [
                   { value: "all", label: "Todas as categorias" },
-                  ...(contractsAndCategories?.categories || []).map(category => ({ value: category, label: category }))
+                  ...categories.map(category => ({ value: category, label: category }))
                 ]
               },
               {
@@ -167,7 +170,7 @@ export default function Despesas() {
                 placeholder: "Todos os contratos",
                 options: [
                   { value: "all", label: "Todos os contratos" },
-                  ...(contractsAndCategories?.contracts || []).map(contract => ({ value: contract, label: contract }))
+                  ...contracts.map(contract => ({ value: contract, label: contract }))
                 ]
               }] : [])
             ]}
