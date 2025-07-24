@@ -449,7 +449,7 @@ export default function Relatorios() {
                           formatter: (value) => new Intl.NumberFormat('pt-BR', {
                             style: 'currency',
                             currency: 'BRL'
-                          }).format(value)
+                          }).format(parseFloat(value) || 0)
                         },
                         { key: 'paymentMethod', label: 'Forma Pagamento', align: 'center' },
                         { key: 'contractNumber', label: 'Contrato', align: 'left' },
@@ -467,28 +467,40 @@ export default function Relatorios() {
                         }
                       ]
                     }}
-                    customCalculations={(data) => (
-                      <div className="space-y-1">
-                        <p className="text-sm">
-                          <strong>Total Geral:</strong> {new Intl.NumberFormat('pt-BR', {
-                            style: 'currency',
-                            currency: 'BRL'
-                          }).format(data.reduce((sum, item) => sum + (item.value || 0), 0))}
-                        </p>
-                        <p className="text-sm">
-                          <strong>Despesas Ativas:</strong> {data.filter(item => !item.category?.includes('[CANCELADA]')).length}
-                        </p>
-                        <p className="text-sm">
-                          <strong>Despesas Canceladas:</strong> {data.filter(item => item.category?.includes('[CANCELADA]')).length}
-                        </p>
-                        <p className="text-sm">
-                          <strong>Valor Médio:</strong> {data.length > 0 ? new Intl.NumberFormat('pt-BR', {
-                            style: 'currency',
-                            currency: 'BRL'
-                          }).format(data.reduce((sum, item) => sum + (item.value || 0), 0) / data.length) : 'R$ 0,00'}
-                        </p>
-                      </div>
-                    )}
+                    customCalculations={(data) => {
+                      const totalGeral = data.reduce((sum, item) => {
+                        const value = parseFloat(item.value) || 0;
+                        return sum + value;
+                      }, 0);
+                      
+                      const despesasAtivas = data.filter(item => !item.category?.includes('[CANCELADA]'));
+                      const despesasCanceladas = data.filter(item => item.category?.includes('[CANCELADA]'));
+                      
+                      const valorMedio = data.length > 0 ? totalGeral / data.length : 0;
+                      
+                      return (
+                        <div className="space-y-1">
+                          <p className="text-sm">
+                            <strong>Total Geral:</strong> {new Intl.NumberFormat('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL'
+                            }).format(totalGeral)}
+                          </p>
+                          <p className="text-sm">
+                            <strong>Despesas Ativas:</strong> {despesasAtivas.length}
+                          </p>
+                          <p className="text-sm">
+                            <strong>Despesas Canceladas:</strong> {despesasCanceladas.length}
+                          </p>
+                          <p className="text-sm">
+                            <strong>Valor Médio:</strong> {new Intl.NumberFormat('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL'
+                            }).format(valorMedio)}
+                          </p>
+                        </div>
+                      );
+                    }}
                   />
                 ) : (
                   <Button 

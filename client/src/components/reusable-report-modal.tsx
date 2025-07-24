@@ -67,10 +67,10 @@ export function ReusableReportModal({
         allowTaint: true,
         backgroundColor: '#ffffff'
       });
-      
+
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
-      
+
       const imgWidth = 210;
       const pageHeight = 295;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
@@ -95,7 +95,7 @@ export function ReusableReportModal({
 
   const formatFiltersText = () => {
     if (!filters || Object.keys(filters).length === 0) return 'Todos os registros';
-    
+
     const activeFilters: string[] = [];
     Object.entries(filters).forEach(([key, value]) => {
       if (value && value !== 'all' && value !== '') {
@@ -113,7 +113,7 @@ export function ReusableReportModal({
         activeFilters.push(`${label}: ${value}`);
       }
     });
-    
+
     return activeFilters.length > 0 ? activeFilters.join(' | ') : 'Todos os registros';
   };
 
@@ -162,7 +162,7 @@ export function ReusableReportModal({
       <DialogTrigger asChild>
         {triggerButton || defaultTrigger}
       </DialogTrigger>
-      
+
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
@@ -189,7 +189,7 @@ export function ReusableReportModal({
                 {companyName} - {new Date().getFullYear()}
               </h2>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-8 mt-6">
               <div>
                 <h3 className="font-semibold text-gray-700 mb-2">DADOS DO RELATÓRIO</h3>
@@ -197,7 +197,7 @@ export function ReusableReportModal({
                 <p className="text-sm"><strong>Filtros Aplicados:</strong> {formatFiltersText()}</p>
                 <p className="text-sm"><strong>Total de Registros:</strong> {data.length}</p>
               </div>
-              
+
               <div>
                 <h3 className="font-semibold text-gray-700 mb-2">RESUMO FINANCEIRO</h3>
                 {customCalculations ? customCalculations(data) : (
