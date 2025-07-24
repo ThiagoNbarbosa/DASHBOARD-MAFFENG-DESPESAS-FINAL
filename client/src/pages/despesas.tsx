@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading-spinner";
 import { FileText, TrendingUp, Calendar, Receipt, Filter } from "lucide-react";
 import { FORMAS_PAGAMENTO } from "@shared/constants";
+import { useContractsAndCategories } from "@/hooks/use-contracts-categories";
 
 export default function Despesas() {
   const [filters, setFilters] = useState({
@@ -31,25 +32,8 @@ export default function Despesas() {
     queryFn: authApi.getCurrentUser,
   });
 
-  // Query para buscar categorias
-  const { data: categories = [] } = useQuery({
-    queryKey: ['/api/categories'],
-    queryFn: async () => {
-      const response = await fetch('/api/categories');
-      if (!response.ok) throw new Error('Erro ao carregar categorias');
-      return response.json();
-    },
-  });
-
-  // Query para buscar contratos
-  const { data: contracts = [] } = useQuery({
-    queryKey: ['/api/contracts'],
-    queryFn: async () => {
-      const response = await fetch('/api/contracts');
-      if (!response.ok) throw new Error('Erro ao carregar contratos');
-      return response.json();
-    },
-  });
+  // Hook para buscar contratos e categorias completos (constantes + dinâmicos)
+  const { data: contractsAndCategories } = useContractsAndCategories();
 
   if (userLoading) {
     return (
@@ -165,7 +149,7 @@ export default function Despesas() {
                 placeholder: "Todas as categorias", 
                 options: [
                   { value: "all", label: "Todas as categorias" },
-                  ...categories.map((category: any) => ({ value: category.name, label: category.name }))
+                  ...(contractsAndCategories?.categories || []).map(category => ({ value: category, label: category }))
                 ]
               },
               {
@@ -183,7 +167,7 @@ export default function Despesas() {
                 placeholder: "Todos os contratos",
                 options: [
                   { value: "all", label: "Todos os contratos" },
-                  ...contracts.map((contract: any) => ({ value: contract.name, label: contract.name }))
+                  ...(contractsAndCategories?.contracts || []).map(contract => ({ value: contract, label: contract }))
                 ]
               }] : [])
             ]}
