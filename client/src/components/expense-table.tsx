@@ -75,12 +75,6 @@ export default function ExpenseTable() {
     setIsDetailsModalOpen(true);
   };
 
-  // Função para abrir modal de edição
-  const handleEditExpense = (expense: Expense) => {
-    setSelectedExpense(expense);
-    setIsEditModalOpen(true);
-  };
-
   // Query unificada para despesas (reduz consultas duplicadas)
   const hasActiveFilters = filters.year !== "all" || filters.month !== "all" || filters.category !== "all" || filters.contractNumber !== "" || filters.paymentMethod !== "all" || filters.startDate !== "" || filters.endDate !== "";
 
@@ -111,57 +105,6 @@ export default function ExpenseTable() {
   const filteredExpenses = hasActiveFilters ? allExpenses : [];
   const recentExpenses = hasActiveFilters ? [] : allExpenses;
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => apiRequest(`/api/expenses/${id}`, 'DELETE'),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/expenses'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
-      toast({
-        title: "Despesa excluída",
-        description: "A despesa foi excluída com sucesso.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Erro ao excluir",
-        description: "Não foi possível excluir a despesa.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const cancelMutation = useMutation({
-    mutationFn: (id: string) => apiRequest(`/api/expenses/${id}/cancel`, 'PATCH'),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/expenses'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
-      toast({
-        title: "Despesa cancelada",
-        description: "A despesa foi cancelada com sucesso.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Erro ao cancelar",
-        description: "Não foi possível cancelar a despesa.",
-        variant: "destructive",
-      });
-    },
-  });
-
-
-
-  const handleCancel = (id: string) => {
-    if (confirm("Tem certeza que deseja cancelar esta despesa?")) {
-      cancelMutation.mutate(id);
-    }
-  };
-
-  const handleDelete = (id: string) => {
-    if (confirm("Tem certeza que deseja excluir esta despesa? Esta ação não pode ser desfeita.")) {
-      deleteMutation.mutate(id);
-    }
-  };
 
   const isCancelled = (category: string) => {
     return category.startsWith('[CANCELADA]');
@@ -427,47 +370,6 @@ export default function ExpenseTable() {
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
-                            {user?.role === "admin" && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                                onClick={() => handleEditExpense(expense)}
-                                title="Editar despesa"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                            )}
-                            {user?.role === "admin" && (
-                              <>
-                                {!isCancelled(expense.category) && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="text-orange-600 border-orange-600 hover:bg-orange-50"
-                                    onClick={() => handleCancel(expense.id)}
-                                    disabled={cancelMutation.isPending}
-                                    title="Cancelar despesa"
-                                  >
-                                    <Ban className="h-4 w-4" />
-                                  </Button>
-                                )}
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="text-red-600 border-red-600 hover:bg-red-50"
-                                  onClick={() => {
-                                    if (confirm('Tem certeza que deseja excluir esta despesa?')) {
-                                      handleDelete(expense.id);
-                                    }
-                                  }}
-                                  disabled={deleteMutation.isPending}
-                                  title="Excluir despesa"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </>
-                            )}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -557,41 +459,6 @@ export default function ExpenseTable() {
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                            onClick={() => handleEditExpense(expense)}
-                            title="Editar despesa"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          {user?.role === "admin" && (
-                            <>
-                              {!isCancelled(expense.category) && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="text-orange-600 border-orange-600 hover:bg-orange-50"
-                                  onClick={() => handleCancel(expense.id)}
-                                  disabled={cancelMutation.isPending}
-                                  title="Cancelar despesa"
-                                >
-                                  <Ban className="h-4 w-4" />
-                                </Button>
-                              )}
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-red-600 border-red-600 hover:bg-red-50"
-                                onClick={() => handleDelete(expense.id)}
-                                disabled={deleteMutation.isPending}
-                                title="Excluir despesa"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </>
-                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -679,14 +546,7 @@ export default function ExpenseTable() {
           )}
         </DialogContent>
       </Dialog>
-
-      {/* Modal de Edição da Despesa */}
-      <EditExpenseModal 
-        expense={selectedExpense}
-        open={isEditModalOpen}
-        onOpenChange={setIsEditModalOpen}
-      />
-
     </div>
   );
 }
+```
