@@ -42,7 +42,7 @@ export default function ExpenseTable() {
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -83,14 +83,14 @@ export default function ExpenseTable() {
 
   // Query unificada para despesas (reduz consultas duplicadas)
   const hasActiveFilters = filters.year !== "all" || filters.month !== "all" || filters.category !== "all" || filters.contractNumber !== "" || filters.paymentMethod !== "all" || filters.startDate !== "" || filters.endDate !== "";
-  
+
   const { data: allExpenses = [], isLoading } = useQuery<Expense[]>({
     queryKey: ['/api/expenses', hasActiveFilters ? 'filtered' : 'recent', filters],
     queryFn: async () => {
       if (!hasActiveFilters) {
         return await apiRequest('/api/expenses', 'GET');
       }
-      
+
       const params = new URLSearchParams();
       if (filters.year && filters.year !== "all") params.set('year', filters.year);
       if (filters.month && filters.month !== "all") {
@@ -102,7 +102,7 @@ export default function ExpenseTable() {
       if (filters.paymentMethod && filters.paymentMethod !== "all") params.set('paymentMethod', filters.paymentMethod);
       if (filters.startDate) params.set('startDate', filters.startDate);
       if (filters.endDate) params.set('endDate', filters.endDate);
-      
+
       return await apiRequest(`/api/expenses?${params}`, 'GET');
     },
   });
@@ -149,7 +149,7 @@ export default function ExpenseTable() {
     },
   });
 
-  
+
 
   const handleCancel = (id: string) => {
     if (confirm("Tem certeza que deseja cancelar esta despesa?")) {
@@ -167,7 +167,7 @@ export default function ExpenseTable() {
     return category.startsWith('[CANCELADA]');
   };
 
-  
+
 
   const clearFilters = () => {
     setFilters({ year: "all", month: "all", category: "all", contractNumber: "", paymentMethod: "all", startDate: "", endDate: "" });
@@ -180,7 +180,7 @@ export default function ExpenseTable() {
     if (category.startsWith('[CANCELADA]')) {
       return "bg-red-50 text-red-600 border border-red-200";
     }
-    
+
     const colors: Record<string, string> = {
       "Material": "bg-blue-100 text-blue-800",
       "Pagamento funcionários": "bg-green-100 text-green-800",
@@ -189,7 +189,7 @@ export default function ExpenseTable() {
       "Aluguel de ferramentas": "bg-purple-100 text-purple-800",
       "Manutenção em veículo": "bg-orange-100 text-orange-800",
     };
-    
+
     // Remove the [CANCELADA] prefix for color matching
     const cleanCategory = category.replace('[CANCELADA] ', '');
     return colors[cleanCategory] || "bg-gray-100 text-gray-800";
@@ -208,6 +208,13 @@ export default function ExpenseTable() {
       default:
         return "💰";
     }
+  };
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
   };
 
   return (
@@ -602,7 +609,7 @@ export default function ExpenseTable() {
           <DialogHeader>
             <DialogTitle>Detalhes da Despesa</DialogTitle>
           </DialogHeader>
-          
+
           {selectedExpense && (
             <div className="space-y-4">
               {/* Nome do usuário responsável */}
@@ -679,7 +686,7 @@ export default function ExpenseTable() {
         open={isEditModalOpen}
         onOpenChange={setIsEditModalOpen}
       />
-      
+
     </div>
   );
 }

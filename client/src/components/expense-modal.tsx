@@ -33,7 +33,7 @@ export default function ExpenseModal() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: contractsCategories } = useContractsAndCategories();
@@ -44,14 +44,14 @@ export default function ExpenseModal() {
   const createExpenseMutation = useMutation({
     mutationFn: async (data: ExpenseFormData) => {
       let imageUrl = "";
-      
+
       console.log('Estado do imageFile antes do upload:', imageFile);
       console.log('Dados do formulário:', data);
-      
+
       if (imageFile) {
         try {
           console.log('Iniciando processo de upload...');
-          
+
           // Converter arquivo para base64
           const reader = new FileReader();
           const fileDataPromise = new Promise<string>((resolve, reject) => {
@@ -61,7 +61,7 @@ export default function ExpenseModal() {
           });
 
           const fileData = await fileDataPromise;
-          
+
           console.log('Enviando arquivo para o servidor...');
 
           // Enviar para o servidor backend que tem service role key
@@ -70,12 +70,12 @@ export default function ExpenseModal() {
             filename: imageFile.name
           });
           imageUrl = result.url;
-          
+
           console.log('Upload concluído, URL:', imageUrl);
         } catch (error) {
           console.error("Erro no upload da imagem:", error);
           console.error("Detalhes do erro:", JSON.stringify(error, null, 2));
-          
+
           // Tentar identificar o tipo específico de erro
           if (error && typeof error === 'object' && 'message' in error) {
             const errorMessage = (error as any).message;
@@ -85,7 +85,7 @@ export default function ExpenseModal() {
               throw new Error("Sem permissão para upload de imagens.");
             }
           }
-          
+
           throw new Error("Falha no upload da imagem. Verifique sua conexão e tente novamente.");
         }
       } else {
@@ -105,7 +105,7 @@ export default function ExpenseModal() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/expenses'] });
       queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
-      
+
       // Use setTimeout to ensure DOM is stable before showing toast
       setTimeout(() => {
         toast({
@@ -113,13 +113,13 @@ export default function ExpenseModal() {
           description: "A despesa foi criada com sucesso.",
         });
       }, 100);
-      
+
       setOpen(false);
       resetForm();
     },
     onError: (error: any) => {
       console.error("Erro ao criar despesa:", error);
-      
+
       // Use setTimeout to ensure DOM is stable before showing toast
       setTimeout(() => {
         toast({
@@ -148,7 +148,7 @@ export default function ExpenseModal() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!imageFile) {
       setTimeout(() => {
         toast({
@@ -179,7 +179,7 @@ export default function ExpenseModal() {
     if (!value) return "";
     const numericValue = parseFloat(value);
     if (isNaN(numericValue)) return "";
-    
+
     return numericValue.toLocaleString('pt-BR', {
       style: 'currency',
       currency: 'BRL',
@@ -264,7 +264,9 @@ export default function ExpenseModal() {
                   <SelectValue placeholder="Selecione a categoria" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((category) => (
+                  <SelectItem value="">Selecione uma categoria</SelectItem>
+                  <SelectItem value="(Sem Categoria)">(Sem Categoria)</SelectItem>
+                  {categories.filter(cat => cat !== '(Sem Categoria)').map((category) => (
                     <SelectItem key={category} value={category}>
                       {category}
                     </SelectItem>
@@ -296,16 +298,18 @@ export default function ExpenseModal() {
                   <SelectValue placeholder="Selecione o contrato" />
                 </SelectTrigger>
                 <SelectContent>
-                  {contracts.map((contrato) => (
-                    <SelectItem key={contrato} value={contrato}>
-                      {contrato}
+                  <SelectItem value="">Selecione um contrato</SelectItem>
+                  <SelectItem value="(Sem Contrato)">(Sem Contrato)</SelectItem>
+                  {contracts.filter(cont => cont !== '(Sem Contrato)').map((contract) => (
+                    <SelectItem key={contract} value={contract}>
+                      {contract}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            
+
 
             <div>
               <Label htmlFor="paymentDate">Data de Pagamento *</Label>

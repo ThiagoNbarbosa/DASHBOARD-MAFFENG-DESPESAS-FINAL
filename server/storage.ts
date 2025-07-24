@@ -780,20 +780,33 @@ export class DatabaseStorage implements IStorage {
   }> {
     try {
       const [dbContracts, dbCategories] = await Promise.all([
-        this.getContracts(),
-        this.getCategories()
+        this.getContracts().catch(err => {
+          console.warn('Erro ao buscar contratos do DB, usando apenas constantes:', err);
+          return [];
+        }),
+        this.getCategories().catch(err => {
+          console.warn('Erro ao buscar categorias do DB, usando apenas constantes:', err);
+          return [];
+        })
       ]);
 
-      // Combine database items with constants
+      // Combine database items with constants, removing duplicates
       const allContracts = [...CONTRATOS, ...dbContracts.map(c => c.name)];
       const allCategories = [...CATEGORIAS, ...dbCategories.map(c => c.name)];
 
+      // Remove duplicates and sort
+      const uniqueContracts = [...new Set(allContracts)].sort();
+      const uniqueCategories = [...new Set(allCategories)].sort();
+
+      console.log(`Contratos totais disponíveis: ${uniqueContracts.length} (${CONTRATOS.length} constantes + ${dbContracts.length} dinâmicos)`);
+      console.log(`Categorias totais disponíveis: ${uniqueCategories.length} (${CATEGORIAS.length} constantes + ${dbCategories.length} dinâmicas)`);
+
       return {
-        contracts: [...new Set(allContracts)].sort(),
-        categories: [...new Set(allCategories)].sort()
+        contracts: uniqueContracts,
+        categories: uniqueCategories
       };
     } catch (error) {
-      console.error('Erro ao buscar contratos e categorias:', error);
+      console.error('Erro crítico ao buscar contratos e categorias:', error);
       return {
         contracts: [...CONTRATOS],
         categories: [...CATEGORIAS]

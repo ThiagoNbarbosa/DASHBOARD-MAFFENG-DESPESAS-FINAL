@@ -80,7 +80,8 @@ export function ExpenseFilters({ filters, setFilters, clearFilters, user }: Expe
             </SelectTrigger>
             <SelectContent className="z-[9999] max-h-[200px] overflow-y-auto">
               <SelectItem value="all">Todas as categorias</SelectItem>
-              {categories.map((category: string) => (
+              <SelectItem value="(Sem Categoria)">(Sem Categoria)</SelectItem>
+              {categories.filter(cat => cat !== '(Sem Categoria)').map((category) => (
                 <SelectItem key={category} value={category}>
                   {category}
                 </SelectItem>
@@ -114,7 +115,8 @@ export function ExpenseFilters({ filters, setFilters, clearFilters, user }: Expe
             </SelectTrigger>
             <SelectContent className="z-[9999] max-h-[200px] overflow-y-auto">
               <SelectItem value="all">Todos os contratos</SelectItem>
-              {contracts.map((contract: string) => (
+              <SelectItem value="(Sem Contrato)">(Sem Contrato)</SelectItem>
+              {contracts.filter(cont => cont !== '(Sem Contrato)').map((contract) => (
                 <SelectItem key={contract} value={contract}>
                   {contract}
                 </SelectItem>
@@ -130,7 +132,7 @@ export function ExpenseFilters({ filters, setFilters, clearFilters, user }: Expe
           </Button>
         </div>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="startDate">Data Inicial</Label>
