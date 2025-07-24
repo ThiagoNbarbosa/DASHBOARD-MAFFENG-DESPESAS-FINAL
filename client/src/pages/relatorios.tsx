@@ -19,6 +19,7 @@ import { formatDateForCSV, formatDateSafely } from "@/lib/date-utils";
 import type { Expense } from "@shared/schema";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { ReusableReportModal } from "@/components/reusable-report-modal";
 
 interface ReportFilters {
   year: string;
@@ -419,14 +420,86 @@ export default function Relatorios() {
                   Importar Excel
                 </Button>
 
-                <Button 
-                  onClick={handleDownload}
-                  disabled={isLoading}
-                  className={`bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 ${isMobile ? 'w-full justify-center' : ''}`}
-                >
-                  <Download className="h-4 w-4" />
-                  Baixar Relatório
-                </Button>
+                {filters.reportType === "visual" ? (
+                  <ReusableReportModal
+                    title="Relatório de Despesas MAFFENG"
+                    data={filteredExpenses}
+                    filters={filters}
+                    companyName="MAFFENG"
+                    reportType="RELATÓRIO FINANCEIRO DE DESPESAS"
+                    triggerButton={
+                      <Button className={`bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 ${isMobile ? 'w-full justify-center' : ''}`}>
+                        <FileText className="h-4 w-4" />
+                        Relatório Visual
+                      </Button>
+                    }
+                    tableConfig={{
+                      columns: [
+                        { key: 'item', label: 'Item', align: 'left' },
+                        { 
+                          key: 'category', 
+                          label: 'Categoria', 
+                          align: 'left',
+                          formatter: (value) => value?.replace('[CANCELADA] ', '') || 'Sem categoria'
+                        },
+                        { 
+                          key: 'value', 
+                          label: 'Valor', 
+                          align: 'right',
+                          formatter: (value) => new Intl.NumberFormat('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL'
+                          }).format(value)
+                        },
+                        { key: 'paymentMethod', label: 'Forma Pagamento', align: 'center' },
+                        { key: 'contractNumber', label: 'Contrato', align: 'left' },
+                        { 
+                          key: 'paymentDate', 
+                          label: 'Data Pagamento', 
+                          align: 'center',
+                          formatter: (value) => formatDateSafely(value)
+                        },
+                        { 
+                          key: 'category', 
+                          label: 'Status', 
+                          align: 'center',
+                          formatter: (value) => value?.includes('[CANCELADA]') ? 'CANCELADA' : 'ATIVA'
+                        }
+                      ]
+                    }}
+                    customCalculations={(data) => (
+                      <div className="space-y-1">
+                        <p className="text-sm">
+                          <strong>Total Geral:</strong> {new Intl.NumberFormat('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL'
+                          }).format(data.reduce((sum, item) => sum + (item.value || 0), 0))}
+                        </p>
+                        <p className="text-sm">
+                          <strong>Despesas Ativas:</strong> {data.filter(item => !item.category?.includes('[CANCELADA]')).length}
+                        </p>
+                        <p className="text-sm">
+                          <strong>Despesas Canceladas:</strong> {data.filter(item => item.category?.includes('[CANCELADA]')).length}
+                        </p>
+                        <p className="text-sm">
+                          <strong>Valor Médio:</strong> {data.length > 0 ? new Intl.NumberFormat('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL'
+                          }).format(data.reduce((sum, item) => sum + (item.value || 0), 0) / data.length) : 'R$ 0,00'}
+                        </p>
+                      </div>
+                    )}
+                  />
+                ) : (
+                  <Button 
+                    onClick={handleDownload}
+                    disabled={isLoading}
+                    className={`bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 ${isMobile ? 'w-full justify-center' : ''}`}
+                  >
+                    <Download className="h-4 w-4" />
+                    Baixar Relatório
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -459,6 +532,7 @@ export default function Relatorios() {
                         <SelectItem value="completo">Relatório Completo (JSON)</SelectItem>
                         <SelectItem value="despesas">Apenas Despesas (CSV)</SelectItem>
                         <SelectItem value="faturamento">Apenas Faturamento (CSV)</SelectItem>
+                        <SelectItem value="visual">Relatório Visual (PDF/Impressão)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
