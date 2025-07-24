@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import Sidebar from "@/components/sidebar";
 import DashboardStats from "@/components/dashboard-stats";
-import ExpenseTable from "@/components/expense-table";
+import DashboardExpenses from "@/components/dashboard-expenses";
 import { authApi } from "@/lib/auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { BarChart3, Calendar, User, Building2 } from "lucide-react";
@@ -76,7 +76,7 @@ export default function Dashboard() {
 
         <main className="px-4 sm:px-6 lg:px-8 pb-8">
           <DashboardStats />
-          <ExpenseTable />
+          <DashboardExpenses />
         </main>
       </div>
     </div>
