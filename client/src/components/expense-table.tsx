@@ -227,7 +227,7 @@ export default function ExpenseTable() {
     <div className="space-y-6">
       {/* Modern Filters */}
       <ModernFilters
-        filters={filters}
+        filters={filters as Record<string, string>}
         onFilterChange={handleFilterChange}
         filterOptions={filterOptions}
         searchPlaceholder="Buscar por item, categoria, contrato ou descrição..."
