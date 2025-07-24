@@ -102,13 +102,6 @@ export default function Sidebar() {
       current: location === "/relatorios",
       description: "Exportar dados filtrados"
     },
-    {
-      name: "Configurações",
-      href: "/configuracoes",
-      icon: Settings,
-      current: location === "/configuracoes",
-      description: "Contratos e categorias"
-    },
     ...(user?.role === "admin" ? [{
       name: "Resultados",
       href: "/results",
@@ -211,6 +204,22 @@ export default function Sidebar() {
                 <p className="text-xs font-medium text-gray-500 mb-2 px-3">ADMINISTRAÇÃO</p>
                 <div className="space-y-2">
                   <SignupModal />
+                  <button
+                    onClick={() => handleNavigation("/configuracoes")}
+                    className={`w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 group ${
+                      location === "/configuracoes"
+                        ? "bg-orange-50 text-orange-700 border border-orange-200 shadow-sm"
+                        : "text-gray-700 hover:bg-gray-50 hover:text-gray-900 border border-transparent"
+                    }`}
+                  >
+                    <Settings className={`mr-3 h-5 w-5 transition-colors ${
+                      location === "/configuracoes" ? "text-orange-600" : "text-gray-500 group-hover:text-gray-700"
+                    }`} />
+                    <div className="flex flex-col items-start">
+                      <span>Configurações</span>
+                      <span className="text-xs text-gray-500 mt-0.5">Contratos e categorias</span>
+                    </div>
+                  </button>
                 </div>
               </div>
             )}
