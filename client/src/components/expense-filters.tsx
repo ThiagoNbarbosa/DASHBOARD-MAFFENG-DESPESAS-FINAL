@@ -81,7 +81,7 @@ export function ExpenseFilters({ filters, setFilters, clearFilters, user }: Expe
             <SelectContent className="z-[9999] max-h-[200px] overflow-y-auto">
               <SelectItem value="all">Todas as categorias</SelectItem>
               <SelectItem value="(Sem Categoria)">(Sem Categoria)</SelectItem>
-              {categories.filter(cat => cat !== '(Sem Categoria)').map((category) => (
+              {categories.filter((cat: string) => cat !== '(Sem Categoria)').map((category: string) => (
                 <SelectItem key={category} value={category}>
                   {category}
                 </SelectItem>
@@ -116,7 +116,7 @@ export function ExpenseFilters({ filters, setFilters, clearFilters, user }: Expe
             <SelectContent className="z-[9999] max-h-[200px] overflow-y-auto">
               <SelectItem value="all">Todos os contratos</SelectItem>
               <SelectItem value="(Sem Contrato)">(Sem Contrato)</SelectItem>
-              {contracts.filter(cont => cont !== '(Sem Contrato)').map((contract) => (
+              {contracts.filter((cont: string) => cont !== '(Sem Contrato)').map((contract: string) => (
                 <SelectItem key={contract} value={contract}>
                   {contract}
                 </SelectItem>
