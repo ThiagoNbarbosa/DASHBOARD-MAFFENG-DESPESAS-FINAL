@@ -1,0 +1,169 @@
+
+import { Search, X, Download, Filter } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { motion } from "framer-motion";
+
+interface FiltersProps {
+  filters: {
+    estado: string;
+    contrato: string;
+    status: string;
+    lote_mes: string;
+    search: string;
+  };
+  onFilterChange: (filters: Partial<FiltersProps["filters"]>) => void;
+}
+
+export function FilterCard({ filters, onFilterChange }: FiltersProps) {
+  const handleClearFilters = () => {
+    onFilterChange({
+      estado: "all",
+      contrato: "all",
+      status: "all",
+      lote_mes: "all",
+      search: "",
+    });
+  };
+
+  const handleExport = () => {
+    // TODO: Implement export functionality
+    console.log("Export functionality not implemented yet");
+  };
+
+  return (
+    <Card className="rounded-2xl shadow-sm">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-lg font-semibold flex items-center gap-2">
+          <Filter className="h-5 w-5" />
+          Filtros
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <label className="text-sm font-medium text-gray-700 mb-2 block">Contrato</label>
+            <Select value={filters.contrato} onValueChange={(value) => onFilterChange({ contrato: value })}>
+              <SelectTrigger className="rounded-xl border-gray-200 hover:border-gray-300">
+                <SelectValue placeholder="Todos os contratos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os contratos</SelectItem>
+                <SelectItem value="202574210908">202574210908</SelectItem>
+                <SelectItem value="202474212057">202474212057</SelectItem>
+                <SelectItem value="202574211507">202574211507</SelectItem>
+                <SelectItem value="202574213575">202574213575</SelectItem>
+                <SelectItem value="202574212626">202574212626</SelectItem>
+              </SelectContent>
+            </Select>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <label className="text-sm font-medium text-gray-700 mb-2 block">Estado</label>
+            <Select value={filters.estado} onValueChange={(value) => onFilterChange({ estado: value })}>
+              <SelectTrigger className="rounded-xl border-gray-200 hover:border-gray-300">
+                <SelectValue placeholder="Todos os estados" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os estados</SelectItem>
+                <SelectItem value="São Paulo">São Paulo</SelectItem>
+                <SelectItem value="Minas Gerais">Minas Gerais</SelectItem>
+                <SelectItem value="Mato Grosso">Mato Grosso</SelectItem>
+                <SelectItem value="Rio de Janeiro">Rio de Janeiro</SelectItem>
+                <SelectItem value="Bahia">Bahia</SelectItem>
+                <SelectItem value="Varginha">Varginha</SelectItem>
+              </SelectContent>
+            </Select>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <label className="text-sm font-medium text-gray-700 mb-2 block">Status</label>
+            <Select value={filters.status} onValueChange={(value) => onFilterChange({ status: value })}>
+              <SelectTrigger className="rounded-xl border-gray-200 hover:border-gray-300">
+                <SelectValue placeholder="Todos os status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os status</SelectItem>
+                <SelectItem value="Iniciar">Iniciar</SelectItem>
+                <SelectItem value="Levantado">Levantado</SelectItem>
+                <SelectItem value="Enviado">Enviado</SelectItem>
+                <SelectItem value="Devolvido">Devolvido</SelectItem>
+                <SelectItem value="Finalizar">Finalizar</SelectItem>
+                <SelectItem value="Concluído">Concluído</SelectItem>
+                <SelectItem value="Não levantado">Não levantado</SelectItem>
+              </SelectContent>
+            </Select>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <label className="text-sm font-medium text-gray-700 mb-2 block">Lote/Mês</label>
+            <Select value={filters.lote_mes} onValueChange={(value) => onFilterChange({ lote_mes: value })}>
+              <SelectTrigger className="rounded-xl border-gray-200 hover:border-gray-300">
+                <SelectValue placeholder="Todos os lotes" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os lotes</SelectItem>
+                <SelectItem value="2025-07">Julho 2025</SelectItem>
+                <SelectItem value="2025-06">Junho 2025</SelectItem>
+                <SelectItem value="2025-05">Maio 2025</SelectItem>
+                <SelectItem value="2025-04">Abril 2025</SelectItem>
+                <SelectItem value="2025-03">Março 2025</SelectItem>
+                <SelectItem value="2025-02">Fevereiro 2025</SelectItem>
+                <SelectItem value="2025-01">Janeiro 2025</SelectItem>
+              </SelectContent>
+            </Select>
+          </motion.div>
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="flex flex-col sm:flex-row sm:items-center gap-4"
+        >
+          <div className="flex-1">
+            <div className="relative">
+              <Input
+                placeholder="Buscar por agência, código ou chamado..."
+                value={filters.search}
+                onChange={(e) => onFilterChange({ search: e.target.value })}
+                className="pl-10 rounded-xl border-gray-200 hover:border-gray-300"
+              />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="w-4 h-4 text-gray-400" />
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={handleClearFilters} className="rounded-xl">
+              <X className="w-4 h-4 mr-2" />
+              Limpar
+            </Button>
+            <Button variant="outline" onClick={handleExport} className="rounded-xl">
+              <Download className="w-4 h-4 mr-2" />
+              Exportar
+            </Button>
+          </div>
+        </motion.div>
+      </CardContent>
+    </Card>
+  );
+}

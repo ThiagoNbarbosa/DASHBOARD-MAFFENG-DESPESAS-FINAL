@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { authApi } from "@/lib/auth";
 import { formatDateSafely } from "@/lib/date-utils";
+import { ModernFilters } from "@/components/ui/modern-filters";
 
 import type { Expense } from "@shared/schema";
 import { BANCOS, FORMAS_PAGAMENTO } from "@shared/constants";
@@ -27,6 +28,7 @@ interface ExpenseFilters {
   paymentMethod: string;
   startDate: string;
   endDate: string;
+  search: string;
 }
 
 export default function ExpenseTable() {
@@ -38,6 +40,7 @@ export default function ExpenseTable() {
     paymentMethod: "all",
     startDate: "",
     endDate: "",
+    search: "",
   });
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
@@ -76,7 +79,7 @@ export default function ExpenseTable() {
   };
 
   // Query unificada para despesas (reduz consultas duplicadas)
-  const hasActiveFilters = filters.year !== "all" || filters.month !== "all" || filters.category !== "all" || filters.contractNumber !== "" || filters.paymentMethod !== "all" || filters.startDate !== "" || filters.endDate !== "";
+  const hasActiveFilters = filters.year !== "all" || filters.month !== "all" || filters.category !== "all" || filters.contractNumber !== "" || filters.paymentMethod !== "all" || filters.startDate !== "" || filters.endDate !== "" || filters.search !== "";
 
   const { data: allExpenses = [], isLoading } = useQuery<Expense[]>({
     queryKey: ['/api/expenses', hasActiveFilters ? 'filtered' : 'recent', filters],
@@ -96,6 +99,7 @@ export default function ExpenseTable() {
       if (filters.paymentMethod && filters.paymentMethod !== "all") params.set('paymentMethod', filters.paymentMethod);
       if (filters.startDate) params.set('startDate', filters.startDate);
       if (filters.endDate) params.set('endDate', filters.endDate);
+      if (filters.search) params.set('search', filters.search);
 
       return await apiRequest(`/api/expenses?${params}`, 'GET');
     },
@@ -105,6 +109,65 @@ export default function ExpenseTable() {
   const filteredExpenses = hasActiveFilters ? allExpenses : [];
   const recentExpenses = hasActiveFilters ? [] : allExpenses;
 
+  // Preparar opções de filtro para o componente ModernFilters
+  const filterOptions = [
+    {
+      key: "year",
+      label: "Ano",
+      placeholder: "Selecione o ano",
+      options: [
+        { value: "all", label: "Todos os anos" },
+        { value: "2024", label: "2024" },
+        { value: "2025", label: "2025" },
+        { value: "2026", label: "2026" }
+      ]
+    },
+    {
+      key: "month",
+      label: "Mês",  
+      placeholder: "Todos os meses",
+      options: [
+        { value: "all", label: "Todos os meses" },
+        ...Array.from({ length: 12 }, (_, i) => {
+          const monthNumber = String(i + 1).padStart(2, '0');
+          const monthName = new Date(2024, i, 1).toLocaleDateString('pt-BR', { month: 'long' });
+          return { value: monthNumber, label: monthName };
+        })
+      ]
+    },
+    {
+      key: "category",
+      label: "Categoria",
+      placeholder: "Todas as categorias", 
+      options: [
+        { value: "all", label: "Todas as categorias" },
+        ...categories.map(category => ({ value: category, label: category }))
+      ]
+    },
+    {
+      key: "paymentMethod",
+      label: "Forma de Pagamento",
+      placeholder: "Todas as formas",
+      options: [
+        { value: "all", label: "Todas as formas" },
+        ...FORMAS_PAGAMENTO.map(method => ({ value: method, label: method }))
+      ]
+    },
+    ...(user?.role === "admin" ? [{
+      key: "contractNumber" as const,
+      label: "Contrato",
+      placeholder: "Todos os contratos",
+      options: [
+        { value: "all", label: "Todos os contratos" },
+        ...contracts.map(contract => ({ value: contract, label: contract }))
+      ]
+    }] : [])
+  ];
+
+  const handleFilterChange = (newFilters: Partial<ExpenseFilters>) => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
+  };
+
 
   const isCancelled = (category: string) => {
     return category.startsWith('[CANCELADA]');
@@ -113,7 +176,7 @@ export default function ExpenseTable() {
 
 
   const clearFilters = () => {
-    setFilters({ year: "all", month: "all", category: "all", contractNumber: "", paymentMethod: "all", startDate: "", endDate: "" });
+    setFilters({ year: "all", month: "all", category: "all", contractNumber: "", paymentMethod: "all", startDate: "", endDate: "", search: "" });
   };
 
 
@@ -162,136 +225,18 @@ export default function ExpenseTable() {
 
   return (
     <div className="space-y-6">
-      {/* Filters */}
-      <Card className="shadow-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base font-semibold">
-            <Filter className="h-5 w-5" />
-            Filtros
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 space-y-2 md:space-y-0">
-            <div>
-              <Label htmlFor="yearFilter">Ano</Label>
-              <Select value={filters.year} onValueChange={(value) => setFilters({ ...filters, year: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o ano" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="2024">2024</SelectItem>
-                  <SelectItem value="2025">2025</SelectItem>
-                  <SelectItem value="2026">2026</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="monthFilter">Mês</Label>
-              <Select value={filters.month} onValueChange={(value) => setFilters({ ...filters, month: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos os meses" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os meses</SelectItem>
-                  {Array.from({ length: 12 }, (_, i) => {
-                    const monthNumber = String(i + 1).padStart(2, '0');
-                    const monthName = new Date(2024, i, 1).toLocaleDateString('pt-BR', { month: 'long' });
-                    return (
-                      <SelectItem key={monthNumber} value={monthNumber}>
-                        {monthName}
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="categoryFilter">Categoria</Label>
-              <Select value={filters.category} onValueChange={(value) => setFilters({ ...filters, category: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todas as categorias" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas as categorias</SelectItem>
-                  {categories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="paymentMethodFilter">Forma de Pagamento</Label>
-              <Select value={filters.paymentMethod} onValueChange={(value) => setFilters({ ...filters, paymentMethod: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todas as formas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas as formas</SelectItem>
-                  {FORMAS_PAGAMENTO.map((method) => (
-                    <SelectItem key={method} value={method}>
-                      {method}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {user?.role === "admin" && (
-              <div>
-                <Label htmlFor="contractFilter">Número do Contrato</Label>
-                <Select value={filters.contractNumber} onValueChange={(value) => setFilters({ ...filters, contractNumber: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todos os contratos" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os contratos</SelectItem>
-                    {contracts.map((contrato) => (
-                      <SelectItem key={contrato} value={contrato}>
-                        {contrato}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            <div>
-              <Label htmlFor="startDateFilter">Data Inicial</Label>
-              <Input
-                id="startDateFilter"
-                type="date"
-                value={filters.startDate}
-                onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="endDateFilter">Data Final</Label>
-              <Input
-                id="endDateFilter"
-                type="date"
-                value={filters.endDate}
-                onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-              />
-            </div>
-
-            <div className="flex items-end">
-              <Button variant="outline" onClick={clearFilters} className="w-full">
-                <X className="h-4 w-4 mr-2" />
-                Limpar Filtros
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Modern Filters */}
+      <ModernFilters
+        filters={filters}
+        onFilterChange={handleFilterChange}
+        filterOptions={filterOptions}
+        searchPlaceholder="Buscar por item, categoria, contrato ou descrição..."
+        showExport={false}
+        title="Filtros"
+      />
 
       {/* Filtered Expenses Section */}
-      {(filters.year !== "all" || filters.month !== "all" || filters.category !== "all" || filters.contractNumber !== "" || filters.paymentMethod !== "all" || filters.startDate !== "" || filters.endDate !== "") && (
+      {hasActiveFilters && (
         <Card className="shadow-sm border-blue-200">
           <CardHeader>
             <CardTitle className="text-base font-semibold flex items-center gap-2">

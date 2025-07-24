@@ -24,6 +24,7 @@ interface AllExpensesTableProps {
     paymentMethod: string;
     startDate: string;
     endDate: string;
+    search: string;
   };
 }
 
@@ -55,6 +56,7 @@ export function AllExpensesTable({ user, filters }: AllExpensesTableProps) {
         if (filters.paymentMethod !== "all") params.append('paymentMethod', filters.paymentMethod);
         if (filters.startDate) params.append('startDate', filters.startDate);
         if (filters.endDate) params.append('endDate', filters.endDate);
+        if (filters.search) params.append('search', filters.search);
       }
       
       const response = await fetch(`/api/expenses/paginated?${params.toString()}`);
@@ -324,11 +326,6 @@ export function AllExpensesTable({ user, filters }: AllExpensesTableProps) {
                           <Checkbox
                             checked={isAllSelected}
                             onCheckedChange={handleSelectAll}
-                            ref={(el) => {
-                              if (el) {
-                                el.indeterminate = isSomeSelected;
-                              }
-                            }}
                             title="Selecionar todas as despesas"
                           />
                         </TableHead>

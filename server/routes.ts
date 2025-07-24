@@ -389,7 +389,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Expense routes
   app.get("/api/expenses", requireAuth, async (req, res) => {
     try {
-      const { year, month, category, contractNumber, paymentMethod } = req.query;
+      const { year, month, category, contractNumber, paymentMethod, search } = req.query;
 
       const filters: any = {};
 
@@ -405,6 +405,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (category && category !== "all") filters.category = category as string;
       if (contractNumber) filters.contractNumber = contractNumber as string;
       if (paymentMethod && paymentMethod !== "all") filters.paymentMethod = paymentMethod as string;
+      if (search) filters.search = search as string;
 
       try {
         const expenses = await storage.getExpenses(filters);
@@ -470,7 +471,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Adicionar filtros dos parâmetros de query
-      const { year, month, category, contractNumber, paymentMethod, startDate, endDate } = req.query;
+      const { year, month, category, contractNumber, paymentMethod, startDate, endDate, search } = req.query;
       
       if (year && year !== "all") filters.year = year as string;
       if (month && month !== "all") filters.month = month as string;
@@ -479,6 +480,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (paymentMethod && paymentMethod !== "all") filters.paymentMethod = paymentMethod as string;
       if (startDate) filters.startDate = startDate as string;
       if (endDate) filters.endDate = endDate as string;
+      if (search) filters.search = search as string;
 
       try {
         const expenses = await storage.getExpensesPaginated(filters);
