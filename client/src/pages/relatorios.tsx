@@ -8,15 +8,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, FileText, Calendar, Filter, BarChart3, Upload, X } from "lucide-react";
+import { Download, FileText, Calendar, Filter, BarChart3, Upload, X, Eye, Edit, Ban, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useResponsive } from "@/hooks/use-responsive";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { BANCOS, FORMAS_PAGAMENTO } from "@shared/constants";
 import { useContractsAndCategories } from "@/hooks/use-contracts-categories";
-import { formatDateForCSV } from "@/lib/date-utils";
+import { formatDateForCSV, formatDateSafely } from "@/lib/date-utils";
 import type { Expense } from "@shared/schema";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 interface ReportFilters {
   year: string;
@@ -534,6 +536,104 @@ export default function Relatorios() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Lista de Despesas Filtradas */}
+          {filteredExpenses.length > 0 && (
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-blue-600" />
+                  Lista de Despesas para Relatório ({filteredExpenses.length} itens)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Item</TableHead>
+                        <TableHead>Categoria</TableHead>
+                        <TableHead>Valor</TableHead>
+                        <TableHead>Forma de Pagamento</TableHead>
+                        <TableHead>Contrato</TableHead>
+                        <TableHead>Data</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredExpenses.slice(0, 10).map((expense: Expense) => (
+                        <TableRow key={expense.id}>
+                          <TableCell className="font-medium">
+                            {expense.item}
+                          </TableCell>
+                          <TableCell>
+                            <Badge 
+                              variant="secondary"
+                              className={expense.category.includes('[CANCELADA]') ? 'bg-red-100 text-red-800' : ''}
+                            >
+                              {expense.category.replace('[CANCELADA] ', '')}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {new Intl.NumberFormat('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL'
+                            }).format(expense.value)}
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm">
+                              {expense.paymentMethod === "Pix" && "🟢"}
+                              {expense.paymentMethod === "Cartão de Crédito" && "💳"}
+                              {expense.paymentMethod === "Boleto à Vista" && "🟠"}
+                              {expense.paymentMethod === "Boleto a Prazo" && "🔴"}
+                              {!["Pix", "Cartão de Crédito", "Boleto à Vista", "Boleto a Prazo"].includes(expense.paymentMethod) && "💰"}
+                              {" "}{expense.paymentMethod}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-sm text-gray-600">
+                            {expense.contractNumber || "Sem contrato"}
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {formatDateSafely(expense.paymentDate)}
+                          </TableCell>
+                          <TableCell>
+                            {expense.category.includes('[CANCELADA]') ? (
+                              <Badge variant="destructive">Cancelada</Badge>
+                            ) : (
+                              <Badge variant="default" className="bg-green-100 text-green-800">Ativa</Badge>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  {filteredExpenses.length > 10 && (
+                    <div className="mt-4 text-center">
+                      <p className="text-sm text-gray-500">
+                        Mostrando 10 de {filteredExpenses.length} despesas. 
+                        <span className="font-medium"> Todas serão incluídas no relatório.</span>
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Mensagem quando não há despesas */}
+          {filteredExpenses.length === 0 && !expensesLoading && (
+            <Card className="mt-6">
+              <CardContent className="text-center py-8">
+                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Nenhuma despesa encontrada
+                </h3>
+                <p className="text-gray-500">
+                  Ajuste os filtros para ver as despesas que serão incluídas no relatório.
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </main>
 
         {/* Modal de Importação */}
