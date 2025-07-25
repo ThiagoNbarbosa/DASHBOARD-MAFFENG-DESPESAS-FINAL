@@ -394,45 +394,48 @@ export default function Relatorios() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50">
       <Sidebar />
-
-      <div className={`flex-1 ${isMobile ? 'ml-0' : 'ml-64'}`}>
-        <header className="bg-white shadow-sm border-b border-gray-200">
-          <div className={`px-4 py-4 ${isMobile ? '' : 'sm:px-6 lg:px-8'}`}>
-            <div className={`${isMobile ? 'flex flex-col gap-4' : 'flex items-center justify-between'}`}>
-              <div>
-                <h1 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-gray-900 flex items-center gap-2`}>
-                  <FileText className={`${isMobile ? 'h-5 w-5' : 'h-6 w-6'} text-orange-600`} />
-                  Relatórios
-                </h1>
-                <p className="text-sm text-gray-600 mt-1">
+      
+      <div className={`transition-all duration-300 ${isMobile ? 'ml-0' : 'ml-64'}`}>
+        {/* Header */}
+        <div className="bg-white shadow-sm border-b border-gray-200">
+          <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <div className="bg-orange-100 p-1.5 sm:p-2 rounded-lg">
+                <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-orange-600" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">Relatórios</h1>
+                <p className="text-xs sm:text-sm text-gray-600 truncate">
                   Gere e baixe relatórios detalhados de despesas e faturamento
                 </p>
               </div>
+            </div>
 
-              <div className={`${isMobile ? 'flex flex-col gap-2 w-full' : 'flex items-center gap-3'}`}>
-                <Button 
-                  onClick={() => setIsImportModalOpen(true)}
-                  className={`bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 ${isMobile ? 'w-full justify-center' : ''}`}
-                >
-                  <Upload className="h-4 w-4" />
-                  Importar Excel
-                </Button>
+            
+            <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 mt-4">
+              <Button 
+                onClick={() => setIsImportModalOpen(true)}
+                className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+              >
+                <Upload className="h-4 w-4" />
+                {isMobile ? 'Import' : 'Importar Excel'}
+              </Button>
 
-                {filters.reportType === "visual" ? (
-                  <ReusableReportModal
-                    title="Relatório de Despesas MAFFENG"
-                    data={filteredExpenses}
-                    filters={filters}
-                    companyName="MAFFENG"
-                    reportType="RELATÓRIO FINANCEIRO DE DESPESAS"
-                    triggerButton={
-                      <Button className={`bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 ${isMobile ? 'w-full justify-center' : ''}`}>
-                        <FileText className="h-4 w-4" />
-                        Relatório Visual
-                      </Button>
-                    }
+              {filters.reportType === "visual" ? (
+                <ReusableReportModal
+                  title="Relatório de Despesas MAFFENG"
+                  data={filteredExpenses}
+                  filters={filters}
+                  companyName="MAFFENG"
+                  reportType="RELATÓRIO FINANCEIRO DE DESPESAS"
+                  triggerButton={
+                    <Button className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      {isMobile ? 'Visual' : 'Relatório Visual'}
+                    </Button>
+                  }
                     tableConfig={{
                       columns: [
                         { key: 'item', label: 'Item', align: 'left' },
@@ -504,43 +507,43 @@ export default function Relatorios() {
                   />
                 ) : (
                   <Button 
-                    onClick={handleDownload}
-                    disabled={isLoading}
-                    className={`bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 ${isMobile ? 'w-full justify-center' : ''}`}
+                    onClick={() => handleDownload("download")}
+                    disabled={filteredExpenses.length === 0}
+                    className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Download className="h-4 w-4" />
-                    Baixar Relatório
+                    {isMobile ? 'Download' : 'Baixar Relatório'}
                   </Button>
                 )}
-              </div>
             </div>
           </div>
-        </header>
+        </div>
 
-        <main className={`${isMobile ? 'px-3 py-4' : 'px-4 sm:px-6 lg:px-8 py-8'} space-y-6`}>
+        {/* Conteúdo principal */}
+        <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-6">
           {/* Filtros */}
-          <Card>
-            <CardHeader className={isMobile ? 'pb-3' : ''}>
-              <CardTitle className={`flex items-center gap-2 ${isMobile ? 'text-lg' : ''}`}>
-                <Filter className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'}`} />
+          <Card className="rounded-2xl shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                <Filter className="h-5 w-5" />
                 Filtros do Relatório
               </CardTitle>
             </CardHeader>
-            <CardContent className={isMobile ? 'pt-0' : ''}>
+            <CardContent>
               <div className="space-y-4">
-                <div className="grid gap-4 grid-cols-1">{/* Sempre 1 coluna para melhor mobile */}
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                   <div>
-                    <label className={`block text-sm font-medium text-gray-700 mb-2 ${isMobile ? 'text-xs' : ''}`}>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Tipo de Relatório
                     </label>
                     <Select
                       value={filters.reportType}
                       onValueChange={(value) => setFilters(prev => ({ ...prev, reportType: value as any }))}
                     >
-                      <SelectTrigger className={isMobile ? 'h-10 text-sm' : ''}>
+                      <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className={isMobile ? 'max-h-48' : ''}>
+                      <SelectContent>
                         <SelectItem value="completo">Relatório Completo (JSON)</SelectItem>
                         <SelectItem value="despesas">Apenas Despesas (CSV)</SelectItem>
                         <SelectItem value="faturamento">Apenas Faturamento (CSV)</SelectItem>
@@ -562,14 +565,14 @@ export default function Relatorios() {
 
           {/* Prévia dos Dados */}
           <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-            <Card>
-              <CardHeader className={isMobile ? 'pb-3' : ''}>
-                <CardTitle className={`flex items-center gap-2 ${isMobile ? 'text-lg' : ''}`}>
-                  <BarChart3 className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-red-600`} />
+            <Card className="rounded-2xl shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-red-600" />
                   Prévia - Despesas
                 </CardTitle>
               </CardHeader>
-              <CardContent className={isMobile ? 'pt-0' : ''}>
+              <CardContent>
                 {isLoading ? (
                   <div className="text-center py-4">Carregando...</div>
                 ) : (
@@ -592,14 +595,14 @@ export default function Relatorios() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className={isMobile ? 'pb-3' : ''}>
-                <CardTitle className={`flex items-center gap-2 ${isMobile ? 'text-lg' : ''}`}>
-                  <BarChart3 className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-green-600`} />
+            <Card className="rounded-2xl shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-green-600" />
                   Prévia - Faturamento
                 </CardTitle>
               </CardHeader>
-              <CardContent className={isMobile ? 'pt-0' : ''}>
+              <CardContent>
                 {isLoading ? (
                   <div className="text-center py-4">Carregando...</div>
                 ) : (
@@ -625,14 +628,14 @@ export default function Relatorios() {
 
           {/* Lista de Despesas Filtradas */}
           {filteredExpenses.length > 0 && (
-            <Card className="mt-6">
-              <CardHeader className={isMobile ? 'pb-3' : ''}>
-                <CardTitle className={`flex items-center gap-2 ${isMobile ? 'text-lg' : ''}`}>
-                  <FileText className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-blue-600`} />
+            <Card className="mt-6 rounded-2xl shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-blue-600" />
                   Lista de Despesas para Relatório ({filteredExpenses.length} itens)
                 </CardTitle>
               </CardHeader>
-              <CardContent className={isMobile ? 'pt-0 px-2' : ''}>
+              <CardContent>
                 {isMobile ? (
                   // Layout de cards para mobile
                   <div className="space-y-3">
@@ -754,19 +757,19 @@ export default function Relatorios() {
 
           {/* Mensagem quando não há despesas */}
           {filteredExpenses.length === 0 && !expensesLoading && (
-            <Card className="mt-6">
-              <CardContent className={`text-center ${isMobile ? 'py-6' : 'py-8'}`}>
-                <FileText className={`${isMobile ? 'h-8 w-8' : 'h-12 w-12'} text-gray-400 mx-auto mb-4`} />
-                <h3 className={`${isMobile ? 'text-base' : 'text-lg'} font-medium text-gray-900 mb-2`}>
+            <Card className="mt-6 rounded-2xl shadow-sm">
+              <CardContent className="text-center py-8">
+                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
                   Nenhuma despesa encontrada
                 </h3>
-                <p className={`text-gray-500 ${isMobile ? 'text-sm' : ''}`}>
+                <p className="text-gray-500">
                   Ajuste os filtros para ver as despesas que serão incluídas no relatório.
                 </p>
               </CardContent>
             </Card>
           )}
-        </main>
+        </div>
 
         {/* Modal de Importação */}
         <Dialog open={isImportModalOpen} onOpenChange={setIsImportModalOpen}>
