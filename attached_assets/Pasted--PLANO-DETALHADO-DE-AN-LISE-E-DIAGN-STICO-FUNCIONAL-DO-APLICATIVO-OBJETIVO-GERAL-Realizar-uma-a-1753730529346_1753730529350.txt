@@ -1,0 +1,105 @@
+🔍 PLANO DETALHADO DE ANÁLISE E DIAGNÓSTICO FUNCIONAL DO APLICATIVO
+🎯 OBJETIVO GERAL
+Realizar uma auditoria técnica completa e não destrutiva do aplicativo, mapeando todas as páginas, rotas, componentes, interações e estruturas existentes para identificar:
+O que já existe funcionalmente e tecnicamente;
+O que está parcialmente implementado;
+O que está ausente ou comprometido tecnicamente.
+⚠️ Foco: coleta e documentação. Nenhuma criação, sugestão de código ou alteração deve ser executada nesta fase.
+🧠 CONTEXTO TÉCNICO
+Frontend: React + TypeScript
+Backend: Node.js (Express)
+Estrutura de diretórios:
+client/src/pages: páginas visuais acessíveis via rota
+client/src/components: componentes reutilizáveis
+server/: rotas de API, serviços e banco de dados
+🚀 FASE 1 — MAPEAMENTO DETALHADO DE ESTRUTURA E INTERFACE
+1.1 🔍 Mapeamento de Rotas e Páginas
+Analise estática do diretório client/src/pages/:
+Liste todos os arquivos .tsx encontrados (com subpastas, se houver).
+Indique o nome da página e presuma a rota correspondente (/dashboard, /login, etc.).
+1.2 🧩 Inventário de Funcionalidades por Página
+Para cada página, documentar:
+Botões (com labels, ícones ou função)
+Inputs e formulários
+Chamadas a hooks customizados (ex: useAuth, useUser)
+Uso de contextos globais
+Importação de componentes principais
+Presença de chamadas de API ou efeitos (useEffect com fetch/post)
+Exemplo de estrutura esperada:
+📄 dashboard.tsx
+  - Botão: "Nova Despesa"
+  - Formulário de filtros (input: data, categoria, valor)
+  - Tabela de despesas
+  - Hook: useDespesas()
+  - Componente: CardResumo, ModalNovaDespesa
+1.3 ❌ Detecção de Páginas Comuns Ausentes
+Verificar ausência de páginas básicas frequentemente esperadas em apps de gestão:
+Login / Cadastro / Esqueci senha
+Perfil do usuário
+Configurações gerais
+Central de ajuda ou FAQ
+Suporte / Contato
+Página de permissões/roles (admin/usuário)
+1.4 📌 Fluxograma Lógico de Navegação (Texto)
+Criar uma árvore simples textual de rotas e navegação, indicando dependências e caminhos:
+/login → /dashboard → 
+      ↳ /despesas → /detalhes/:id
+      ↳ /usuarios
+🧪 FASE 2 — ANÁLISE FUNCIONAL E QUALITATIVA DO CÓDIGO EXISTENTE
+2.1 🔍 Verificação de Implementações Incompletas ou Falsas
+Para cada funcionalidade identificada, inspecione se:
+Possui função real (ex: não está usando apenas console.log)
+Tem retorno ou manipulação de estado
+Há integração real com API ou banco
+Exemplos a serem identificados:
+Botões de "Excluir" que apenas mostram um alert
+Modais que não disparam ação alguma
+Campos de formulário sem validação
+2.2 🛠️ Identificação de Fragilidades Técnicas
+Detectar pontos comuns de deficiência técnica, como:
+Falta de loading e feedback ao usuário
+Falta de tratamento de erro (try/catch ausente)
+Validações superficiais ou ausentes
+Hooks com efeitos colaterais mal tratados
+Código comentado ou em duplicidade
+🧩 FASE 3 — CLASSIFICAÇÃO E PRIORIZAÇÃO DE FUNCIONALIDADES
+3.1 📊 Matriz de Impacto vs Esforço (Qualitativa)
+Organize funcionalidades detectadas ou ausentes em 3 grupos:
+CategoriaDescrição
+🟢 Alta Prioridade (Baixo esforço, Alto impacto)
+Melhorias rápidas e importantes
+🟡 Média Prioridade (Alto impacto, Alto esforço)
+Demandam planejamento e sprint
+🔴 Baixa Prioridade (Baixo impacto)
+Adiar ou descartar
+3.2 ⚡ Melhorias Rápidas e Seguras (Hoje)
+Documentar tudo que pode ser otimizado sem impacto no sistema atual, como:
+Ajustar labels incorretos
+Adicionar required em campos de formulário
+Inserir mensagens de erro básicas
+Substituir console.log por funções de feedback real
+✅ ENTREGA FINAL ESPERADA
+📑 TABELA: Páginas + Funcionalidades
+PáginaFuncionalidades detectadasFuncionalidades incompletas
+/dashboard
+Formulário, tabela, filtro, botão de nova despesa
+Botão "Excluir" sem ação
+/usuarios
+Listagem, edição
+Sem formulário completo
+🧱 LISTA: Funcionalidades Ausentes
+Página de Configurações
+Tela de Perfil
+Central de Suporte/FAQ
+Modo dark/light
+Histórico de atividades do usuário
+🔥 PONTOS TÉCNICOS CRÍTICOS
+Falta de validação
+Falta de loading
+Botões inativos
+Requisições sem tratamento de erro
+📌 SUGESTÃO DE AÇÕES FUTURAS
+Criar página de Configurações
+Ativar edição real em /usuarios
+Incluir feedback visual (ex: loaders)
+Priorizar páginas que bloqueiam uso real do sistema
