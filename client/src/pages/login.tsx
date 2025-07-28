@@ -7,7 +7,18 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { authApi } from "@/lib/auth";
 import type { LoginData } from "@shared/schema";
-import logoPath from "@assets/63f5d089-94db-4968-a76f-00d77b188818 (1)_1750213898122.png";
+// Logo MAFFENG como SVG embutido
+const MAFFENGLogo = () => (
+  <svg viewBox="0 0 200 80" className="h-full w-full">
+    <rect width="200" height="80" fill="#1e40af" rx="8"/>
+    <text x="100" y="35" textAnchor="middle" fill="white" fontSize="24" fontWeight="bold">
+      MAFFENG
+    </text>
+    <text x="100" y="55" textAnchor="middle" fill="#93c5fd" fontSize="12">
+      Dashboard Financeiro
+    </text>
+  </svg>
+);
 
 export default function Login() {
   const [credentials, setCredentials] = useState<LoginData>({
@@ -45,7 +56,7 @@ export default function Login() {
       <div className="max-w-md w-full space-y-8 p-8">
         <div className="text-center">
           <div className="mx-auto h-48 w-64 flex items-center justify-center">
-            <img src={logoPath} alt="MAFFENG Logo" className="h-full w-full object-contain" />
+            <MAFFENGLogo />
           </div>
         </div>
 
