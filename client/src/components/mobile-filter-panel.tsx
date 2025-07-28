@@ -1,6 +1,7 @@
 import { useState, useCallback, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Filter, X } from "lucide-react";
 import { ExpenseFilters } from "./expense-filters";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -63,13 +64,15 @@ const MobileFilterPanel = memo(function MobileFilterPanel({
     );
   }
 
+  // Em mobile, usar Sheet ao invés de Dialog para melhor compatibilidade
   return (
     <div className="mb-4">
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogTrigger asChild>
+      <Sheet open={isOpen} onOpenChange={setIsOpen}>
+        <SheetTrigger asChild>
           <Button 
             variant="outline" 
-            className="w-full justify-between bg-white border-gray-200 hover:bg-gray-50"
+            className="w-full justify-between bg-white border-gray-200 hover:bg-gray-50 active:bg-gray-100 min-h-[44px] touch-manipulation"
+            style={{ WebkitTapHighlightColor: 'transparent' }}
           >
             <div className="flex items-center gap-2">
               <Filter className="h-4 w-4" />
@@ -81,44 +84,47 @@ const MobileFilterPanel = memo(function MobileFilterPanel({
               </div>
             )}
           </Button>
-        </DialogTrigger>
+        </SheetTrigger>
         
-        <DialogContent 
-          className={`${isMobile ? 'max-w-[95vw] max-h-[90vh]' : 'max-w-2xl'} overflow-y-auto z-[100000]`}
+        <SheetContent 
+          side="bottom" 
+          className="h-[90vh] flex flex-col"
         >
-          <DialogHeader className="pb-4">
-            <DialogTitle className="text-left">Filtros de Pesquisa</DialogTitle>
+          <SheetHeader className="pb-4 flex-shrink-0">
+            <SheetTitle className="text-left">Filtros de Pesquisa</SheetTitle>
             <p className="text-sm text-gray-600 text-left">
               Use os filtros abaixo para encontrar despesas específicas
             </p>
-          </DialogHeader>
+          </SheetHeader>
           
-          <div className="space-y-6">
-            <ExpenseFilters
-              filters={filters}
-              setFilters={handleFiltersChange}
-              clearFilters={handleClearFilters}
-              user={user}
-            />
-            
-            <div className="flex gap-3 pt-4 border-t">
-              <Button
-                variant="outline"
-                onClick={() => setIsOpen(false)}
-                className="flex-1"
-              >
-                Cancelar
-              </Button>
-              <Button
-                onClick={() => setIsOpen(false)}
-                className="flex-1 bg-orange-600 hover:bg-orange-700"
-              >
-                Aplicar Filtros
-              </Button>
+          <div className="flex-1 overflow-y-auto">
+            <div className="space-y-6 pb-6">
+              <ExpenseFilters
+                filters={filters}
+                setFilters={handleFiltersChange}
+                clearFilters={handleClearFilters}
+                user={user}
+              />
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+          
+          <div className="flex gap-3 pt-4 border-t bg-white flex-shrink-0">
+            <Button
+              variant="outline"
+              onClick={() => setIsOpen(false)}
+              className="flex-1 min-h-[44px]"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => setIsOpen(false)}
+              className="flex-1 bg-orange-600 hover:bg-orange-700 min-h-[44px]"
+            >
+              Aplicar Filtros
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 });
