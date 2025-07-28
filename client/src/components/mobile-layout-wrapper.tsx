@@ -45,6 +45,11 @@ export function MobileLayoutWrapper({
 
     // Prevent zoom on double tap but allow normal touch interaction
     const preventZoom = (e: TouchEvent) => {
+      // Don't interfere with dialog interactions
+      if (e.target && (e.target as Element).closest('[role="dialog"]')) {
+        return;
+      }
+      
       if (e.touches.length > 1) {
         e.preventDefault();
       }
