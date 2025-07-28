@@ -8,12 +8,11 @@ import MobileFilterPanel from "@/components/mobile-filter-panel";
 import ExpenseModal from "@/components/expense-modal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading-spinner";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { FileText, TrendingUp, Calendar, Receipt, Filter } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { FORMAS_PAGAMENTO } from "@shared/constants";
 
 export default function Despesas() {
-  const isMobile = useIsMobile();
   const [filters, setFilters] = useState({
     year: new Date().getFullYear().toString(),
     month: "all",
@@ -37,6 +36,27 @@ export default function Despesas() {
       search: "",
     });
   };
+
+  const isMobile = useIsMobile();
+
+  // Calcular filtros ativos
+  const calculateActiveFilters = () => {
+    let count = 0;
+    const currentYear = new Date().getFullYear().toString();
+    
+    if (filters.year !== currentYear && filters.year !== "all") count++;
+    if (filters.month !== "all") count++;
+    if (filters.category !== "all") count++;
+    if (filters.contractNumber !== "all") count++;
+    if (filters.paymentMethod !== "all") count++;
+    if (filters.startDate) count++;
+    if (filters.endDate) count++;
+    if (filters.search) count++;
+    
+    return count;
+  };
+
+  const totalFiltersActive = calculateActiveFilters();
 
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['/api/auth/me'],
@@ -123,34 +143,15 @@ export default function Despesas() {
           </Card>
         </div>
 
-        {/* Filtros */}
+        {/* Filtros - Responsivo */}
         <div className="px-4 sm:px-6 lg:px-8 pb-4">
-          {isMobile ? (
-            <MobileFilterPanel
-              filters={filters}
-              setFilters={setFilters}
-              clearFilters={clearFilters}
-              user={user}
-              totalFiltersActive={Object.values(filters).filter(v => v && v !== 'all' && v !== new Date().getFullYear().toString()).length}
-            />
-          ) : (
-            <Card className="rounded-2xl shadow-sm">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                  <Filter className="h-5 w-5" />
-                  Filtros de Despesas
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ExpenseFilters
-                  filters={filters}
-                  setFilters={setFilters}
-                  clearFilters={clearFilters}
-                  user={user}
-                />
-              </CardContent>
-            </Card>
-          )}
+          <MobileFilterPanel
+            filters={filters}
+            setFilters={setFilters}
+            clearFilters={clearFilters}
+            user={user}
+            totalFiltersActive={totalFiltersActive}
+          />
         </div>
 
         {/* Conteúdo principal */}
