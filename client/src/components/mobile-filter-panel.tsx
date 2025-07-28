@@ -70,10 +70,10 @@ const MobileFilterPanel = memo(function MobileFilterPanel({
         <DialogTrigger asChild>
           <Button 
             variant="outline" 
-            className="w-full justify-between bg-white border-gray-200 hover:bg-gray-50"
-            onClick={() => {
-              console.log('Mobile filter button clicked, isMobile:', isMobile);
-              setIsOpen(true);
+            className="w-full justify-between bg-white border-gray-200 hover:bg-gray-50 touch-manipulation"
+            style={{ 
+              WebkitTapHighlightColor: 'transparent',
+              touchAction: 'manipulation'
             }}
           >
             <div className="flex items-center gap-2">

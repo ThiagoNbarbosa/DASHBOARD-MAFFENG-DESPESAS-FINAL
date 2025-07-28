@@ -45,8 +45,12 @@ export function MobileLayoutWrapper({
 
     // Prevent zoom on double tap but allow normal touch interaction
     const preventZoom = (e: TouchEvent) => {
-      // Don't interfere with dialog interactions
-      if (e.target && (e.target as Element).closest('[role="dialog"]')) {
+      // Don't interfere with dialog interactions or buttons
+      if (e.target && (
+        (e.target as Element).closest('[role="dialog"]') ||
+        (e.target as Element).closest('button') ||
+        (e.target as Element).closest('[data-radix-collection-item]')
+      )) {
         return;
       }
       
@@ -55,7 +59,7 @@ export function MobileLayoutWrapper({
       }
     };
 
-    document.addEventListener('touchstart', preventZoom, { passive: false });
+    document.addEventListener('touchstart', preventZoom, { passive: true });
 
     return () => {
       document.removeEventListener('touchstart', preventZoom);
