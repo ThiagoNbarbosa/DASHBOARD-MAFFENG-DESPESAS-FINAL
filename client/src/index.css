@@ -72,6 +72,29 @@
     transform: translateZ(0) !important;
     will-change: transform !important;
   }
+  
+  /* Improve Sheet behavior on mobile */
+  [data-radix-dialog-overlay] {
+    -webkit-transform: translateZ(0) !important;
+    transform: translateZ(0) !important;
+    backdrop-filter: blur(4px) !important;
+  }
+  
+  [data-radix-dialog-content][data-side="bottom"] {
+    -webkit-transform: translateZ(0) !important;
+    transform: translateZ(0) !important;
+    will-change: transform !important;
+    max-height: 90vh !important;
+    border-top-left-radius: 16px !important;
+    border-top-right-radius: 16px !important;
+  }
+  
+  /* Ensure buttons work properly on mobile */
+  button[data-radix-dialog-trigger] {
+    -webkit-tap-highlight-color: transparent !important;
+    touch-action: manipulation !important;
+    min-height: 44px !important;
+  }
 }
 
 :root {
