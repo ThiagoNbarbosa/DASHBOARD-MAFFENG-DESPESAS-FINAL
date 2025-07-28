@@ -35,12 +35,16 @@ export function ExpenseFilters({ filters, setFilters, clearFilters, user }: Expe
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
         <div>
-          <Label htmlFor="yearFilter">Ano</Label>
+          <Label>Ano</Label>
           <Select value={filters.year} onValueChange={(value) => setFilters({ ...filters, year: value })}>
-            <SelectTrigger>
+            <SelectTrigger id="yearFilter">
               <SelectValue placeholder="Selecione o ano" />
             </SelectTrigger>
-            <SelectContent className="z-[99999] max-h-[200px] overflow-y-auto bg-white border shadow-lg">
+            <SelectContent 
+              className="z-[99999] max-h-[200px] overflow-y-auto bg-white border shadow-lg"
+              position="popper"
+              sideOffset={4}
+            >
               <SelectItem value="all">Todos os anos</SelectItem>
               <SelectItem value="2025">2025</SelectItem>
               <SelectItem value="2026">2026</SelectItem>
@@ -53,12 +57,16 @@ export function ExpenseFilters({ filters, setFilters, clearFilters, user }: Expe
         </div>
 
         <div>
-          <Label htmlFor="monthFilter">Mês</Label>
+          <Label>Mês</Label>
           <Select value={filters.month} onValueChange={(value) => setFilters({ ...filters, month: value })}>
-            <SelectTrigger>
+            <SelectTrigger id="monthFilter">
               <SelectValue placeholder="Todos os meses" />
             </SelectTrigger>
-            <SelectContent className="z-[99999] max-h-[200px] overflow-y-auto bg-white border shadow-lg">
+            <SelectContent 
+              className="z-[99999] max-h-[200px] overflow-y-auto bg-white border shadow-lg"
+              position="popper"
+              sideOffset={4}
+            >
               <SelectItem value="all">Todos os meses</SelectItem>
               {Array.from({ length: 12 }, (_, i) => {
                 const monthNumber = String(i + 1).padStart(2, '0');
@@ -74,12 +82,16 @@ export function ExpenseFilters({ filters, setFilters, clearFilters, user }: Expe
         </div>
 
         <div>
-          <Label htmlFor="categoryFilter">Categoria</Label>
+          <Label>Categoria</Label>
           <Select value={filters.category} onValueChange={(value) => setFilters({ ...filters, category: value })}>
-            <SelectTrigger>
+            <SelectTrigger id="categoryFilter">
               <SelectValue placeholder="Todas as categorias" />
             </SelectTrigger>
-            <SelectContent className="z-[99999] max-h-[200px] overflow-y-auto bg-white border shadow-lg">
+            <SelectContent 
+              className="z-[99999] max-h-[200px] overflow-y-auto bg-white border shadow-lg"
+              position="popper"
+              sideOffset={4}
+            >
               <SelectItem value="all">Todas as categorias</SelectItem>
               <SelectItem value="(Sem Categoria)">(Sem Categoria)</SelectItem>
               {categories.filter((cat: string) => cat !== '(Sem Categoria)').map((category: string) => (
@@ -92,12 +104,16 @@ export function ExpenseFilters({ filters, setFilters, clearFilters, user }: Expe
         </div>
 
         <div>
-          <Label htmlFor="paymentMethodFilter">Forma de Pagamento</Label>
+          <Label>Forma de Pagamento</Label>
           <Select value={filters.paymentMethod} onValueChange={(value) => setFilters({ ...filters, paymentMethod: value })}>
-            <SelectTrigger>
+            <SelectTrigger id="paymentMethodFilter">
               <SelectValue placeholder="Todas as formas" />
             </SelectTrigger>
-            <SelectContent className="z-[99999] max-h-[200px] overflow-y-auto bg-white border shadow-lg">
+            <SelectContent 
+              className="z-[99999] max-h-[200px] overflow-y-auto bg-white border shadow-lg"
+              position="popper"
+              sideOffset={4}
+            >
               <SelectItem value="all">Todas as formas</SelectItem>
               {FORMAS_PAGAMENTO.map((method) => (
                 <SelectItem key={method} value={method}>
@@ -109,12 +125,16 @@ export function ExpenseFilters({ filters, setFilters, clearFilters, user }: Expe
         </div>
 
         <div>
-          <Label htmlFor="contractFilter">Contrato</Label>
+          <Label>Contrato</Label>
           <Select value={filters.contractNumber} onValueChange={(value) => setFilters({ ...filters, contractNumber: value })}>
-            <SelectTrigger>
+            <SelectTrigger id="contractFilter">
               <SelectValue placeholder="Todos os contratos" />
             </SelectTrigger>
-            <SelectContent className="z-[99999] max-h-[200px] overflow-y-auto bg-white border shadow-lg">
+            <SelectContent 
+              className="z-[99999] max-h-[200px] overflow-y-auto bg-white border shadow-lg"
+              position="popper"
+              sideOffset={4}
+            >
               <SelectItem value="all">Todos os contratos</SelectItem>
               <SelectItem value="(Sem Contrato)">(Sem Contrato)</SelectItem>
               {contracts.filter((cont: string) => cont !== '(Sem Contrato)').map((contract: string) => (
@@ -136,7 +156,7 @@ export function ExpenseFilters({ filters, setFilters, clearFilters, user }: Expe
 
       {/* Barra de Pesquisa */}
       <div className="mt-4">
-        <Label htmlFor="searchFilter">Buscar</Label>
+        <Label>Buscar</Label>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
@@ -162,7 +182,7 @@ export function ExpenseFilters({ filters, setFilters, clearFilters, user }: Expe
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
         <div>
-          <Label htmlFor="startDate">Data Inicial</Label>
+          <Label>Data Inicial</Label>
           <Input
             id="startDate"
             type="date"
@@ -172,7 +192,7 @@ export function ExpenseFilters({ filters, setFilters, clearFilters, user }: Expe
         </div>
 
         <div>
-          <Label htmlFor="endDate">Data Final</Label>
+          <Label>Data Final</Label>
           <Input
             id="endDate"
             type="date"
