@@ -9,17 +9,9 @@ import { Separator } from "@/components/ui/separator";
 import { BarChart3, FileText, TrendingUp, LogOut, Menu, X, UserPlus, Receipt, Calculator, CreditCard, Download, Settings, Building, Tag } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import SignupModal from "@/components/signup-modal";
-// Logo MAFFENG como SVG embutido
+// Logo MAFFENG
 const MAFFENGLogo = () => (
-  <svg viewBox="0 0 200 80" className="h-full w-full">
-    <rect width="200" height="80" fill="#1e40af" rx="4"/>
-    <text x="100" y="35" textAnchor="middle" fill="white" fontSize="20" fontWeight="bold">
-      MAFFENG
-    </text>
-    <text x="100" y="55" textAnchor="middle" fill="#93c5fd" fontSize="10">
-      Dashboard
-    </text>
-  </svg>
+  <img src="/logo-maffeng.svg" alt="MAFFENG Logo" className="h-full w-full object-contain" />
 );
 
 export default function Sidebar() {

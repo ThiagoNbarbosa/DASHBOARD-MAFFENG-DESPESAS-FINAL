@@ -7,17 +7,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { authApi } from "@/lib/auth";
 import type { LoginData } from "@shared/schema";
-// Logo MAFFENG como SVG embutido
+// Logo MAFFENG
 const MAFFENGLogo = () => (
-  <svg viewBox="0 0 200 80" className="h-full w-full">
-    <rect width="200" height="80" fill="#1e40af" rx="8"/>
-    <text x="100" y="35" textAnchor="middle" fill="white" fontSize="24" fontWeight="bold">
-      MAFFENG
-    </text>
-    <text x="100" y="55" textAnchor="middle" fill="#93c5fd" fontSize="12">
-      Dashboard Financeiro
-    </text>
-  </svg>
+  <img src="/logo-maffeng.svg" alt="MAFFENG Logo" className="h-full w-full object-contain" />
 );
 
 export default function Login() {
