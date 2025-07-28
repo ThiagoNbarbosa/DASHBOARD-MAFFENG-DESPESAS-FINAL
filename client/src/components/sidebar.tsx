@@ -9,9 +9,9 @@ import { Separator } from "@/components/ui/separator";
 import { BarChart3, FileText, TrendingUp, LogOut, Menu, X, UserPlus, Receipt, Calculator, CreditCard, Download, Settings, Building, Tag } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import SignupModal from "@/components/signup-modal";
-// Logo MAFFENG
+// Logo MAFFENG Original
 const MAFFENGLogo = () => (
-  <img src="/logo-maffeng.svg" alt="MAFFENG Logo" className="h-full w-full object-contain" />
+  <img src="/assets/logo-maffeng-original.png" alt="MAFFENG Logo" className="h-full w-full object-contain" />
 );
 
 export default function Sidebar() {
