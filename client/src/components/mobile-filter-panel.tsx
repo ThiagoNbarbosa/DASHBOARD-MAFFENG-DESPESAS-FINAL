@@ -34,6 +34,7 @@ const MobileFilterPanel = memo(function MobileFilterPanel({
 
   const handleFiltersChange = useCallback((newFilters: any) => {
     try {
+      console.log('Mobile filter panel - updating filters:', newFilters);
       setFilters(newFilters);
     } catch (error) {
       console.error('Error updating filters:', error);
@@ -70,6 +71,10 @@ const MobileFilterPanel = memo(function MobileFilterPanel({
           <Button 
             variant="outline" 
             className="w-full justify-between bg-white border-gray-200 hover:bg-gray-50"
+            onClick={() => {
+              console.log('Mobile filter button clicked, isMobile:', isMobile);
+              setIsOpen(true);
+            }}
           >
             <div className="flex items-center gap-2">
               <Filter className="h-4 w-4" />
@@ -84,7 +89,8 @@ const MobileFilterPanel = memo(function MobileFilterPanel({
         </DialogTrigger>
         
         <DialogContent 
-          className={`${isMobile ? 'max-w-[95vw] max-h-[90vh]' : 'max-w-2xl'} overflow-y-auto`}
+          className={`${isMobile ? 'max-w-[95vw] max-h-[90vh] z-[99999]' : 'max-w-2xl'} overflow-y-auto`}
+          style={{ zIndex: 99999 }}
         >
           <DialogHeader className="pb-4">
             <DialogTitle className="text-left">Filtros de Pesquisa</DialogTitle>
