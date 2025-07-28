@@ -1,0 +1,65 @@
+**🧪 AUDITORIA TÉCNICA ESPECÍFICA - FUNCIONALIDADE MOBILE E IDENTIDADE VISUAL**
+
+---
+
+### 🔍 OBJETIVO DA ANÁLISE
+
+Realizar uma análise minuciosa do comportamento **mobile (Google Chrome em dispositivos Android e iOS)** da página `despesas.tsx`, com foco especial em:
+
+1. Comportamento dos **filtros** e seus componentes no modo responsivo.
+2. Inspeção do layout visual responsivo (componentes, cores, fontes).
+3. Identificação do **design system utilizado** (paleta de cores, tipografia, espaçamentos, botões, modais etc.).
+4. Aponta apenas o que pode estar causando comportamentos inconsistentes no mobile (sem alterar nada).
+
+---
+
+### 📝 COMANDO PARA ANÁLISE
+
+**PROMPT PARA REPLIT AGENT:**
+
+```bash
+# Acesse o diretório client/src/pages e abra o arquivo despesas.tsx.
+# Execute uma análise específica com foco exclusivo em dispositivos móveis (Google Chrome Mobile View).
+# Verifique o seguinte:
+
+1. Quais componentes de filtro estão visíveis no modo mobile?
+2. Eles estão sendo renderizados condicionalmente via "isMobile"?
+3. Algum modal, dropdown ou componente está com problema de "overflow", "z-index" ou não está aparecendo no mobile?
+4. Há algum `useEffect` ou `useMediaQuery` relacionado à responsividade?
+5. Os eventos de clique, seleção e aplicação de filtros estão realmente funcionando no modo responsivo?
+6. Existe algum CSS ou classe Tailwind que pode estar colidindo ou sendo sobrescrita no mobile (ex: `overflow-hidden`, `position: fixed`, `display: none`)?
+7. Valide se os elementos MobileFilterPanel estão corretamente ancorados à tela, com o comportamento de "bottom sheet".
+
+# Em seguida, analise também:
+
+8. A paleta de cores utilizada no projeto (em tailwind.config.ts ou styled-components)
+9. A tipografia padrão usada nas principais páginas (font-family, tamanhos, pesos)
+10. Quais elementos visuais compõem o kit de interface (ex: botões, cards, inputs, modais)
+
+# Atenção:
+- Apenas colete informações, não altere arquivos.
+- Gere um diagnóstico completo focado apenas na experiência mobile.
+- Informe se há algum componente que é exibido no desktop mas oculto ou quebrado no mobile.
+```
+
+---
+
+### 🌐 CHECKLIST ESPERADO DE RETORNO
+
+* ✅ Quais filtros aparecem (ou não aparecem) no mobile
+* ✅ Se há falha de clique, interação ou evento em dispositivos pequenos
+* ✅ Se há bug de sobreposição, rolagem ou z-index
+* ✅ Tipografia utilizada (nome, fallback, tamanhos)
+* ✅ Paleta de cores extraída do design system ou tailwind.config
+* ✅ Comportamento de modais e painéis no mobile
+* ✅ Sugestão de testes adicionais: inspecionar em tela de 375px e 414px
+
+---
+
+### 🚀 PRÓXIMO PASSO (após retorno da análise)
+
+* Validar o comportamento detectado no mobile.
+* Comparar com renderização desktop.
+* Planejar correções sem afetar o ambiente atual de produção.
+
+Caso deseje, posso gerar também um modelo de relatório visual com screenshots responsivos e auditoria comparativa. Deseja seguir com isso?
