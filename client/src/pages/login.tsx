@@ -7,9 +7,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { authApi } from "@/lib/auth";
 import type { LoginData } from "@shared/schema";
-// Logo MAFFENG
+// Logo MAFFENG Original
 const MAFFENGLogo = () => (
-  <img src="/logo-maffeng.svg" alt="MAFFENG Logo" className="h-full w-full object-contain" />
+  <img src="/assets/logo-maffeng-original.png" alt="MAFFENG Logo" className="h-full w-full object-contain" />
 );
 
 export default function Login() {
