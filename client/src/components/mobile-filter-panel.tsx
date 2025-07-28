@@ -90,7 +90,11 @@ const MobileFilterPanel = memo(function MobileFilterPanel({
         
         <DialogContent 
           className={`${isMobile ? 'max-w-[95vw] max-h-[90vh] z-[99999]' : 'max-w-2xl'} overflow-y-auto`}
-          style={{ zIndex: 99999 }}
+          style={{ 
+            zIndex: 99999,
+            WebkitTransform: 'translateZ(0)',
+            transform: 'translateZ(0)'
+          }}
         >
           <DialogHeader className="pb-4">
             <DialogTitle className="text-left">Filtros de Pesquisa</DialogTitle>

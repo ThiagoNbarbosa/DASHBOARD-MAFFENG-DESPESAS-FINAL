@@ -37,17 +37,70 @@ export function ExpenseFilters({ filters, setFilters, clearFilters, user }: Expe
         <div>
           <Label htmlFor="yearFilter">Ano</Label>
           <Select value={filters.year} onValueChange={(value) => setFilters({ ...filters, year: value })}>
-            <SelectTrigger>
+            <SelectTrigger 
+              className="touch-manipulation"
+              style={{ 
+                WebkitTapHighlightColor: 'transparent',
+                touchAction: 'manipulation'
+              }}
+            >
               <SelectValue placeholder="Selecione o ano" />
             </SelectTrigger>
-            <SelectContent className="z-[9999] max-h-[200px] overflow-y-auto">
-              <SelectItem value="all">Todos os anos</SelectItem>
-              <SelectItem value="2025">2025</SelectItem>
-              <SelectItem value="2026">2026</SelectItem>
-              <SelectItem value="2027">2027</SelectItem>
-              <SelectItem value="2028">2028</SelectItem>
-              <SelectItem value="2029">2029</SelectItem>
-              <SelectItem value="2030">2030</SelectItem>
+            <SelectContent 
+              className="z-[99999] max-h-[200px] overflow-y-auto"
+              position="popper"
+              sideOffset={4}
+              style={{ zIndex: 99999 }}
+            >
+              <SelectItem 
+                value="all"
+                className="cursor-pointer touch-manipulation"
+                style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+              >
+                Todos os anos
+              </SelectItem>
+              <SelectItem 
+                value="2025"
+                className="cursor-pointer touch-manipulation"
+                style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+              >
+                2025
+              </SelectItem>
+              <SelectItem 
+                value="2026"
+                className="cursor-pointer touch-manipulation"
+                style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+              >
+                2026
+              </SelectItem>
+              <SelectItem 
+                value="2027"
+                className="cursor-pointer touch-manipulation"
+                style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+              >
+                2027
+              </SelectItem>
+              <SelectItem 
+                value="2028"
+                className="cursor-pointer touch-manipulation"
+                style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+              >
+                2028
+              </SelectItem>
+              <SelectItem 
+                value="2029"
+                className="cursor-pointer touch-manipulation"
+                style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+              >
+                2029
+              </SelectItem>
+              <SelectItem 
+                value="2030"
+                className="cursor-pointer touch-manipulation"
+                style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+              >
+                2030
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -55,16 +108,38 @@ export function ExpenseFilters({ filters, setFilters, clearFilters, user }: Expe
         <div>
           <Label htmlFor="monthFilter">Mês</Label>
           <Select value={filters.month} onValueChange={(value) => setFilters({ ...filters, month: value })}>
-            <SelectTrigger>
+            <SelectTrigger 
+              className="touch-manipulation"
+              style={{ 
+                WebkitTapHighlightColor: 'transparent',
+                touchAction: 'manipulation'
+              }}
+            >
               <SelectValue placeholder="Todos os meses" />
             </SelectTrigger>
-            <SelectContent className="z-[9999] max-h-[200px] overflow-y-auto">
-              <SelectItem value="all">Todos os meses</SelectItem>
+            <SelectContent 
+              className="z-[99999] max-h-[200px] overflow-y-auto"
+              position="popper"
+              sideOffset={4}
+              style={{ zIndex: 99999 }}
+            >
+              <SelectItem 
+                value="all"
+                className="cursor-pointer touch-manipulation"
+                style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+              >
+                Todos os meses
+              </SelectItem>
               {Array.from({ length: 12 }, (_, i) => {
                 const monthNumber = String(i + 1).padStart(2, '0');
                 const monthName = new Date(2024, i, 1).toLocaleDateString('pt-BR', { month: 'long' });
                 return (
-                  <SelectItem key={monthNumber} value={monthNumber}>
+                  <SelectItem 
+                    key={monthNumber} 
+                    value={monthNumber}
+                    className="cursor-pointer touch-manipulation"
+                    style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+                  >
                     {monthName}
                   </SelectItem>
                 );
@@ -76,14 +151,42 @@ export function ExpenseFilters({ filters, setFilters, clearFilters, user }: Expe
         <div>
           <Label htmlFor="categoryFilter">Categoria</Label>
           <Select value={filters.category} onValueChange={(value) => setFilters({ ...filters, category: value })}>
-            <SelectTrigger>
+            <SelectTrigger 
+              className="touch-manipulation"
+              style={{ 
+                WebkitTapHighlightColor: 'transparent',
+                touchAction: 'manipulation'
+              }}
+            >
               <SelectValue placeholder="Todas as categorias" />
             </SelectTrigger>
-            <SelectContent className="z-[9999] max-h-[200px] overflow-y-auto">
-              <SelectItem value="all">Todas as categorias</SelectItem>
-              <SelectItem value="(Sem Categoria)">(Sem Categoria)</SelectItem>
+            <SelectContent 
+              className="z-[99999] max-h-[200px] overflow-y-auto"
+              position="popper"
+              sideOffset={4}
+              style={{ zIndex: 99999 }}
+            >
+              <SelectItem 
+                value="all"
+                className="cursor-pointer touch-manipulation"
+                style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+              >
+                Todas as categorias
+              </SelectItem>
+              <SelectItem 
+                value="(Sem Categoria)"
+                className="cursor-pointer touch-manipulation"
+                style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+              >
+                (Sem Categoria)
+              </SelectItem>
               {categories.filter((cat: string) => cat !== '(Sem Categoria)').map((category: string) => (
-                <SelectItem key={category} value={category}>
+                <SelectItem 
+                  key={category} 
+                  value={category}
+                  className="cursor-pointer touch-manipulation"
+                  style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+                >
                   {category}
                 </SelectItem>
               ))}
@@ -94,13 +197,35 @@ export function ExpenseFilters({ filters, setFilters, clearFilters, user }: Expe
         <div>
           <Label htmlFor="paymentMethodFilter">Forma de Pagamento</Label>
           <Select value={filters.paymentMethod} onValueChange={(value) => setFilters({ ...filters, paymentMethod: value })}>
-            <SelectTrigger>
+            <SelectTrigger 
+              className="touch-manipulation"
+              style={{ 
+                WebkitTapHighlightColor: 'transparent',
+                touchAction: 'manipulation'
+              }}
+            >
               <SelectValue placeholder="Todas as formas" />
             </SelectTrigger>
-            <SelectContent className="z-[9999] max-h-[200px] overflow-y-auto">
-              <SelectItem value="all">Todas as formas</SelectItem>
+            <SelectContent 
+              className="z-[99999] max-h-[200px] overflow-y-auto"
+              position="popper"
+              sideOffset={4}
+              style={{ zIndex: 99999 }}
+            >
+              <SelectItem 
+                value="all"
+                className="cursor-pointer touch-manipulation"
+                style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+              >
+                Todas as formas
+              </SelectItem>
               {FORMAS_PAGAMENTO.map((method) => (
-                <SelectItem key={method} value={method}>
+                <SelectItem 
+                  key={method} 
+                  value={method}
+                  className="cursor-pointer touch-manipulation"
+                  style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+                >
                   {method}
                 </SelectItem>
               ))}
@@ -111,14 +236,42 @@ export function ExpenseFilters({ filters, setFilters, clearFilters, user }: Expe
         <div>
           <Label htmlFor="contractFilter">Contrato</Label>
           <Select value={filters.contractNumber} onValueChange={(value) => setFilters({ ...filters, contractNumber: value })}>
-            <SelectTrigger>
+            <SelectTrigger 
+              className="touch-manipulation"
+              style={{ 
+                WebkitTapHighlightColor: 'transparent',
+                touchAction: 'manipulation'
+              }}
+            >
               <SelectValue placeholder="Todos os contratos" />
             </SelectTrigger>
-            <SelectContent className="z-[9999] max-h-[200px] overflow-y-auto">
-              <SelectItem value="all">Todos os contratos</SelectItem>
-              <SelectItem value="(Sem Contrato)">(Sem Contrato)</SelectItem>
+            <SelectContent 
+              className="z-[99999] max-h-[200px] overflow-y-auto"
+              position="popper"
+              sideOffset={4}
+              style={{ zIndex: 99999 }}
+            >
+              <SelectItem 
+                value="all"
+                className="cursor-pointer touch-manipulation"
+                style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+              >
+                Todos os contratos
+              </SelectItem>
+              <SelectItem 
+                value="(Sem Contrato)"
+                className="cursor-pointer touch-manipulation"
+                style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+              >
+                (Sem Contrato)
+              </SelectItem>
               {contracts.filter((cont: string) => cont !== '(Sem Contrato)').map((contract: string) => (
-                <SelectItem key={contract} value={contract}>
+                <SelectItem 
+                  key={contract} 
+                  value={contract}
+                  className="cursor-pointer touch-manipulation"
+                  style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+                >
                   {contract}
                 </SelectItem>
               ))}
