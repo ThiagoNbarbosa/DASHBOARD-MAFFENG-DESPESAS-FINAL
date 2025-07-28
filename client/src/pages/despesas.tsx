@@ -4,13 +4,16 @@ import { authApi } from "@/lib/auth";
 import Sidebar from "@/components/sidebar";
 import { AllExpensesTable } from "@/components/all-expenses-table";
 import { ExpenseFilters } from "@/components/expense-filters";
+import MobileFilterPanel from "@/components/mobile-filter-panel";
 import ExpenseModal from "@/components/expense-modal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading-spinner";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { FileText, TrendingUp, Calendar, Receipt, Filter } from "lucide-react";
 import { FORMAS_PAGAMENTO } from "@shared/constants";
 
 export default function Despesas() {
+  const isMobile = useIsMobile();
   const [filters, setFilters] = useState({
     year: new Date().getFullYear().toString(),
     month: "all",
@@ -122,22 +125,32 @@ export default function Despesas() {
 
         {/* Filtros */}
         <div className="px-4 sm:px-6 lg:px-8 pb-4">
-          <Card className="rounded-2xl shadow-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                <Filter className="h-5 w-5" />
-                Filtros de Despesas
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ExpenseFilters
-                filters={filters}
-                setFilters={setFilters}
-                clearFilters={clearFilters}
-                user={user}
-              />
-            </CardContent>
-          </Card>
+          {isMobile ? (
+            <MobileFilterPanel
+              filters={filters}
+              setFilters={setFilters}
+              clearFilters={clearFilters}
+              user={user}
+              totalFiltersActive={Object.values(filters).filter(v => v && v !== 'all' && v !== new Date().getFullYear().toString()).length}
+            />
+          ) : (
+            <Card className="rounded-2xl shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  <Filter className="h-5 w-5" />
+                  Filtros de Despesas
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ExpenseFilters
+                  filters={filters}
+                  setFilters={setFilters}
+                  clearFilters={clearFilters}
+                  user={user}
+                />
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Conteúdo principal */}
