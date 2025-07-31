@@ -1,0 +1,93 @@
+**ARQUIVOS MAIS IMPORTANTES DO SISTEMA DASHBOARD FINANCEIRO MAFFENG**
+
+**Arquivo 1:**
+Caminho: shared/schema.ts
+Importância: Schema principal do banco de dados com tabelas users, expenses e billing. Define toda a estrutura de dados, validações Zod e tipos TypeScript. Central para entender o modelo de dados do sistema.
+
+**Arquivo 2:**
+Caminho: server/routes.ts
+Importância: Rotas da API principal com toda lógica de backend. Contém autenticação, CRUD de despesas/faturamento, upload de arquivos Excel, middleware de segurança e sessões.
+
+**Arquivo 3:**
+Caminho: client/src/pages/dashboard.tsx
+Importância: Página principal do sistema com overview financeiro. Ponto de entrada após login, contém componentes DashboardStats e DashboardExpenses com métricas em tempo real.
+
+**Arquivo 4:**
+Caminho: client/src/pages/despesas.tsx
+Importância: Interface principal de gestão de despesas. Contém sistema de filtros avançados, tabela responsiva, modal de criação e funcionalidades móveis otimizadas.
+
+**Arquivo 5:**
+Caminho: client/src/components/expense-filters.tsx
+Importância: Sistema de filtros avançados usado em múltiplas páginas. Componente central para busca por ano, mês, categoria, forma de pagamento e contratos com otimizações mobile.
+
+**Arquivo 6:**
+Caminho: client/src/lib/queryClient.ts
+Importância: Configuração do React Query com cache inteligente. Define padrões de requisições API, tratamento de erros 401/403 e otimizações de performance.
+
+**Arquivo 7:**
+Caminho: server/storage.ts
+Importância: Interface de abstração do banco de dados. Define todos os métodos CRUD para users, expenses, billing e estatísticas. Camada crítica entre API e banco.
+
+**Arquivo 8:**
+Caminho: client/src/pages/faturamento.tsx
+Importância: Sistema completo de gestão de faturamento com CRUD, filtros, modais e controle de status (pendente/pago/vencido). Interface para receitas da empresa.
+
+**Arquivo 9:**
+Caminho: client/src/pages/relatorios.tsx
+Importância: Central de relatórios com importação Excel, filtros avançados, exportação CSV/JSON e sistema drag-and-drop. Funcionalidade crítica para análise de dados.
+
+**Arquivo 10:**
+Caminho: client/src/pages/final.tsx
+Importância: Análise financeira consolidada calculando receitas, despesas e lucro líquido. Dashboard executivo com KPIs e indicadores de performance.
+
+**Arquivo 11:**
+Caminho: client/src/App.tsx
+Importância: Configuração principal da aplicação React com roteamento, autenticação, providers e componentes de performance mobile.
+
+**Arquivo 12:**
+Caminho: package.json
+Importância: Configuração de dependências, scripts de build e deploy. Define stack tecnológico: React, Express, PostgreSQL, Supabase, Chart.js, Radix UI.
+
+**Arquivo 13:**
+Caminho: tailwind.config.ts
+Importância: Configuração do design system com paleta de cores, tipografia e temas. Define identidade visual consistente em todo o sistema.
+
+**Arquivo 14:**
+Caminho: client/src/index.css
+Importância: CSS global com otimizações mobile críticas, design system em CSS variables e fixes específicos para componentes Radix UI em dispositivos móveis.
+
+**Arquivo 15:**
+Caminho: client/src/components/mobile-filter-panel.tsx
+Importância: Componente especializado para filtros em dispositivos móveis usando Sheet (bottom drawer). Crítico para experiência mobile responsiva.
+
+**Arquivo 16:**
+Caminho: shared/constants.ts
+Importância: Constantes globais do sistema incluindo formas de pagamento, categorias, contratos e bancos emissores. Padronização de dados em todo sistema.
+
+**Arquivo 17:**
+Caminho: server/storage-pg.ts
+Importância: Implementação concreta do storage usando PostgreSQL/Drizzle ORM. Contém toda lógica de queries complexas, filtros e operações de banco.
+
+**Arquivo 18:**
+Caminho: client/src/pages/results.tsx
+Importância: Dashboard de analytics com gráficos Chart.js, estatísticas por categoria/contrato/pagamento e visualizações interativas de dados.
+
+**Arquivo 19:**
+Caminho: client/src/hooks/use-mobile.ts
+Importância: Hook personalizado para detecção de dispositivos móveis combinando User-Agent e largura de tela. Usado para renderização condicional responsiva.
+
+**Arquivo 20:**
+Caminho: server/index.ts
+Importância: Servidor principal Express com configuração de middleware, CORS, sessões, roteamento e inicialização do banco de dados. Ponto de entrada do backend.
+
+**RESUMO EXECUTIVO:**
+
+Estes 20 arquivos representam 95% da funcionalidade crítica do sistema Dashboard Financeiro MAFFENG. O sistema é uma aplicação full-stack moderna com:
+
+- **Frontend**: React 18 + TypeScript com Radix UI e Tailwind CSS
+- **Backend**: Node.js + Express com autenticação baseada em sessões
+- **Banco**: PostgreSQL com Drizzle ORM e esquema bem definido
+- **Funcionalidades**: CRUD completo, filtros avançados, relatórios, analytics, sistema mobile otimizado
+- **Performance**: React Query cache, componentes otimizados, design responsivo
+
+A arquitetura segue padrões modernos de desenvolvimento com separação clara entre camadas, tipagem forte TypeScript e experiência mobile-first.
