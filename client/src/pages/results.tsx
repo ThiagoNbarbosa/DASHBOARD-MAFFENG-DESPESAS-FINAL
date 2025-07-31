@@ -1,7 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Sidebar from "@/components/sidebar";
 import ExpensesByContract from "@/components/expenses-by-contract";
+import ModernCategoryChart from "@/components/modern-category-chart";
+import ModernContractChart from "@/components/modern-contract-chart";
+import ModernPaymentChart from "@/components/modern-payment-chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,6 +50,10 @@ export default function Results() {
     category: "all",
     contractNumber: "",
   });
+  
+  // Estados para interatividade dos gráficos
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
 
   const { data: categoryStats = [] } = useQuery({
     queryKey: ['/api/stats/categories', filters],
@@ -82,6 +89,45 @@ export default function Results() {
       return await apiRequest('/api/stats/monthly', 'GET');
     },
   });
+
+  // Buscar dados de despesas para análise por contrato
+  const { data: expenses = [] } = useQuery({
+    queryKey: ['/api/expenses', filters],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (filters.year && filters.year !== "all") params.set('year', filters.year);
+      if (filters.month && filters.month !== "all") params.set('month', filters.month);
+      if (filters.category && filters.category !== "all") params.set('category', filters.category);
+      if (filters.contractNumber) params.set('contractNumber', filters.contractNumber);
+      
+      return await apiRequest(`/api/expenses?${params}`, 'GET');
+    },
+  });
+
+  // Preparar dados para o gráfico de contratos
+  const contractData = useMemo(() => {
+    if (!expenses.length) return [];
+    
+    const contractMap = new Map();
+    
+    expenses.forEach((expense: any) => {
+      const contract = expense.contractNumber || 'Sem Contrato';
+      
+      if (!contractMap.has(contract)) {
+        contractMap.set(contract, {
+          contractNumber: contract,
+          totalAmount: 0,
+          expenseCount: 0,
+        });
+      }
+      
+      const contractInfo = contractMap.get(contract);
+      contractInfo.totalAmount += parseFloat(expense.value || 0);
+      contractInfo.expenseCount += 1;
+    });
+    
+    return Array.from(contractMap.values()).sort((a, b) => b.totalAmount - a.totalAmount);
+  }, [expenses]);
 
   const categoryChartData = {
     labels: categoryStats.map((stat: any) => stat.category),
@@ -288,63 +334,35 @@ export default function Results() {
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-base font-semibold">Despesas por Categoria</CardTitle>
-              </CardHeader>
-              <CardContent className="p-4">
-                <div style={{ height: '300px' }}>
-                  <Doughnut data={categoryChartData} options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: {
-                        position: 'bottom' as const,
-                        labels: {
-                          padding: 20,
-                          usePointStyle: true
-                        }
-                      }
-                    }
-                  }} />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-base font-semibold">Distribuição por Forma de Pagamento</CardTitle>
-              </CardHeader>
-              <CardContent className="p-4">
-                <div className="overflow-x-auto">
-                  <div style={{ height: '300px', minWidth: '300px' }}>
-                    <Bar
-                      data={paymentChartData}
-                      options={{
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                          legend: {
-                            display: false
-                          }
-                        },
-                        scales: {
-                          y: {
-                            beginAtZero: true
-                          }
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          {/* Gráfico de Categoria Moderno */}
+          <div className="mb-8">
+            <ModernCategoryChart 
+              data={categoryStats}
+              title="Despesas por Categoria"
+              showLegend={true}
+              showStats={true}
+              selectedCategory={selectedCategory}
+              onCategorySelect={setSelectedCategory}
+              onCategoryHover={setHoveredCategory}
+            />
           </div>
 
-          {/* Seção de Despesas por Contrato */}
+          {/* Gráfico de Formas de Pagamento Moderno */}
+          <div className="mb-8">
+            <ModernPaymentChart 
+              data={paymentStats}
+              title="Distribuição por Forma de Pagamento"
+              showStats={true}
+            />
+          </div>
+
+          {/* Gráfico de Contratos Moderno */}
           <div className="mt-8">
-            <ExpensesByContract filters={filters} />
+            <ModernContractChart 
+              data={contractData}
+              title="Análise Detalhada por Contrato"
+              showStats={true}
+            />
           </div>
         </main>
       </div>

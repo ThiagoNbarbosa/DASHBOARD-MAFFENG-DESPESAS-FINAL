@@ -3,14 +3,23 @@ import { useQuery } from "@tanstack/react-query";
 import { authApi } from "@/lib/auth";
 import { apiRequest } from "@/lib/queryClient";
 import Sidebar from "@/components/sidebar";
+import { ExpenseFilters } from "@/components/expense-filters";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, FileText, Calendar, Filter, BarChart3, Upload, X } from "lucide-react";
+import { Download, FileText, Calendar, Filter, BarChart3, Upload, X, Eye, Edit, Ban, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useResponsive } from "@/hooks/use-responsive";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { BANCOS, FORMAS_PAGAMENTO } from "@shared/constants";
+import { useContractsAndCategories } from "@/hooks/use-contracts-categories";
+import { formatDateForCSV, formatDateSafely } from "@/lib/date-utils";
+import type { Expense } from "@shared/schema";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { ReusableReportModal } from "@/components/reusable-report-modal";
 
 interface ReportFilters {
   year: string;
@@ -18,40 +27,45 @@ interface ReportFilters {
   category: string;
   contractNumber: string;
   paymentMethod: string;
+  startDate: string;
+  endDate: string;
   reportType: 'despesas' | 'faturamento' | 'completo';
 }
 
 export default function Relatorios() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { data: contractsCategories } = useContractsAndCategories();
+
+  const contracts = contractsCategories?.contracts || [];
+  const categories = contractsCategories?.categories || [];
+  const { isMobile, isTablet } = useResponsive();
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [importDate, setImportDate] = useState(new Date().toISOString().split('T')[0]);
+
   const [filters, setFilters] = useState<ReportFilters>({
     year: new Date().getFullYear().toString(),
     month: "all",
-    category: "",
-    contractNumber: "",
-    paymentMethod: "",
+    category: "all",
+    contractNumber: "all",
+    paymentMethod: "all",
+    startDate: "",
+    endDate: "",
     reportType: "completo"
   });
 
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-
-  // Mutation para importar Excel
+  // Import Excel mutation
   const importExcelMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append('excel', file);
-
+    mutationFn: async (formData: FormData) => {
       const response = await fetch('/api/expenses/import-excel', {
         method: 'POST',
         body: formData,
-        credentials: 'include',
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Erro no upload: ${errorText}`);
+        const error = await response.json();
+        throw new Error(error.message || 'Erro na importação');
       }
 
       return response.json();
@@ -59,43 +73,53 @@ export default function Relatorios() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/expenses'] });
       queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
-      setShowImportModal(false);
-      setSelectedFile(null);
-      
-      // Mensagem inteligente com detalhes da importação
-      const message = data.enhanced > 0 
-        ? `${data.imported} despesas importadas. ${data.enhanced} foram melhoradas automaticamente!`
-        : `${data.imported} despesas importadas com sucesso.`;
-      
-      toast({
-        title: "🧠 Importação Inteligente Concluída",
-        description: message,
-      });
+      setIsImportModalOpen(false);
 
-      // Mostrar insights se houver
-      if (data.insights && data.insights.length > 0) {
+      // Toast principal de sucesso
+      setTimeout(() => {
+        toast({
+          title: data.success ? "Importação concluída!" : "Importação com problemas",
+          description: data.message,
+          variant: data.success ? "default" : "destructive",
+        });
+      }, 100);
+
+      // Toast com detalhes se houve melhorias
+      if (data.enhanced > 0) {
         setTimeout(() => {
           toast({
-            title: "💡 Insights da Importação",
-            description: data.insights.slice(0, 2).join('; '),
+            title: `${data.enhanced} melhorias aplicadas`,
+            description: "Dados foram normalizados automaticamente conforme padrões do sistema.",
           });
-        }, 1000);
+        }, 1500);
       }
 
-      // Mostrar informações sobre a inteligência aplicada
-      if (data.intelligence) {
+      // Toast com avisos se houver
+      if (data.warnings > 0) {
         setTimeout(() => {
           toast({
-            title: "🤖 Inteligência Aplicada",
-            description: `${data.intelligence.columnsAutoMapped} colunas mapeadas automaticamente`,
+            title: `${data.warnings} avisos`,
+            description: "Alguns dados foram ajustados automaticamente.",
           });
-        }, 2000);
+        }, 3000);
+      }
+
+      // Toast com erros se houver
+      if (data.errors > 0) {
+        setTimeout(() => {
+          toast({
+            title: `${data.errors} linhas com problemas`,
+            description: "Algumas linhas não puderam ser importadas devido a dados inválidos.",
+            variant: "destructive",
+          });
+        }, 4500);
       }
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      setIsImportModalOpen(false);
       toast({
         title: "Erro na importação",
-        description: error.message,
+        description: error.message || "Falha ao importar planilha Excel",
         variant: "destructive",
       });
     },
@@ -103,99 +127,91 @@ export default function Relatorios() {
 
   const validateFile = (file: File) => {
     const validTypes = [
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'application/vnd.ms-excel',
-      'application/excel',
-      'text/csv'
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+      'application/vnd.ms-excel', // .xls
+      'text/csv', // .csv
+      'application/octet-stream' // fallback MIME type
     ];
-    
+
     const validExtensions = ['.xlsx', '.xls', '.csv'];
-    const fileExtension = file.name.toLowerCase().slice(file.name.lastIndexOf('.'));
-    
-    return validTypes.includes(file.type) || validExtensions.includes(fileExtension);
+    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+
+    if (!validTypes.includes(file.type) && !validExtensions.includes(fileExtension)) {
+      throw new Error('Formato de arquivo inválido. Use apenas .xlsx, .xls ou .csv');
+    }
+
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      throw new Error('Arquivo muito grande. Limite de 10MB');
+    }
+
+    return true;
   };
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (validateFile(file)) {
-        setSelectedFile(file);
-      } else {
-        toast({
-          title: "Formato inválido",
-          description: "Por favor, selecione um arquivo Excel (.xlsx ou .xls).",
-          variant: "destructive",
-        });
+  const safeDownload = (blob: Blob, filename: string) => {
+    try {
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+
+      // Append to body, click, and remove
+      document.body.appendChild(link);
+      link.click();
+
+      // Clean up
+      if (link.parentNode) {
+        link.parentNode.removeChild(link);
       }
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download error:', error);
+      throw new Error('Erro ao realizar download do arquivo');
     }
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  };
+  const handleFileUpload = (file: File) => {
+    if (!file) return;
 
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
+    try {
+      validateFile(file);
+
+      toast({
+        title: "Arquivo carregado",
+        description: `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`,
+      });
+
+      const formData = new FormData();
+      formData.append('excel', file);
+      formData.append('importDate', importDate);
+      importExcelMutation.mutate(formData);
+    } catch (error: any) {
+      toast({
+        title: "Erro no arquivo",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-
-    const files = e.dataTransfer.files;
-    if (files.length === 0) {
-      toast({
-        title: "Nenhum arquivo detectado",
-        description: "Tente arrastar um arquivo novamente.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (files.length > 1) {
-      toast({
-        title: "Múltiplos arquivos detectados",
-        description: "Por favor, arraste apenas um arquivo por vez.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const file = files[0];
-    
-    // Verificar tamanho do arquivo (máximo 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      toast({
-        title: "Arquivo muito grande",
-        description: "O arquivo deve ter no máximo 10MB.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (validateFile(file)) {
-      setSelectedFile(file);
-      toast({
-        title: "✅ Arquivo carregado com sucesso",
-        description: `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB) pronto para importação inteligente.`,
-      });
-    } else {
-      toast({
-        title: "Formato não suportado",
-        description: "Por favor, arraste um arquivo Excel (.xlsx, .xls) ou CSV.",
-        variant: "destructive",
-      });
-    }
+    setIsDragOver(false);
+    handleFileUpload(e.dataTransfer.files[0]);
   };
 
-  const handleImportExcel = () => {
-    if (selectedFile) {
-      importExcelMutation.mutate(selectedFile);
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      handleFileUpload(e.target.files[0]);
     }
   };
 
@@ -204,18 +220,22 @@ export default function Relatorios() {
     queryFn: authApi.getCurrentUser,
   });
 
-  // Buscar dados de despesas com filtros
-  const { data: expenses = [], isLoading: isLoadingExpenses } = useQuery({
-    queryKey: ['/api/expenses', filters.year, filters.month, filters.category, filters.contractNumber, filters.paymentMethod],
-    queryFn: () => {
+  // Query para buscar despesas com filtros aplicados
+  const { data: filteredExpenses = [], isLoading: expensesLoading } = useQuery({
+    queryKey: ['/api/expenses', filters.year, filters.month, filters.category, filters.contractNumber, filters.paymentMethod, filters.startDate, filters.endDate],
+    queryFn: async () => {
       const params = new URLSearchParams();
-      if (filters.year && filters.year !== "all") params.append('year', filters.year);
-      if (filters.month && filters.month !== "all") params.append('month', filters.month);
-      if (filters.category) params.append('category', filters.category);
-      if (filters.contractNumber) params.append('contractNumber', filters.contractNumber);
-      if (filters.paymentMethod && filters.paymentMethod !== "all") params.append('paymentMethod', filters.paymentMethod);
-      
-      return apiRequest(`/api/expenses?${params.toString()}`, 'GET');
+      if (filters.year !== "all") params.append('year', filters.year);
+      if (filters.month !== "all") params.append('month', filters.month);
+      if (filters.category !== "all") params.append('category', filters.category);
+      if (filters.contractNumber !== "all") params.append('contractNumber', filters.contractNumber);
+      if (filters.paymentMethod !== "all") params.append('paymentMethod', filters.paymentMethod);
+      if (filters.startDate) params.append('startDate', filters.startDate);
+      if (filters.endDate) params.append('endDate', filters.endDate);
+
+      const response = await fetch(`/api/expenses?${params.toString()}`);
+      if (!response.ok) throw new Error('Erro ao buscar despesas');
+      return response.json();
     },
   });
 
@@ -226,58 +246,27 @@ export default function Relatorios() {
       const params = new URLSearchParams();
       if (filters.year && filters.year !== "all") params.append('year', filters.year);
       if (filters.month && filters.month !== "all") params.append('month', filters.month);
-      if (filters.contractNumber) params.append('contractNumber', filters.contractNumber);
-      
+      if (filters.contractNumber && filters.contractNumber !== "all") params.append('contractNumber', filters.contractNumber);
+
       return apiRequest(`/api/billing?${params.toString()}`, 'GET');
     },
   });
 
-  if (userLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto mb-4"></div>
-          <p className="text-lg text-gray-600">Carregando relatórios...</p>
-        </div>
-      </div>
-    );
-  }
+  // Aliases para manter compatibilidade
+  const expenses = filteredExpenses;
+  const isLoadingExpenses = expensesLoading;
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-red-600 mb-2">Acesso Negado</h2>
-          <p className="text-gray-600">Você precisa estar logado para acessar esta página.</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Função segura para downloads
-  const safeDownload = (blob: Blob, filename: string) => {
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    
-    try {
-      link.setAttribute('href', url);
-      link.setAttribute('download', filename);
-      link.style.visibility = 'hidden';
-      
-      // Verificação segura antes de appendChild
-      if (document.body) {
-        document.body.appendChild(link);
-        link.click();
-        
-        // Verificação segura antes de removeChild
-        if (link.parentNode === document.body) {
-          document.body.removeChild(link);
-        }
-      }
-    } finally {
-      // Sempre limpar a URL para evitar memory leaks
-      URL.revokeObjectURL(url);
-    }
+  const clearFilters = () => {
+    setFilters({
+      year: new Date().getFullYear().toString(),
+      month: "all",
+      category: "all",
+      contractNumber: "all",
+      paymentMethod: "all",
+      startDate: "",
+      endDate: "",
+      reportType: "completo"
+    });
   };
 
   // Função para gerar e baixar CSV
@@ -293,11 +282,11 @@ export default function Relatorios() {
 
     let csvContent = '';
     let headers: string[] = [];
-    
+
     if (type === 'despesas') {
       headers = ['ID', 'Item', 'Valor', 'Método Pagamento', 'Categoria', 'Contrato', 'Data Pagamento', 'Criado em'];
       csvContent = headers.join(',') + '\n';
-      
+
       data.forEach((expense: any) => {
         const row = [
           expense.id,
@@ -306,7 +295,7 @@ export default function Relatorios() {
           `"${expense.paymentMethod}"`,
           `"${expense.category}"`,
           expense.contractNumber,
-          new Date(expense.paymentDate).toLocaleDateString('pt-BR'),
+          formatDateForCSV(expense.paymentDate),
           new Date(expense.createdAt).toLocaleDateString('pt-BR')
         ];
         csvContent += row.join(',') + '\n';
@@ -314,7 +303,7 @@ export default function Relatorios() {
     } else if (type === 'faturamento') {
       headers = ['ID', 'Cliente', 'Descrição', 'Valor', 'Status', 'Contrato', 'Vencimento', 'Data Pagamento', 'Emissão'];
       csvContent = headers.join(',') + '\n';
-      
+
       data.forEach((billing: any) => {
         const row = [
           billing.id,
@@ -324,7 +313,7 @@ export default function Relatorios() {
           billing.status,
           billing.contractNumber,
           new Date(billing.dueDate).toLocaleDateString('pt-BR'),
-          billing.paymentDate ? new Date(billing.paymentDate).toLocaleDateString('pt-BR') : 'N/A',
+          billing.paymentDate ? formatDateForCSV(billing.paymentDate) : 'N/A',
           new Date(billing.issueDate).toLocaleDateString('pt-BR')
         ];
         csvContent += row.join(',') + '\n';
@@ -382,181 +371,203 @@ export default function Relatorios() {
   const totalFaturamento = faturamentos.length;
   const valorTotalFaturamento = faturamentos.reduce((sum: number, f: any) => sum + parseFloat(f.value || "0"), 0);
 
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto mb-4"></div>
+          <p className="text-lg text-gray-600">Carregando relatórios...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-red-600 mb-2">Acesso Negado</h2>
+          <p className="text-gray-600">Você precisa estar logado para acessar esta página.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Sidebar />
       
-      <div className="lg:pl-64">
+      <div className={`transition-all duration-300 ${isMobile ? 'ml-0' : 'ml-64'}`}>
         {/* Header */}
-        <header className="bg-white shadow-sm border-b border-gray-200">
-          <div className="px-4 sm:px-6 lg:px-8 py-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="bg-blue-100 p-2 rounded-lg">
-                  <Download className="h-6 w-6 text-blue-600" />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Relatórios</h1>
-                  <p className="text-sm text-gray-600">
-                    Exporte dados filtrados em CSV ou JSON
-                  </p>
-                </div>
+        <div className="bg-white shadow-sm border-b border-gray-200">
+          <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <div className="bg-orange-100 p-1.5 sm:p-2 rounded-lg">
+                <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-orange-600" />
               </div>
-              
-              <div className="flex gap-3">
-                <Button 
-                  onClick={() => setShowImportModal(true)}
-                  className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
-                >
-                  <Upload className="h-4 w-4" />
-                  Importar Excel
-                </Button>
-                
-                <Button 
-                  onClick={handleDownload}
-                  disabled={isLoading}
-                  className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
-                >
-                  <Download className="h-4 w-4" />
-                  Baixar Relatório
-                </Button>
+              <div className="min-w-0 flex-1">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">Relatórios</h1>
+                <p className="text-xs sm:text-sm text-gray-600 truncate">
+                  Gere e baixe relatórios detalhados de despesas e faturamento
+                </p>
               </div>
             </div>
-          </div>
-        </header>
 
-        <main className="px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+            
+            <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 mt-4">
+              <Button 
+                onClick={() => setIsImportModalOpen(true)}
+                className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+              >
+                <Upload className="h-4 w-4" />
+                {isMobile ? 'Import' : 'Importar Excel'}
+              </Button>
+
+              {filters.reportType === "visual" ? (
+                <ReusableReportModal
+                  title="Relatório de Despesas MAFFENG"
+                  data={filteredExpenses}
+                  filters={filters}
+                  companyName="MAFFENG"
+                  reportType="RELATÓRIO FINANCEIRO DE DESPESAS"
+                  triggerButton={
+                    <Button className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      {isMobile ? 'Visual' : 'Relatório Visual'}
+                    </Button>
+                  }
+                    tableConfig={{
+                      columns: [
+                        { key: 'item', label: 'Item', align: 'left' },
+                        { 
+                          key: 'category', 
+                          label: 'Categoria', 
+                          align: 'left',
+                          formatter: (value) => value?.replace('[CANCELADA] ', '') || 'Sem categoria'
+                        },
+                        { 
+                          key: 'value', 
+                          label: 'Valor', 
+                          align: 'right',
+                          formatter: (value) => new Intl.NumberFormat('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL'
+                          }).format(parseFloat(value) || 0)
+                        },
+                        { key: 'paymentMethod', label: 'Forma Pagamento', align: 'center' },
+                        { key: 'contractNumber', label: 'Contrato', align: 'left' },
+                        { 
+                          key: 'paymentDate', 
+                          label: 'Data Pagamento', 
+                          align: 'center',
+                          formatter: (value) => formatDateSafely(value)
+                        },
+                        { 
+                          key: 'category', 
+                          label: 'Status', 
+                          align: 'center',
+                          formatter: (value) => value?.includes('[CANCELADA]') ? 'CANCELADA' : 'ATIVA'
+                        }
+                      ]
+                    }}
+                    customCalculations={(data) => {
+                      const totalGeral = data.reduce((sum, item) => {
+                        const value = parseFloat(item.value) || 0;
+                        return sum + value;
+                      }, 0);
+                      
+                      const despesasAtivas = data.filter(item => !item.category?.includes('[CANCELADA]'));
+                      const despesasCanceladas = data.filter(item => item.category?.includes('[CANCELADA]'));
+                      
+                      const valorMedio = data.length > 0 ? totalGeral / data.length : 0;
+                      
+                      return (
+                        <div className="space-y-1">
+                          <p className="text-sm">
+                            <strong>Total Geral:</strong> {new Intl.NumberFormat('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL'
+                            }).format(totalGeral)}
+                          </p>
+                          <p className="text-sm">
+                            <strong>Despesas Ativas:</strong> {despesasAtivas.length}
+                          </p>
+                          <p className="text-sm">
+                            <strong>Despesas Canceladas:</strong> {despesasCanceladas.length}
+                          </p>
+                          <p className="text-sm">
+                            <strong>Valor Médio:</strong> {new Intl.NumberFormat('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL'
+                            }).format(valorMedio)}
+                          </p>
+                        </div>
+                      );
+                    }}
+                  />
+                ) : (
+                  <Button 
+                    onClick={() => handleDownload("download")}
+                    disabled={filteredExpenses.length === 0}
+                    className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Download className="h-4 w-4" />
+                    {isMobile ? 'Download' : 'Baixar Relatório'}
+                  </Button>
+                )}
+            </div>
+          </div>
+        </div>
+
+        {/* Conteúdo principal */}
+        <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-6">
           {/* Filtros */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+          <Card className="rounded-2xl shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-semibold flex items-center gap-2">
                 <Filter className="h-5 w-5" />
                 Filtros do Relatório
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Tipo de Relatório
-                  </label>
-                  <Select
-                    value={filters.reportType}
-                    onValueChange={(value) => setFilters(prev => ({ ...prev, reportType: value as any }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="completo">Relatório Completo (JSON)</SelectItem>
-                      <SelectItem value="despesas">Apenas Despesas (CSV)</SelectItem>
-                      <SelectItem value="faturamento">Apenas Faturamento (CSV)</SelectItem>
-                    </SelectContent>
-                  </Select>
+              <div className="space-y-4">
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Tipo de Relatório
+                    </label>
+                    <Select
+                      value={filters.reportType}
+                      onValueChange={(value) => setFilters(prev => ({ ...prev, reportType: value as any }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="completo">Relatório Completo (JSON)</SelectItem>
+                        <SelectItem value="despesas">Apenas Despesas (CSV)</SelectItem>
+                        <SelectItem value="faturamento">Apenas Faturamento (CSV)</SelectItem>
+                        <SelectItem value="visual">Relatório Visual (PDF/Impressão)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Ano
-                  </label>
-                  <Select
-                    value={filters.year}
-                    onValueChange={(value) => setFilters(prev => ({ ...prev, year: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos os anos</SelectItem>
-                      <SelectItem value="2025">2025</SelectItem>
-                      <SelectItem value="2024">2024</SelectItem>
-                      <SelectItem value="2023">2023</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Mês
-                  </label>
-                  <Select
-                    value={filters.month}
-                    onValueChange={(value) => setFilters(prev => ({ ...prev, month: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos os meses</SelectItem>
-                      <SelectItem value="01">Janeiro</SelectItem>
-                      <SelectItem value="02">Fevereiro</SelectItem>
-                      <SelectItem value="03">Março</SelectItem>
-                      <SelectItem value="04">Abril</SelectItem>
-                      <SelectItem value="05">Maio</SelectItem>
-                      <SelectItem value="06">Junho</SelectItem>
-                      <SelectItem value="07">Julho</SelectItem>
-                      <SelectItem value="08">Agosto</SelectItem>
-                      <SelectItem value="09">Setembro</SelectItem>
-                      <SelectItem value="10">Outubro</SelectItem>
-                      <SelectItem value="11">Novembro</SelectItem>
-                      <SelectItem value="12">Dezembro</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Categoria
-                  </label>
-                  <Input
-                    placeholder="Ex: Material, Transporte..."
-                    value={filters.category}
-                    onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value }))}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Número do Contrato
-                  </label>
-                  <Input
-                    placeholder="Ex: 0001, 0002..."
-                    value={filters.contractNumber}
-                    onChange={(e) => setFilters(prev => ({ ...prev, contractNumber: e.target.value }))}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Método de Pagamento
-                  </label>
-                  <Select
-                    value={filters.paymentMethod}
-                    onValueChange={(value) => setFilters(prev => ({ ...prev, paymentMethod: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos</SelectItem>
-                      <SelectItem value="Pix">Pix</SelectItem>
-                      <SelectItem value="Cartão de Crédito">Cartão de Crédito</SelectItem>
-                      <SelectItem value="Cartão de Débito">Cartão de Débito</SelectItem>
-                      <SelectItem value="Boleto à Vista">Boleto à Vista</SelectItem>
-                      <SelectItem value="Transferência">Transferência</SelectItem>
-                      <SelectItem value="Dinheiro">Dinheiro</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <ExpenseFilters
+                  filters={filters}
+                  setFilters={setFilters}
+                  clearFilters={clearFilters}
+                  user={user}
+                />
               </div>
             </CardContent>
           </Card>
 
           {/* Prévia dos Dados */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+          <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+            <Card className="rounded-2xl shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
                   <BarChart3 className="h-5 w-5 text-red-600" />
                   Prévia - Despesas
                 </CardTitle>
@@ -584,9 +595,9 @@ export default function Relatorios() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+            <Card className="rounded-2xl shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
                   <BarChart3 className="h-5 w-5 text-green-600" />
                   Prévia - Faturamento
                 </CardTitle>
@@ -615,171 +626,216 @@ export default function Relatorios() {
             </Card>
           </div>
 
-          {/* Informações sobre formatos */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Formatos de Export
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 bg-blue-50 rounded-lg">
-                  <h3 className="font-medium text-blue-900 mb-2">Relatório Completo (JSON)</h3>
-                  <p className="text-sm text-blue-700">
-                    Inclui despesas, faturamento e resumo financeiro em formato estruturado para análises avançadas.
-                  </p>
-                </div>
-                <div className="p-4 bg-red-50 rounded-lg">
-                  <h3 className="font-medium text-red-900 mb-2">Despesas (CSV)</h3>
-                  <p className="text-sm text-red-700">
-                    Apenas dados de despesas em formato CSV, ideal para importação em planilhas.
-                  </p>
-                </div>
-                <div className="p-4 bg-green-50 rounded-lg">
-                  <h3 className="font-medium text-green-900 mb-2">Faturamento (CSV)</h3>
-                  <p className="text-sm text-green-700">
-                    Apenas dados de faturamento em formato CSV, perfeito para análise de receitas.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </main>
-      </div>
+          {/* Lista de Despesas Filtradas */}
+          {filteredExpenses.length > 0 && (
+            <Card className="mt-6 rounded-2xl shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-blue-600" />
+                  Lista de Despesas para Relatório ({filteredExpenses.length} itens)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isMobile ? (
+                  // Layout de cards para mobile
+                  <div className="space-y-3">
+                    {filteredExpenses.slice(0, 10).map((expense: Expense) => (
+                      <div key={expense.id} className="bg-gray-50 rounded-lg p-3 space-y-2">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-sm truncate">{expense.item}</h4>
+                            <p className="text-xs text-gray-600">{formatDateSafely(expense.paymentDate)}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium text-sm">
+                              {new Intl.NumberFormat('pt-BR', {
+                                style: 'currency',
+                                currency: 'BRL'
+                              }).format(expense.value)}
+                            </p>
+                            {expense.category.includes('[CANCELADA]') ? (
+                              <Badge variant="destructive" className="text-xs">Cancelada</Badge>
+                            ) : (
+                              <Badge variant="default" className="bg-green-100 text-green-800 text-xs">Ativa</Badge>
+                            )}
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div>
+                            <span className="text-gray-500">Categoria: </span>
+                            <span className="font-medium">{expense.category.replace('[CANCELADA] ', '')}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-500">Pagamento: </span>
+                            <span className="font-medium">{expense.paymentMethod}</span>
+                          </div>
+                        </div>
+                        {expense.contractNumber && (
+                          <div className="text-xs">
+                            <span className="text-gray-500">Contrato: </span>
+                            <span className="font-medium">{expense.contractNumber}</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  // Tabela para desktop
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Item</TableHead>
+                          <TableHead>Categoria</TableHead>
+                          <TableHead>Valor</TableHead>
+                          <TableHead>Forma de Pagamento</TableHead>
+                          <TableHead>Contrato</TableHead>
+                          <TableHead>Data</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                    <TableBody>
+                      {filteredExpenses.slice(0, 10).map((expense: Expense) => (
+                        <TableRow key={expense.id}>
+                          <TableCell className="font-medium">
+                            {expense.item}
+                          </TableCell>
+                          <TableCell>
+                            <Badge 
+                              variant="secondary"
+                              className={expense.category.includes('[CANCELADA]') ? 'bg-red-100 text-red-800' : ''}
+                            >
+                              {expense.category.replace('[CANCELADA] ', '')}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {new Intl.NumberFormat('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL'
+                            }).format(expense.value)}
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm">
+                              {expense.paymentMethod === "Pix" && "🟢"}
+                              {expense.paymentMethod === "Cartão de Crédito" && "💳"}
+                              {expense.paymentMethod === "Boleto à Vista" && "🟠"}
+                              {expense.paymentMethod === "Boleto a Prazo" && "🔴"}
+                              {!["Pix", "Cartão de Crédito", "Boleto à Vista", "Boleto a Prazo"].includes(expense.paymentMethod) && "💰"}
+                              {" "}{expense.paymentMethod}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-sm text-gray-600">
+                            {expense.contractNumber || "Sem contrato"}
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {formatDateSafely(expense.paymentDate)}
+                          </TableCell>
+                          <TableCell>
+                            {expense.category.includes('[CANCELADA]') ? (
+                              <Badge variant="destructive">Cancelada</Badge>
+                            ) : (
+                              <Badge variant="default" className="bg-green-100 text-green-800">Ativa</Badge>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+                {filteredExpenses.length > 10 && (
+                  <div className="mt-4 text-center">
+                    <p className={`text-gray-500 ${isMobile ? 'text-xs' : 'text-sm'}`}>
+                      Mostrando 10 de {filteredExpenses.length} despesas. 
+                      <span className="font-medium"> Todas serão incluídas no relatório.</span>
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
-      {/* Modal de Importação de Excel */}
-      <Dialog open={showImportModal} onOpenChange={setShowImportModal}>
-        <DialogContent className="max-w-md mx-auto">
-          <DialogHeader>
-            <DialogTitle>Importar Despesas do Excel</DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div className="text-sm text-gray-600">
-              <div className="bg-blue-50 p-3 rounded-lg mb-3">
-                <h4 className="font-medium text-blue-800 mb-2 flex items-center gap-2">
-                  <span>🧠</span> Importação Inteligente
-                </h4>
-                <p className="text-xs text-blue-700">
-                  O sistema detecta automaticamente as colunas, normaliza categorias 
-                  e métodos de pagamento, e corrige formatos de dados!
+          {/* Mensagem quando não há despesas */}
+          {filteredExpenses.length === 0 && !expensesLoading && (
+            <Card className="mt-6 rounded-2xl shadow-sm">
+              <CardContent className="text-center py-8">
+                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Nenhuma despesa encontrada
+                </h3>
+                <p className="text-gray-500">
+                  Ajuste os filtros para ver as despesas que serão incluídas no relatório.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* Modal de Importação */}
+        <Dialog open={isImportModalOpen} onOpenChange={setIsImportModalOpen}>
+          <DialogContent className={`${isMobile ? 'max-w-[95vw] max-h-[85vh] mx-2' : 'max-w-2xl max-h-[90vh]'} overflow-y-auto`}>
+            <DialogHeader className={isMobile ? 'pb-2' : ''}>
+              <DialogTitle className={`flex items-center gap-2 ${isMobile ? 'text-lg' : ''}`}>
+                <Upload className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-green-600`} />
+                Importar Planilha Excel
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="import-date" className={`block text-sm font-medium text-gray-700 mb-2 ${isMobile ? 'text-xs' : ''}`}>
+                  Data para as despesas importadas
+                </label>
+                <Input
+                  id="import-date"
+                  type="date"
+                  defaultValue={importDate}
+                  className={`w-full ${isMobile ? 'h-10 text-sm' : ''}`}
+                  onChange={(e) => setImportDate(e.target.value)}
+                />
+              </div>
+
+              <div 
+                className={`border-2 border-dashed rounded-lg ${isMobile ? 'p-4' : 'p-6'} text-center transition-colors ${
+                  isDragOver 
+                    ? 'border-green-500 bg-green-50' 
+                    : 'border-gray-300 hover:border-green-400'
+                }`}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+              >
+                <Upload className={`${isMobile ? 'h-6 w-6' : 'h-8 w-8'} mx-auto mb-2 ${isDragOver ? 'text-green-500' : 'text-gray-400'}`} />
+                <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600 mb-2`}>
+                  {isMobile ? 'Toque para selecionar' : 'Arraste e solte sua planilha aqui ou'}
+                </p>
+                <label htmlFor="file-input" className="inline-block">
+                  <span className={`bg-green-600 hover:bg-green-700 text-white ${isMobile ? 'px-3 py-2 text-sm' : 'px-4 py-2'} rounded cursor-pointer`}>
+                    Selecionar Arquivo
+                  </span>
+                  <input
+                    id="file-input"
+                    type="file"
+                    className="hidden"
+                    accept=".xlsx,.xls,.csv"
+                    onChange={handleInputChange}
+                  />
+                </label>
+                <p className={`text-xs text-gray-500 mt-2 ${isMobile ? 'text-[10px]' : ''}`}>
+                  Formatos aceitos: .xlsx, .xls, .csv (máx. 10MB)
                 </p>
               </div>
-              
-              <p className="mb-2">Formatos aceitos (ordem flexível):</p>
-              <ul className="list-disc list-inside space-y-1 text-xs">
-                <li><strong>Item/Descrição:</strong> Nome do produto/serviço</li>
-                <li><strong>Valor:</strong> R$ 100,00 ou 100.50 (múltiplos formatos)</li>
-                <li><strong>Pagamento:</strong> Cartão, PIX, Dinheiro, etc.</li>
-                <li><strong>Categoria:</strong> Alimentação, Transporte, etc.</li>
-                <li><strong>Contrato:</strong> Número ou código do contrato</li>
-                <li><strong>Data:</strong> DD/MM/AAAA ou outros formatos</li>
-              </ul>
-              <p className="mt-2 text-xs text-green-600">
-                ✅ Cabeçalhos são detectados automaticamente
-              </p>
-            </div>
 
-            <div 
-              className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                isDragging 
-                  ? 'border-blue-400 bg-blue-50' 
-                  : 'border-gray-300 hover:border-gray-400'
-              }`}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-            >
-              {selectedFile ? (
-                <div className="space-y-2">
-                  <FileText className="h-8 w-8 text-green-600 mx-auto" />
-                  <p className="text-sm font-medium text-green-600">
-                    {selectedFile.name}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                  </p>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setSelectedFile(null)}
-                    className="text-red-600 border-red-600 hover:bg-red-50"
-                  >
-                    <X className="h-4 w-4 mr-1" />
-                    Remover
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {isDragging ? (
-                    <div className="animate-bounce">
-                      <Upload className="h-10 w-10 text-blue-500 mx-auto" />
-                    </div>
-                  ) : (
-                    <Upload className="h-8 w-8 text-gray-400 mx-auto" />
-                  )}
-                  
-                  <div>
-                    <label className="cursor-pointer">
-                      <input
-                        type="file"
-                        accept=".xlsx,.xls,.csv"
-                        onChange={handleFileSelect}
-                        className="hidden"
-                      />
-                      <span className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                        Clique para selecionar arquivo
-                      </span>
-                    </label>
-                    
-                    {isDragging ? (
-                      <div className="mt-2 p-2 bg-blue-100 rounded-lg">
-                        <p className="text-sm font-medium text-blue-700">
-                          📂 Solte o arquivo aqui!
-                        </p>
-                        <p className="text-xs text-blue-600">
-                          Excel (.xlsx, .xls) ou CSV aceitos
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="mt-2">
-                        <p className="text-xs text-gray-500">
-                          ou <span className="font-medium">arraste e solte</span> um arquivo Excel aqui
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1">
-                          Máximo: 10MB • Formatos: .xlsx, .xls, .csv
-                        </p>
-                      </div>
-                    )}
-                  </div>
+              {importExcelMutation.isPending && (
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600 mx-auto mb-2"></div>
+                  <p className="text-sm text-gray-600">Processando planilha...</p>
                 </div>
               )}
             </div>
-
-            <div className="flex gap-3 pt-4">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowImportModal(false);
-                  setSelectedFile(null);
-                }}
-                className="flex-1"
-              >
-                Cancelar
-              </Button>
-              <Button
-                onClick={handleImportExcel}
-                disabled={!selectedFile || importExcelMutation.isPending}
-                className="flex-1 bg-green-600 hover:bg-green-700"
-              >
-                {importExcelMutation.isPending ? "Importando..." : "Importar"}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 }

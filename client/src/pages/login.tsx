@@ -7,7 +7,10 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { authApi } from "@/lib/auth";
 import type { LoginData } from "@shared/schema";
-import logoPath from "@assets/63f5d089-94db-4968-a76f-00d77b188818 (1)_1750213898122.png";
+// Logo MAFFENG Original
+const MAFFENGLogo = () => (
+  <img src="/assets/logo-maffeng-original.png" alt="MAFFENG Logo" className="h-full w-full object-contain" />
+);
 
 export default function Login() {
   const [credentials, setCredentials] = useState<LoginData>({
@@ -45,7 +48,7 @@ export default function Login() {
       <div className="max-w-md w-full space-y-8 p-8">
         <div className="text-center">
           <div className="mx-auto h-48 w-64 flex items-center justify-center">
-            <img src={logoPath} alt="MAFFENG Logo" className="h-full w-full object-contain" />
+            <MAFFENGLogo />
           </div>
         </div>
 
@@ -95,7 +98,8 @@ export default function Login() {
                 ⚠️ Aplicativo Restrito
               </h3>
               <div className="text-xs text-amber-700">
-                Para acessar este sistema, entre em contato com o desenvolvedor.
+                O aplicativo é restrito a usuários autorizados.
+                Por favor, entre em contato com o desenvolvedor se precisar de acesso.
               </div>
             </div>
           </CardContent>

@@ -9,6 +9,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import type { Expense } from "@shared/schema";
+import { BANCOS, FORMAS_PAGAMENTO } from "@shared/constants";
+import { useContractsAndCategories } from "@/hooks/use-contracts-categories";
+import { dateToInputValue } from "@/lib/date-utils";
 
 interface EditExpenseModalProps {
   expense: Expense | null;
@@ -39,6 +42,10 @@ export default function EditExpenseModal({ expense, open, onOpenChange }: EditEx
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { data: contractsCategories } = useContractsAndCategories();
+
+  const contracts = contractsCategories?.contracts || [];
+  const categories = contractsCategories?.categories || [];
 
   // Populate form when expense changes
   useEffect(() => {
@@ -49,7 +56,7 @@ export default function EditExpenseModal({ expense, open, onOpenChange }: EditEx
         category: expense.category,
         contractNumber: expense.contractNumber,
         totalValue: expense.value,
-        paymentDate: new Date(expense.paymentDate).toISOString().split('T')[0],
+        paymentDate: dateToInputValue(expense.paymentDate),
         bankIssuer: expense.bankIssuer || "",
       });
     }
@@ -59,11 +66,21 @@ export default function EditExpenseModal({ expense, open, onOpenChange }: EditEx
     mutationFn: async (data: ExpenseFormData) => {
       if (!expense) throw new Error("No expense to update");
 
+      // Remover o valor do objeto de atualização para garantir que não seja alterado
+      const { totalValue, ...updateData } = data;
+      
+      // Validar e formatar data corretamente
+      const paymentDate = new Date(data.paymentDate);
+      if (isNaN(paymentDate.getTime())) {
+        throw new Error("Data de pagamento inválida");
+      }
+      
       const expenseData = {
-        ...data,
-        value: data.totalValue,
-        paymentDate: new Date(data.paymentDate).toISOString(),
+        ...updateData,
+        paymentDate: paymentDate.toISOString(),
       };
+      
+      console.log("Dados sendo enviados para atualização:", expenseData);
 
       return await apiRequest(`/api/expenses/${expense.id}`, 'PUT', expenseData);
     },
@@ -121,21 +138,7 @@ export default function EditExpenseModal({ expense, open, onOpenChange }: EditEx
     }
   };
 
-  const categories = [
-    "Pagamento funcionários",
-    "Material",
-    "Mão de Obra",
-    "Prestador de serviços",
-    "Aluguel de ferramentas",
-    "Manutenção em veículo",
-  ];
 
-  const paymentMethods = [
-    "Pix",
-    "Cartão de Crédito",
-    "Boleto à Vista",
-    "Boleto a Prazo",
-  ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -169,7 +172,10 @@ export default function EditExpenseModal({ expense, open, onOpenChange }: EditEx
                 onChange={handleTotalValueChange}
                 placeholder="R$ 0,00"
                 required
+                disabled
+                className="bg-gray-100 cursor-not-allowed"
               />
+              <p className="text-xs text-gray-500 font-italic mt-1">(Valor inalterado)</p>
             </div>
 
             <div>
@@ -179,7 +185,7 @@ export default function EditExpenseModal({ expense, open, onOpenChange }: EditEx
                   <SelectValue placeholder="Selecione a forma de pagamento" />
                 </SelectTrigger>
                 <SelectContent>
-                  {paymentMethods.map((method) => (
+                  {FORMAS_PAGAMENTO.map((method) => (
                     <SelectItem key={method} value={method}>
                       {method}
                     </SelectItem>
@@ -206,13 +212,34 @@ export default function EditExpenseModal({ expense, open, onOpenChange }: EditEx
 
             <div>
               <Label htmlFor="edit-contractNumber">Número do Contrato *</Label>
-              <Input
-                id="edit-contractNumber"
-                value={formData.contractNumber}
-                onChange={(e) => setFormData({ ...formData, contractNumber: e.target.value })}
-                placeholder="Ex: CT-2024-001"
-                required
-              />
+              <Select value={formData.contractNumber} onValueChange={(value) => setFormData({ ...formData, contractNumber: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o contrato" />
+                </SelectTrigger>
+                <SelectContent>
+                  {contracts.map((contrato) => (
+                    <SelectItem key={contrato} value={contrato}>
+                      {contrato}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="edit-bankIssuer">Banco Emissor</Label>
+              <Select value={formData.bankIssuer || ""} onValueChange={(value) => setFormData({ ...formData, bankIssuer: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o banco emissor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {BANCOS.map((banco) => (
+                    <SelectItem key={banco} value={banco}>
+                      {banco}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div>

@@ -8,13 +8,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Trash2, Filter, X, Ban, Eye } from "lucide-react";
+import { Trash2, Filter, X, Ban, Eye, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { authApi } from "@/lib/auth";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { formatDateSafely } from "@/lib/date-utils";
+import { ModernFilters } from "@/components/ui/modern-filters";
 
 import type { Expense } from "@shared/schema";
+import { BANCOS, FORMAS_PAGAMENTO } from "@shared/constants";
+import { useContractsAndCategories } from "@/hooks/use-contracts-categories";
+import EditExpenseModal from "./edit-expense-modal";
 
 interface ExpenseFilters {
   year: string;
@@ -24,6 +28,7 @@ interface ExpenseFilters {
   paymentMethod: string;
   startDate: string;
   endDate: string;
+  search: string;
 }
 
 export default function ExpenseTable() {
@@ -35,18 +40,23 @@ export default function ExpenseTable() {
     paymentMethod: "all",
     startDate: "",
     endDate: "",
+    search: "",
   });
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-  
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const isMobile = useIsMobile();
 
   const { data: user } = useQuery({
     queryKey: ['/api/auth/me'],
     queryFn: authApi.getCurrentUser,
   });
+
+  const { data: contractsCategories } = useContractsAndCategories();
+  const contracts = contractsCategories?.contracts || [];
+  const categories = contractsCategories?.categories || [];
 
   // Query para buscar dados do usuário da despesa selecionada
   const { data: expenseUser } = useQuery({
@@ -69,15 +79,15 @@ export default function ExpenseTable() {
   };
 
   // Query unificada para despesas (reduz consultas duplicadas)
-  const hasActiveFilters = filters.year !== "all" || filters.month !== "all" || filters.category !== "all" || filters.contractNumber !== "" || filters.paymentMethod !== "all" || filters.startDate !== "" || filters.endDate !== "";
-  
+  const hasActiveFilters = filters.year !== "all" || filters.month !== "all" || filters.category !== "all" || filters.contractNumber !== "" || filters.paymentMethod !== "all" || filters.startDate !== "" || filters.endDate !== "" || filters.search !== "";
+
   const { data: allExpenses = [], isLoading } = useQuery<Expense[]>({
     queryKey: ['/api/expenses', hasActiveFilters ? 'filtered' : 'recent', filters],
     queryFn: async () => {
       if (!hasActiveFilters) {
         return await apiRequest('/api/expenses', 'GET');
       }
-      
+
       const params = new URLSearchParams();
       if (filters.year && filters.year !== "all") params.set('year', filters.year);
       if (filters.month && filters.month !== "all") {
@@ -89,7 +99,8 @@ export default function ExpenseTable() {
       if (filters.paymentMethod && filters.paymentMethod !== "all") params.set('paymentMethod', filters.paymentMethod);
       if (filters.startDate) params.set('startDate', filters.startDate);
       if (filters.endDate) params.set('endDate', filters.endDate);
-      
+      if (filters.search) params.set('search', filters.search);
+
       return await apiRequest(`/api/expenses?${params}`, 'GET');
     },
   });
@@ -98,83 +109,84 @@ export default function ExpenseTable() {
   const filteredExpenses = hasActiveFilters ? allExpenses : [];
   const recentExpenses = hasActiveFilters ? [] : allExpenses;
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => apiRequest(`/api/expenses/${id}`, 'DELETE'),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/expenses'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
-      toast({
-        title: "Despesa excluída",
-        description: "A despesa foi excluída com sucesso.",
-      });
+  // Preparar opções de filtro para o componente ModernFilters
+  const filterOptions = [
+    {
+      key: "year",
+      label: "Ano",
+      placeholder: "Selecione o ano",
+      options: [
+        { value: "all", label: "Todos os anos" },
+        { value: "2024", label: "2024" },
+        { value: "2025", label: "2025" },
+        { value: "2026", label: "2026" }
+      ]
     },
-    onError: () => {
-      toast({
-        title: "Erro ao excluir",
-        description: "Não foi possível excluir a despesa.",
-        variant: "destructive",
-      });
+    {
+      key: "month",
+      label: "Mês",  
+      placeholder: "Todos os meses",
+      options: [
+        { value: "all", label: "Todos os meses" },
+        ...Array.from({ length: 12 }, (_, i) => {
+          const monthNumber = String(i + 1).padStart(2, '0');
+          const monthName = new Date(2024, i, 1).toLocaleDateString('pt-BR', { month: 'long' });
+          return { value: monthNumber, label: monthName };
+        })
+      ]
     },
-  });
+    {
+      key: "category",
+      label: "Categoria",
+      placeholder: "Todas as categorias", 
+      options: [
+        { value: "all", label: "Todas as categorias" },
+        ...categories.map(category => ({ value: category, label: category }))
+      ]
+    },
+    {
+      key: "paymentMethod",
+      label: "Forma de Pagamento",
+      placeholder: "Todas as formas",
+      options: [
+        { value: "all", label: "Todas as formas" },
+        ...FORMAS_PAGAMENTO.map(method => ({ value: method, label: method }))
+      ]
+    },
+    ...(user?.role === "admin" ? [{
+      key: "contractNumber" as const,
+      label: "Contrato",
+      placeholder: "Todos os contratos",
+      options: [
+        { value: "all", label: "Todos os contratos" },
+        ...contracts.map(contract => ({ value: contract, label: contract }))
+      ]
+    }] : [])
+  ];
 
-  const cancelMutation = useMutation({
-    mutationFn: (id: string) => apiRequest(`/api/expenses/${id}/cancel`, 'PATCH'),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/expenses'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
-      toast({
-        title: "Despesa cancelada",
-        description: "A despesa foi cancelada com sucesso.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Erro ao cancelar",
-        description: "Não foi possível cancelar a despesa.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  
-
-  const handleCancel = (id: string) => {
-    if (confirm("Tem certeza que deseja cancelar esta despesa?")) {
-      cancelMutation.mutate(id);
-    }
+  const handleFilterChange = (newFilters: Partial<ExpenseFilters>) => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm("Tem certeza que deseja excluir esta despesa? Esta ação não pode ser desfeita.")) {
-      deleteMutation.mutate(id);
-    }
-  };
 
   const isCancelled = (category: string) => {
     return category.startsWith('[CANCELADA]');
   };
 
-  
+
 
   const clearFilters = () => {
-    setFilters({ year: "all", month: "all", category: "all", contractNumber: "", paymentMethod: "all", startDate: "", endDate: "" });
+    setFilters({ year: "all", month: "all", category: "all", contractNumber: "", paymentMethod: "all", startDate: "", endDate: "", search: "" });
   };
 
-  const categories = [
-    "Pagamento funcionários",
-    "Material",
-    "Mão de Obra",
-    "Prestador de serviços",
-    "Aluguel de ferramentas",
-    "Manutenção em veículo",
-  ];
+
 
   const getCategoryColor = (category: string) => {
     // Check if the expense is cancelled
     if (category.startsWith('[CANCELADA]')) {
       return "bg-red-50 text-red-600 border border-red-200";
     }
-    
+
     const colors: Record<string, string> = {
       "Material": "bg-blue-100 text-blue-800",
       "Pagamento funcionários": "bg-green-100 text-green-800",
@@ -183,7 +195,7 @@ export default function ExpenseTable() {
       "Aluguel de ferramentas": "bg-purple-100 text-purple-800",
       "Manutenção em veículo": "bg-orange-100 text-orange-800",
     };
-    
+
     // Remove the [CANCELADA] prefix for color matching
     const cleanCategory = category.replace('[CANCELADA] ', '');
     return colors[cleanCategory] || "bg-gray-100 text-gray-800";
@@ -204,138 +216,27 @@ export default function ExpenseTable() {
     }
   };
 
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
+  };
+
   return (
     <div className="space-y-6">
-      {/* Filters */}
-      <Card className="shadow-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base font-semibold">
-            <Filter className="h-5 w-5" />
-            Filtros
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className={`grid gap-4 ${isMobile ? 'grid-cols-1 space-y-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-6 space-y-2 md:space-y-0'}`}>
-            <div>
-              <Label htmlFor="yearFilter">Ano</Label>
-              <Select value={filters.year} onValueChange={(value) => setFilters({ ...filters, year: value })}>
-                <SelectTrigger className={isMobile ? "h-12 text-base" : ""}>
-                  <SelectValue placeholder="Selecione o ano" />
-                </SelectTrigger>
-                <SelectContent className={isMobile ? "z-50" : ""} position="popper" side="bottom">
-                  <SelectItem value="all">Todos os anos</SelectItem>
-                  <SelectItem value="2024">2024</SelectItem>
-                  <SelectItem value="2025">2025</SelectItem>
-                  <SelectItem value="2026">2026</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="monthFilter">Mês</Label>
-              <Select value={filters.month} onValueChange={(value) => setFilters({ ...filters, month: value })}>
-                <SelectTrigger className={isMobile ? "h-12 text-base" : ""}>
-                  <SelectValue placeholder="Todos os meses" />
-                </SelectTrigger>
-                <SelectContent className={isMobile ? "z-50 max-h-60" : ""} position="popper" side="bottom">
-                  <SelectItem value="all">Todos os meses</SelectItem>
-                  {Array.from({ length: 12 }, (_, i) => {
-                    const monthNumber = String(i + 1).padStart(2, '0');
-                    const monthName = new Date(2024, i, 1).toLocaleDateString('pt-BR', { month: 'long' });
-                    return (
-                      <SelectItem key={monthNumber} value={monthNumber}>
-                        {monthName}
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="categoryFilter">Categoria</Label>
-              <Select value={filters.category} onValueChange={(value) => setFilters({ ...filters, category: value })}>
-                <SelectTrigger className={isMobile ? "h-12 text-base" : ""}>
-                  <SelectValue placeholder="Todas as categorias" />
-                </SelectTrigger>
-                <SelectContent className={isMobile ? "z-50 max-h-60" : ""} position="popper" side="bottom">
-                  <SelectItem value="all">Todas as categorias</SelectItem>
-                  {categories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="paymentMethodFilter">Forma de Pagamento</Label>
-              <Select value={filters.paymentMethod} onValueChange={(value) => setFilters({ ...filters, paymentMethod: value })}>
-                <SelectTrigger className={isMobile ? "h-12 text-base" : ""}>
-                  <SelectValue placeholder="Todas as formas" />
-                </SelectTrigger>
-                <SelectContent className={isMobile ? "z-50" : ""} position="popper" side="bottom">
-                  <SelectItem value="all">Todas as formas</SelectItem>
-                  <SelectItem value="Pix">Pix</SelectItem>
-                  <SelectItem value="Cartão de Crédito">Cartão de Crédito</SelectItem>
-                  <SelectItem value="Boleto à Vista">Boleto à Vista</SelectItem>
-                  <SelectItem value="Boleto a Prazo">Boleto a Prazo</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {user?.role === "admin" && (
-              <div>
-                <Label htmlFor="contractFilter">Número do Contrato</Label>
-                <Input
-                  id="contractFilter"
-                  placeholder="Digite o número do contrato"
-                  value={filters.contractNumber}
-                  onChange={(e) => setFilters({ ...filters, contractNumber: e.target.value })}
-                  className={isMobile ? "h-12 text-base" : ""}
-                />
-              </div>
-            )}
-
-            <div>
-              <Label htmlFor="startDateFilter">Data Inicial</Label>
-              <Input
-                id="startDateFilter"
-                type="date"
-                value={filters.startDate}
-                onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-                className={isMobile ? "h-12 text-base" : ""}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="endDateFilter">Data Final</Label>
-              <Input
-                id="endDateFilter"
-                type="date"
-                value={filters.endDate}
-                onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-                className={isMobile ? "h-12 text-base" : ""}
-              />
-            </div>
-
-            <div className="flex items-end">
-              <Button 
-                variant="outline" 
-                onClick={clearFilters} 
-                className={`w-full ${isMobile ? "h-12 text-base" : ""}`}
-              >
-                <X className="h-4 w-4 mr-2" />
-                Limpar Filtros
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Modern Filters */}
+      <ModernFilters
+        filters={filters as Record<string, string>}
+        onFilterChange={handleFilterChange}
+        filterOptions={filterOptions}
+        searchPlaceholder="Buscar por item, categoria, contrato ou descrição..."
+        showExport={false}
+        title="Filtros"
+      />
 
       {/* Filtered Expenses Section */}
-      {(filters.year !== "all" || filters.month !== "all" || filters.category !== "all" || filters.contractNumber !== "" || filters.paymentMethod !== "all" || filters.startDate !== "" || filters.endDate !== "") && (
+      {hasActiveFilters && (
         <Card className="shadow-sm border-blue-200">
           <CardHeader>
             <CardTitle className="text-base font-semibold flex items-center gap-2">
@@ -401,7 +302,7 @@ export default function ExpenseTable() {
                           {expense.contractNumber}
                         </TableCell>
                         <TableCell className={isCancelled(expense.category) ? "text-red-600" : ""}>
-                          {new Date(expense.paymentDate).toLocaleDateString('pt-BR')}
+                          {formatDateSafely(expense.paymentDate)}
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
@@ -410,37 +311,10 @@ export default function ExpenseTable() {
                               variant="outline"
                               className="text-blue-600 border-blue-600 hover:bg-blue-50"
                               onClick={() => handleViewDetails(expense)}
+                              title="Visualizar detalhes"
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
-                            {user?.role === "admin" && (
-                              <>
-                                {!isCancelled(expense.category) && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="text-orange-600 border-orange-600 hover:bg-orange-50"
-                                    onClick={() => handleCancel(expense.id)}
-                                    disabled={cancelMutation.isPending}
-                                  >
-                                    <Ban className="h-4 w-4" />
-                                  </Button>
-                                )}
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="text-red-600 border-red-600 hover:bg-red-50"
-                                  onClick={() => {
-                                    if (confirm('Tem certeza que deseja excluir esta despesa?')) {
-                                      handleDelete(expense.id);
-                                    }
-                                  }}
-                                  disabled={deleteMutation.isPending}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </>
-                            )}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -517,7 +391,7 @@ export default function ExpenseTable() {
                         {expense.contractNumber}
                       </TableCell>
                       <TableCell className={isCancelled(expense.category) ? "text-red-600" : ""}>
-                        {new Date(expense.paymentDate).toLocaleDateString('pt-BR')}
+                        {formatDateSafely(expense.paymentDate)}
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
@@ -526,33 +400,10 @@ export default function ExpenseTable() {
                             variant="outline"
                             className="text-blue-600 border-blue-600 hover:bg-blue-50"
                             onClick={() => handleViewDetails(expense)}
+                            title="Visualizar detalhes"
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          {user?.role === "admin" && (
-                            <>
-                              {!isCancelled(expense.category) && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="text-orange-600 border-orange-600 hover:bg-orange-50"
-                                  onClick={() => handleCancel(expense.id)}
-                                  disabled={cancelMutation.isPending}
-                                >
-                                  <Ban className="h-4 w-4" />
-                                </Button>
-                              )}
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-red-600 border-red-600 hover:bg-red-50"
-                                onClick={() => handleDelete(expense.id)}
-                                disabled={deleteMutation.isPending}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </>
-                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -570,7 +421,7 @@ export default function ExpenseTable() {
           <DialogHeader>
             <DialogTitle>Detalhes da Despesa</DialogTitle>
           </DialogHeader>
-          
+
           {selectedExpense && (
             <div className="space-y-4">
               {/* Nome do usuário responsável */}
@@ -640,7 +491,6 @@ export default function ExpenseTable() {
           )}
         </DialogContent>
       </Dialog>
-      
     </div>
   );
 }

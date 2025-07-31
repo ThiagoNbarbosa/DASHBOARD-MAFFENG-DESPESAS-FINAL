@@ -1,7 +1,7 @@
-import { neon } from "@neondatabase/serverless";
+import { Pool } from "pg";
 import type { Billing, InsertBilling } from "@shared/schema";
 
-const sql = neon(process.env.DATABASE_URL!);
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 export class BillingStorage {
   private mockData: Billing[] = [];

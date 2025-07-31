@@ -1,9 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { initBillingTable } from "./init-billing";
 import { initUsersTable } from "./init-users";
-import { billingStorage } from "./billing-storage";
+import { testConnection } from "./database";
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
@@ -40,10 +39,17 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Inicializar tabelas do banco
-  await initUsersTable();
-  await initBillingTable();
-  await billingStorage.initTable();
+  // Testar conexão com banco de dados
+  console.log('Tentando conectar com o banco de dados...');
+  const isConnected = await testConnection();
+  
+  if (isConnected) {
+    console.log('Inicializando tabelas do banco...');
+    await initUsersTable();
+  } else {
+    console.log('Banco não disponível - sistema funcionará com dados locais');
+    console.log('Para conectar ao banco, verifique se DATABASE_URL está correta');
+  }
   
   const server = await registerRoutes(app);
 
