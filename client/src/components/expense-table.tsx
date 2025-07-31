@@ -12,6 +12,7 @@ import { Trash2, Filter, X, Ban, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { authApi } from "@/lib/auth";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 import type { Expense } from "@shared/schema";
 
@@ -40,6 +41,7 @@ export default function ExpenseTable() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
 
   const { data: user } = useQuery({
     queryKey: ['/api/auth/me'],
@@ -213,14 +215,15 @@ export default function ExpenseTable() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 space-y-2 md:space-y-0">
+          <div className={`grid gap-4 ${isMobile ? 'grid-cols-1 space-y-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-6 space-y-2 md:space-y-0'}`}>
             <div>
               <Label htmlFor="yearFilter">Ano</Label>
               <Select value={filters.year} onValueChange={(value) => setFilters({ ...filters, year: value })}>
-                <SelectTrigger>
+                <SelectTrigger className={isMobile ? "h-12 text-base" : ""}>
                   <SelectValue placeholder="Selecione o ano" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className={isMobile ? "z-50" : ""} position="popper" side="bottom">
+                  <SelectItem value="all">Todos os anos</SelectItem>
                   <SelectItem value="2024">2024</SelectItem>
                   <SelectItem value="2025">2025</SelectItem>
                   <SelectItem value="2026">2026</SelectItem>
@@ -231,10 +234,10 @@ export default function ExpenseTable() {
             <div>
               <Label htmlFor="monthFilter">Mês</Label>
               <Select value={filters.month} onValueChange={(value) => setFilters({ ...filters, month: value })}>
-                <SelectTrigger>
+                <SelectTrigger className={isMobile ? "h-12 text-base" : ""}>
                   <SelectValue placeholder="Todos os meses" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className={isMobile ? "z-50 max-h-60" : ""} position="popper" side="bottom">
                   <SelectItem value="all">Todos os meses</SelectItem>
                   {Array.from({ length: 12 }, (_, i) => {
                     const monthNumber = String(i + 1).padStart(2, '0');
@@ -252,10 +255,10 @@ export default function ExpenseTable() {
             <div>
               <Label htmlFor="categoryFilter">Categoria</Label>
               <Select value={filters.category} onValueChange={(value) => setFilters({ ...filters, category: value })}>
-                <SelectTrigger>
+                <SelectTrigger className={isMobile ? "h-12 text-base" : ""}>
                   <SelectValue placeholder="Todas as categorias" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className={isMobile ? "z-50 max-h-60" : ""} position="popper" side="bottom">
                   <SelectItem value="all">Todas as categorias</SelectItem>
                   {categories.map((category) => (
                     <SelectItem key={category} value={category}>
@@ -269,10 +272,10 @@ export default function ExpenseTable() {
             <div>
               <Label htmlFor="paymentMethodFilter">Forma de Pagamento</Label>
               <Select value={filters.paymentMethod} onValueChange={(value) => setFilters({ ...filters, paymentMethod: value })}>
-                <SelectTrigger>
+                <SelectTrigger className={isMobile ? "h-12 text-base" : ""}>
                   <SelectValue placeholder="Todas as formas" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className={isMobile ? "z-50" : ""} position="popper" side="bottom">
                   <SelectItem value="all">Todas as formas</SelectItem>
                   <SelectItem value="Pix">Pix</SelectItem>
                   <SelectItem value="Cartão de Crédito">Cartão de Crédito</SelectItem>
@@ -290,6 +293,7 @@ export default function ExpenseTable() {
                   placeholder="Digite o número do contrato"
                   value={filters.contractNumber}
                   onChange={(e) => setFilters({ ...filters, contractNumber: e.target.value })}
+                  className={isMobile ? "h-12 text-base" : ""}
                 />
               </div>
             )}
@@ -301,6 +305,7 @@ export default function ExpenseTable() {
                 type="date"
                 value={filters.startDate}
                 onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
+                className={isMobile ? "h-12 text-base" : ""}
               />
             </div>
 
@@ -311,11 +316,16 @@ export default function ExpenseTable() {
                 type="date"
                 value={filters.endDate}
                 onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
+                className={isMobile ? "h-12 text-base" : ""}
               />
             </div>
 
             <div className="flex items-end">
-              <Button variant="outline" onClick={clearFilters} className="w-full">
+              <Button 
+                variant="outline" 
+                onClick={clearFilters} 
+                className={`w-full ${isMobile ? "h-12 text-base" : ""}`}
+              >
                 <X className="h-4 w-4 mr-2" />
                 Limpar Filtros
               </Button>
