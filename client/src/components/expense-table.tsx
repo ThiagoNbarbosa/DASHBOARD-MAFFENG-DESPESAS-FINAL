@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MobileSelect } from "./mobile-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -227,7 +228,7 @@ export default function ExpenseTable() {
     <div className="space-y-6">
       {/* Modern Filters */}
       <ModernFilters
-        filters={filters as Record<string, string>}
+        filters={filters as any}
         onFilterChange={handleFilterChange}
         filterOptions={filterOptions}
         searchPlaceholder="Buscar por item, categoria, contrato ou descrição..."

@@ -5,7 +5,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 interface MobileSelectProps {
   value: string;
   onValueChange: (value: string) => void;
-  options: string[];
+  options: (string | {value: string, label: string})[];
   placeholder: string;
   label?: string;
   className?: string;
@@ -38,11 +38,15 @@ export const MobileSelect = memo(function MobileSelect({
         }}
       >
         <option value="">{placeholder}</option>
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
+        {options.map((option) => {
+          const optionValue = typeof option === 'string' ? option : option.value;
+          const optionLabel = typeof option === 'string' ? option : option.label;
+          return (
+            <option key={optionValue} value={optionValue}>
+              {optionLabel}
+            </option>
+          );
+        })}
       </select>
     );
   }
@@ -53,11 +57,15 @@ export const MobileSelect = memo(function MobileSelect({
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent className="z-[99999] max-h-[200px] overflow-y-auto bg-white border shadow-lg">
-        {options.map((option) => (
-          <SelectItem key={option} value={option}>
-            {option}
-          </SelectItem>
-        ))}
+        {options.map((option) => {
+          const optionValue = typeof option === 'string' ? option : option.value;
+          const optionLabel = typeof option === 'string' ? option : option.label;
+          return (
+            <SelectItem key={optionValue} value={optionValue}>
+              {optionLabel}
+            </SelectItem>
+          );
+        })}
       </SelectContent>
     </Select>
   );

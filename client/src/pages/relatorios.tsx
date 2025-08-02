@@ -540,7 +540,12 @@ export default function Relatorios() {
                     <MobileSelect
                       value={filters.reportType}
                       onValueChange={(value) => setFilters(prev => ({ ...prev, reportType: value as any }))}
-                      options={["completo", "despesas", "faturamento", "visual"]}
+                      options={[
+                        {value: "completo", label: "Relatório Completo (JSON)"}, 
+                        {value: "despesas", label: "Apenas Despesas (CSV)"}, 
+                        {value: "faturamento", label: "Apenas Faturamento (CSV)"}, 
+                        {value: "visual", label: "Relatório Visual (PDF/Impressão)"}
+                      ]}
                       placeholder="Selecione o tipo de relatório"
                     />
                   </div>

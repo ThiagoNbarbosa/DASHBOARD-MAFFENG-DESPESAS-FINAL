@@ -1,5 +1,6 @@
 import { useState, useCallback, memo } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MobileSelect } from "./mobile-select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -36,114 +37,85 @@ export function ExpenseFilters({ filters, setFilters, clearFilters, user }: Expe
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
         <div>
           <Label>Ano</Label>
-          <Select value={filters.year} onValueChange={(value) => setFilters({ ...filters, year: value })}>
-            <SelectTrigger id="yearFilter">
-              <SelectValue placeholder="Selecione o ano" />
-            </SelectTrigger>
-            <SelectContent 
-              className="z-[99999] max-h-[200px] overflow-y-auto bg-white border shadow-lg"
-              position="popper"
-              sideOffset={4}
-            >
-              <SelectItem value="all">Todos os anos</SelectItem>
-              <SelectItem value="2025">2025</SelectItem>
-              <SelectItem value="2026">2026</SelectItem>
-              <SelectItem value="2027">2027</SelectItem>
-              <SelectItem value="2028">2028</SelectItem>
-              <SelectItem value="2029">2029</SelectItem>
-              <SelectItem value="2030">2030</SelectItem>
-            </SelectContent>
-          </Select>
+          <MobileSelect
+            value={filters.year}
+            onValueChange={(value) => setFilters({ ...filters, year: value })}
+            options={[
+              {value: "all", label: "Todos os anos"}, 
+              {value: "2025", label: "2025"}, 
+              {value: "2026", label: "2026"}, 
+              {value: "2027", label: "2027"}, 
+              {value: "2028", label: "2028"}, 
+              {value: "2029", label: "2029"}, 
+              {value: "2030", label: "2030"}
+            ]}
+            placeholder="Selecione o ano"
+          />
         </div>
 
         <div>
           <Label>Mês</Label>
-          <Select value={filters.month} onValueChange={(value) => setFilters({ ...filters, month: value })}>
-            <SelectTrigger id="monthFilter">
-              <SelectValue placeholder="Todos os meses" />
-            </SelectTrigger>
-            <SelectContent 
-              className="z-[99999] max-h-[200px] overflow-y-auto bg-white border shadow-lg"
-              position="popper"
-              sideOffset={4}
-            >
-              <SelectItem value="all">Todos os meses</SelectItem>
-              {Array.from({ length: 12 }, (_, i) => {
-                const monthNumber = String(i + 1).padStart(2, '0');
-                const monthName = new Date(2024, i, 1).toLocaleDateString('pt-BR', { month: 'long' });
-                return (
-                  <SelectItem key={monthNumber} value={monthNumber}>
-                    {monthName}
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
+          <MobileSelect
+            value={filters.month}
+            onValueChange={(value) => setFilters({ ...filters, month: value })}
+            options={[
+              {value: "all", label: "Todos os meses"}, 
+              {value: "01", label: "Janeiro"}, 
+              {value: "02", label: "Fevereiro"}, 
+              {value: "03", label: "Março"}, 
+              {value: "04", label: "Abril"}, 
+              {value: "05", label: "Maio"}, 
+              {value: "06", label: "Junho"}, 
+              {value: "07", label: "Julho"}, 
+              {value: "08", label: "Agosto"}, 
+              {value: "09", label: "Setembro"}, 
+              {value: "10", label: "Outubro"}, 
+              {value: "11", label: "Novembro"}, 
+              {value: "12", label: "Dezembro"}
+            ]}
+            placeholder="Todos os meses"
+          />
         </div>
 
         <div>
           <Label>Categoria</Label>
-          <Select value={filters.category} onValueChange={(value) => setFilters({ ...filters, category: value })}>
-            <SelectTrigger id="categoryFilter">
-              <SelectValue placeholder="Todas as categorias" />
-            </SelectTrigger>
-            <SelectContent 
-              className="z-[99999] max-h-[200px] overflow-y-auto bg-white border shadow-lg"
-              position="popper"
-              sideOffset={4}
-            >
-              <SelectItem value="all">Todas as categorias</SelectItem>
-              <SelectItem value="(Sem Categoria)">(Sem Categoria)</SelectItem>
-              {categories.filter((cat: string) => cat !== '(Sem Categoria)').map((category: string) => (
-                <SelectItem key={category} value={category}>
-                  {category}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <MobileSelect
+            value={filters.category}
+            onValueChange={(value) => setFilters({ ...filters, category: value })}
+            options={[
+              {value: "all", label: "Todas as categorias"}, 
+              {value: "(Sem Categoria)", label: "(Sem Categoria)"}, 
+              ...categories.filter((cat: string) => cat !== '(Sem Categoria)').map((cat: string) => ({value: cat, label: cat}))
+            ]}
+            placeholder="Todas as categorias"
+          />
         </div>
 
         <div>
           <Label>Forma de Pagamento</Label>
-          <Select value={filters.paymentMethod} onValueChange={(value) => setFilters({ ...filters, paymentMethod: value })}>
-            <SelectTrigger id="paymentMethodFilter">
-              <SelectValue placeholder="Todas as formas" />
-            </SelectTrigger>
-            <SelectContent 
-              className="z-[99999] max-h-[200px] overflow-y-auto bg-white border shadow-lg"
-              position="popper"
-              sideOffset={4}
-            >
-              <SelectItem value="all">Todas as formas</SelectItem>
-              {FORMAS_PAGAMENTO.map((method) => (
-                <SelectItem key={method} value={method}>
-                  {method}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <MobileSelect
+            value={filters.paymentMethod}
+            onValueChange={(value) => setFilters({ ...filters, paymentMethod: value })}
+            options={[
+              {value: "all", label: "Todas as formas"}, 
+              ...FORMAS_PAGAMENTO.map(method => ({value: method, label: method}))
+            ]}
+            placeholder="Todas as formas"
+          />
         </div>
 
         <div>
           <Label>Contrato</Label>
-          <Select value={filters.contractNumber} onValueChange={(value) => setFilters({ ...filters, contractNumber: value })}>
-            <SelectTrigger id="contractFilter">
-              <SelectValue placeholder="Todos os contratos" />
-            </SelectTrigger>
-            <SelectContent 
-              className="z-[99999] max-h-[200px] overflow-y-auto bg-white border shadow-lg"
-              position="popper"
-              sideOffset={4}
-            >
-              <SelectItem value="all">Todos os contratos</SelectItem>
-              <SelectItem value="(Sem Contrato)">(Sem Contrato)</SelectItem>
-              {contracts.filter((cont: string) => cont !== '(Sem Contrato)').map((contract: string) => (
-                <SelectItem key={contract} value={contract}>
-                  {contract}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <MobileSelect
+            value={filters.contractNumber}
+            onValueChange={(value) => setFilters({ ...filters, contractNumber: value })}
+            options={[
+              {value: "all", label: "Todos os contratos"}, 
+              {value: "(Sem Contrato)", label: "(Sem Contrato)"}, 
+              ...contracts.filter((cont: string) => cont !== '(Sem Contrato)').map((cont: string) => ({value: cont, label: cont}))
+            ]}
+            placeholder="Todos os contratos"
+          />
         </div>
 
         <div className="flex items-end">

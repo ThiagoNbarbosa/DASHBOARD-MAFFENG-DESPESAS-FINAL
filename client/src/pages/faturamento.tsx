@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MobileSelect } from "@/components/mobile-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Receipt, FileText, Calendar, DollarSign, Filter, Plus, X, Trash2, XCircle, Eye } from "lucide-react";
@@ -352,68 +353,59 @@ export default function Faturamento() {
                   <label className="text-sm font-medium text-gray-700 mb-2 block">
                     Ano
                   </label>
-                  <Select
+                  <MobileSelect
                     value={filters.year}
                     onValueChange={(value) => setFilters(prev => ({ ...prev, year: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o ano" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos os anos</SelectItem>
-                      <SelectItem value="2024">2024</SelectItem>
-                      <SelectItem value="2025">2025</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    options={[
+                      {value: "all", label: "Todos os anos"}, 
+                      {value: "2024", label: "2024"}, 
+                      {value: "2025", label: "2025"}
+                    ]}
+                    placeholder="Selecione o ano"
+                  />
                 </div>
 
                 <div>
                   <label className="text-sm font-medium text-gray-700 mb-2 block">
                     Mês
                   </label>
-                  <Select
+                  <MobileSelect
                     value={filters.month}
                     onValueChange={(value) => setFilters(prev => ({ ...prev, month: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Todos os meses" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos os meses</SelectItem>
-                      <SelectItem value="01">Janeiro</SelectItem>
-                      <SelectItem value="02">Fevereiro</SelectItem>
-                      <SelectItem value="03">Março</SelectItem>
-                      <SelectItem value="04">Abril</SelectItem>
-                      <SelectItem value="05">Maio</SelectItem>
-                      <SelectItem value="06">Junho</SelectItem>
-                      <SelectItem value="07">Julho</SelectItem>
-                      <SelectItem value="08">Agosto</SelectItem>
-                      <SelectItem value="09">Setembro</SelectItem>
-                      <SelectItem value="10">Outubro</SelectItem>
-                      <SelectItem value="11">Novembro</SelectItem>
-                      <SelectItem value="12">Dezembro</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    options={[
+                      {value: "all", label: "Todos os meses"}, 
+                      {value: "01", label: "Janeiro"}, 
+                      {value: "02", label: "Fevereiro"}, 
+                      {value: "03", label: "Março"}, 
+                      {value: "04", label: "Abril"}, 
+                      {value: "05", label: "Maio"}, 
+                      {value: "06", label: "Junho"}, 
+                      {value: "07", label: "Julho"}, 
+                      {value: "08", label: "Agosto"}, 
+                      {value: "09", label: "Setembro"}, 
+                      {value: "10", label: "Outubro"}, 
+                      {value: "11", label: "Novembro"}, 
+                      {value: "12", label: "Dezembro"}
+                    ]}
+                    placeholder="Todos os meses"
+                  />
                 </div>
 
                 <div>
                   <label className="text-sm font-medium text-gray-700 mb-2 block">
                     Status
                   </label>
-                  <Select
+                  <MobileSelect
                     value={filters.status}
                     onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Todos os status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos os status</SelectItem>
-                      <SelectItem value="pendente">Pendente</SelectItem>
-                      <SelectItem value="pago">Pago</SelectItem>
-                      <SelectItem value="vencido">Vencido</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    options={[
+                      {value: "all", label: "Todos os status"}, 
+                      {value: "pendente", label: "Pendente"}, 
+                      {value: "pago", label: "Pago"}, 
+                      {value: "vencido", label: "Vencido"}
+                    ]}
+                    placeholder="Todos os status"
+                  />
                 </div>
 
                 <div>

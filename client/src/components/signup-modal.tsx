@@ -111,7 +111,10 @@ export default function SignupModal() {
             <MobileSelect
               value={formData.role}
               onValueChange={(value) => setFormData({ ...formData, role: value })}
-              options={["user", "admin"]}
+              options={[
+                {value: "user", label: "Usuário"}, 
+                {value: "admin", label: "Administrador"}
+              ]}
               placeholder="Selecione a função"
             />
           </div>
