@@ -114,6 +114,29 @@
     max-height: 50vh !important;
     overflow-y: auto !important;
   }
+
+  /* Native mobile inputs styling */
+  select.mobile-native,
+  input.mobile-native {
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 12px center !important;
+    background-size: 16px !important;
+    padding-right: 40px !important;
+  }
+
+  /* Touch optimizations for native inputs */
+  input[type="date"],
+  input[type="text"],
+  select {
+    font-size: 16px !important;
+    min-height: 48px !important;
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: transparent !important;
+  }
 }
 
 :root {

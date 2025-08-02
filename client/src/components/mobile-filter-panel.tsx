@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Filter, X } from "lucide-react";
 import { ExpenseFilters } from "./expense-filters";
+import { MobileNativeFilters } from "./mobile-native-filters";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { User } from "@shared/schema";
 
@@ -88,7 +89,7 @@ const MobileFilterPanel = memo(function MobileFilterPanel({
         
         <SheetContent 
           side="bottom" 
-          className="h-[90vh] flex flex-col"
+          className="h-[90vh] flex flex-col z-[100]"
         >
           <SheetHeader className="pb-4 flex-shrink-0">
             <SheetTitle className="text-left">Filtros de Pesquisa</SheetTitle>
@@ -99,7 +100,7 @@ const MobileFilterPanel = memo(function MobileFilterPanel({
           
           <div className="flex-1 overflow-y-auto">
             <div className="space-y-6 pb-6">
-              <ExpenseFilters
+              <MobileNativeFilters
                 filters={filters}
                 setFilters={handleFiltersChange}
                 clearFilters={handleClearFilters}
@@ -112,15 +113,17 @@ const MobileFilterPanel = memo(function MobileFilterPanel({
             <Button
               variant="outline"
               onClick={() => setIsOpen(false)}
-              className="flex-1 min-h-[44px]"
+              className="flex-1 min-h-[48px] text-base"
+              style={{ fontSize: '16px' }}
             >
               Cancelar
             </Button>
             <Button
               onClick={() => setIsOpen(false)}
-              className="flex-1 bg-orange-600 hover:bg-orange-700 min-h-[44px]"
+              className="flex-1 bg-orange-600 hover:bg-orange-700 min-h-[48px] text-base font-medium"
+              style={{ fontSize: '16px' }}
             >
-              Aplicar Filtros
+              Aplicar {totalFiltersActive > 0 ? `(${totalFiltersActive})` : 'Filtros'}
             </Button>
           </div>
         </SheetContent>
