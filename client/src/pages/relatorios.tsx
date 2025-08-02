@@ -551,6 +551,7 @@ export default function Relatorios() {
                   </div>
                 </div>
 
+                {/* Filtros idênticos à página de despesas */}
                 <ExpenseFilters
                   filters={filters}
                   setFilters={setFilters}
