@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MobileSelect } from "@/components/mobile-select";
 import { Download, FileText, Calendar, Filter, BarChart3, Upload, X, Eye, Edit, Ban, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useResponsive } from "@/hooks/use-responsive";
@@ -536,20 +537,12 @@ export default function Relatorios() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Tipo de Relatório
                     </label>
-                    <Select
+                    <MobileSelect
                       value={filters.reportType}
                       onValueChange={(value) => setFilters(prev => ({ ...prev, reportType: value as any }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="completo">Relatório Completo (JSON)</SelectItem>
-                        <SelectItem value="despesas">Apenas Despesas (CSV)</SelectItem>
-                        <SelectItem value="faturamento">Apenas Faturamento (CSV)</SelectItem>
-                        <SelectItem value="visual">Relatório Visual (PDF/Impressão)</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      options={["completo", "despesas", "faturamento", "visual"]}
+                      placeholder="Selecione o tipo de relatório"
+                    />
                   </div>
                 </div>
 

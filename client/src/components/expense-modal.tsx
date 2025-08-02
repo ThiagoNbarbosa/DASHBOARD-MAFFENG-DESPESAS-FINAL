@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MobileSelect } from "./mobile-select";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -243,70 +244,42 @@ export default function ExpenseModal() {
 
             <div>
               <Label htmlFor="paymentMethod">Forma de Pagamento *</Label>
-              <Select value={formData.paymentMethod} onValueChange={(value) => setFormData({ ...formData, paymentMethod: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a forma de pagamento" />
-                </SelectTrigger>
-                <SelectContent>
-                  {FORMAS_PAGAMENTO.map((method) => (
-                    <SelectItem key={method} value={method}>
-                      {method}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <MobileSelect
+                value={formData.paymentMethod}
+                onValueChange={(value) => setFormData({ ...formData, paymentMethod: value })}
+                options={FORMAS_PAGAMENTO}
+                placeholder="Selecione a forma de pagamento"
+              />
             </div>
 
             <div>
               <Label htmlFor="category">Categoria *</Label>
-              <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Selecione uma categoria</SelectItem>
-                  <SelectItem value="(Sem Categoria)">(Sem Categoria)</SelectItem>
-                  {categories.filter(cat => cat !== '(Sem Categoria)').map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <MobileSelect
+                value={formData.category}
+                onValueChange={(value) => setFormData({ ...formData, category: value })}
+                options={["(Sem Categoria)", ...categories.filter(cat => cat !== '(Sem Categoria)')]}
+                placeholder="Selecione a categoria"
+              />
             </div>
 
             <div>
               <Label htmlFor="bankIssuer">Banco Emissor</Label>
-              <Select value={formData.bankIssuer || ""} onValueChange={(value) => setFormData({ ...formData, bankIssuer: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o banco emissor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {BANCOS.map((banco) => (
-                    <SelectItem key={banco} value={banco}>
-                      {banco}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <MobileSelect
+                value={formData.bankIssuer || ""}
+                onValueChange={(value) => setFormData({ ...formData, bankIssuer: value })}
+                options={BANCOS}
+                placeholder="Selecione o banco emissor"
+              />
             </div>
 
             <div>
               <Label htmlFor="contractNumber">Número do Contrato *</Label>
-              <Select value={formData.contractNumber} onValueChange={(value) => setFormData({ ...formData, contractNumber: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o contrato" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Selecione um contrato</SelectItem>
-                  <SelectItem value="(Sem Contrato)">(Sem Contrato)</SelectItem>
-                  {contracts.filter(cont => cont !== '(Sem Contrato)').map((contract) => (
-                    <SelectItem key={contract} value={contract}>
-                      {contract}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <MobileSelect
+                value={formData.contractNumber}
+                onValueChange={(value) => setFormData({ ...formData, contractNumber: value })}
+                options={["(Sem Contrato)", ...contracts.filter(cont => cont !== '(Sem Contrato)')]}
+                placeholder="Selecione o contrato"
+              />
             </div>
 
 

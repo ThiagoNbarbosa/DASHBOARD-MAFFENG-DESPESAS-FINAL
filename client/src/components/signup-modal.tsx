@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MobileSelect } from "./mobile-select";
 import { UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
@@ -107,15 +108,12 @@ export default function SignupModal() {
 
           <div>
             <Label htmlFor="role">Função *</Label>
-            <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione a função" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="user">Usuário</SelectItem>
-                <SelectItem value="admin">Administrador</SelectItem>
-              </SelectContent>
-            </Select>
+            <MobileSelect
+              value={formData.role}
+              onValueChange={(value) => setFormData({ ...formData, role: value })}
+              options={["user", "admin"]}
+              placeholder="Selecione a função"
+            />
           </div>
 
           <div className="flex justify-end space-x-2 pt-4 border-t">

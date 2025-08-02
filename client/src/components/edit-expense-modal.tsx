@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MobileSelect } from "./mobile-select";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -180,66 +181,42 @@ export default function EditExpenseModal({ expense, open, onOpenChange }: EditEx
 
             <div>
               <Label htmlFor="edit-paymentMethod">Forma de Pagamento *</Label>
-              <Select value={formData.paymentMethod} onValueChange={(value) => setFormData({ ...formData, paymentMethod: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a forma de pagamento" />
-                </SelectTrigger>
-                <SelectContent>
-                  {FORMAS_PAGAMENTO.map((method) => (
-                    <SelectItem key={method} value={method}>
-                      {method}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <MobileSelect
+                value={formData.paymentMethod}
+                onValueChange={(value) => setFormData({ ...formData, paymentMethod: value })}
+                options={FORMAS_PAGAMENTO}
+                placeholder="Selecione a forma de pagamento"
+              />
             </div>
 
             <div>
               <Label htmlFor="edit-category">Categoria *</Label>
-              <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <MobileSelect
+                value={formData.category}
+                onValueChange={(value) => setFormData({ ...formData, category: value })}
+                options={categories}
+                placeholder="Selecione a categoria"
+              />
             </div>
 
             <div>
               <Label htmlFor="edit-contractNumber">Número do Contrato *</Label>
-              <Select value={formData.contractNumber} onValueChange={(value) => setFormData({ ...formData, contractNumber: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o contrato" />
-                </SelectTrigger>
-                <SelectContent>
-                  {contracts.map((contrato) => (
-                    <SelectItem key={contrato} value={contrato}>
-                      {contrato}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <MobileSelect
+                value={formData.contractNumber}
+                onValueChange={(value) => setFormData({ ...formData, contractNumber: value })}
+                options={contracts}
+                placeholder="Selecione o contrato"
+              />
             </div>
 
             <div>
               <Label htmlFor="edit-bankIssuer">Banco Emissor</Label>
-              <Select value={formData.bankIssuer || ""} onValueChange={(value) => setFormData({ ...formData, bankIssuer: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o banco emissor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {BANCOS.map((banco) => (
-                    <SelectItem key={banco} value={banco}>
-                      {banco}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <MobileSelect
+                value={formData.bankIssuer || ""}
+                onValueChange={(value) => setFormData({ ...formData, bankIssuer: value })}
+                options={BANCOS}
+                placeholder="Selecione o banco emissor"
+              />
             </div>
 
             <div>

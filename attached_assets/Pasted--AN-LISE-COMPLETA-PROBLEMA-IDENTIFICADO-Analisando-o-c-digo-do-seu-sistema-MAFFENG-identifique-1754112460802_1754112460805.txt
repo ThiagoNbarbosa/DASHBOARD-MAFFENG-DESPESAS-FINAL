@@ -1,0 +1,111 @@
+🔍 ANÁLISE COMPLETA - PROBLEMA IDENTIFICADO!
+Analisando o código do seu sistema MAFFENG, identifiquei EXATAMENTE o mesmo problema nos filtros das outras páginas!
+🚨 PROBLEMA PRINCIPAL - Z-INDEX E PORTAL
+O problema está nos componentes que usam ExpenseFilters e Select do shadcn/ui dentro de modais e páginas. Os dropdowns estão sendo bloqueados por problemas de camadas (z-index) e portal rendering.
+CAUSA RAIZ:
+
+ExpenseFilters usa SelectContent que fica preso em containers
+Modais têm z-index próprio que bloqueia dropdowns
+SelectContent não consegue escapar dos portals
+No mobile, viewport e touch events conflitam
+
+✅ SOLUÇÃO IMEDIATA
+Preciso que você aplique as MESMAS correções para TODAS as páginas seguindo este padrão:
+🎯 PRINCIPAIS CORREÇÕES A APLICAR:
+1. INPUTS NATIVOS NO MOBILE
+
+✅ Substitua todos os Select do shadcn/ui por <select> nativos no mobile
+✅ Use <input> nativos para datas e busca
+✅ Elimina conflitos de z-index e portal rendering
+
+2. TOUCH OPTIMIZATION
+
+✅ Adicione touch-manipulation para melhor responsividade
+✅ Use minHeight: 48px (padrão Apple/Google para touch)
+✅ Configure fontSize: 16px para prevenir zoom automático no iOS
+
+3. Z-INDEX FIXES
+
+✅ Modais com z-[100] explícito
+✅ Remove dependência de portals complexos
+✅ Inputs nativos não precisam de camadas extras
+
+4. UX MELHORADA
+
+✅ Botões maiores e mais fáceis de tocar
+✅ WebkitAppearance: 'none' removido para controle total
+✅ Responsividade otimizada para mobile
+
+📋 ARQUIVOS QUE VOCÊ PRECISA CORRIGIR:
+PÁGINAS:
+
+client/src/pages/relatorios.tsx - Aplicar MobileFilterPanel + corrigir selects internos
+client/src/pages/results.tsx - Aplicar MobileFilterPanel se usar filtros
+Outras páginas que usam filtros
+
+COMPONENTES:
+
+client/src/components/expense-modal.tsx - Corrigir selects para mobile
+client/src/components/edit-expense-modal.tsx - Corrigir selects para mobile
+client/src/components/signup-modal.tsx - Corrigir select de role
+client/src/components/reusable-report-modal.tsx - Se usa selects
+
+PADRÃO DE CORREÇÃO:
+Para cada Select, substitua por este padrão:
+typescript// Componente Select mobile-friendly
+const MobileSelect = ({ value, onValueChange, options, placeholder, label }: {
+  value: string;
+  onValueChange: (value: string) => void;
+  options: string[];
+  placeholder: string;
+  label: string;
+}) => {
+  if (isMobile) {
+    return (
+      <select
+        value={value}
+        onChange={(e) => onValueChange(e.target.value)}
+        className="w-full p-4 text-base border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-orange-500 focus:border-transparent touch-manipulation"
+        style={{ 
+          WebkitAppearance: 'none',
+          fontSize: '16px',
+          minHeight: '48px'
+        }}
+      >
+        <option value="">{placeholder}</option>
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+    );
+  }
+
+  return (
+    <Select value={value} onValueChange={onValueChange}>
+      <SelectTrigger>
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent className="z-[99999] max-h-[200px] overflow-y-auto bg-white border shadow-lg">
+        {options.map((option) => (
+          <SelectItem key={option} value={option}>
+            {option}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+};
+🔧 POR QUE ESSA SOLUÇÃO FUNCIONA:
+
+Inputs nativos são renderizados pelo próprio sistema operacional
+Sem conflitos de z-index porque não há portals ou overlays complexos
+Touch events funcionam naturalmente
+Performance melhor no mobile
+
+📱 PRÓXIMOS PASSOS:
+
+Comece pela página relatórios.tsx - substitua todos os Selects internos
+Aplique o mesmo padrão nos modais (expense-modal, edit-expense-modal, signup-modal)
+Teste no mobile - os dropdowns agora vão funcionar perfeitamente
