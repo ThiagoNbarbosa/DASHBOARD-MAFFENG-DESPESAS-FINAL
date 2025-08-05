@@ -297,7 +297,7 @@ export class DatabaseStorage implements IStorage {
 
       // Filtro por contrato
       if (filters?.contractNumber && filters.contractNumber !== "all") {
-        conditions.push(like(expenses.contractNumber, `%${filters.contractNumber}%`));
+        conditions.push(eq(expenses.contractNumber, filters.contractNumber));
       }
 
       // Filtro por método de pagamento
